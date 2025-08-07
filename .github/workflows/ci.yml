@@ -1,0 +1,83 @@
+# .github/workflows/ci.yml
+
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - staging
+
+permissions:
+  contents: write
+
+jobs:
+  lint-and-test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.12']
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: true
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install pip-tools
+        run: pip install pip-tools
+
+      - name: Validate lockfiles
+        run: |
+          pip-compile --dry-run --generate-hashes \
+            --output-file=requirements.txt pyproject.toml
+          pip-compile --dry-run --generate-hashes --extra=dev \
+            --output-file=requirements-dev.txt pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          pip install --require-hashes -r requirements.txt
+          pip install --require-hashes -r requirements-dev.txt
+
+      - name: Run pip-audit
+        run: pip-audit --progress-spinner off
+
+      - name: Black formatting check
+        run: black --check .
+
+      - name: Ruff linting
+        run: ruff check .
+
+      - name: Type checking with mypy
+        run: mypy .
+
+      - name: Run tests with coverage
+        run: |
+          pytest --cov --cov-report=term --cov-report=xml
+
+      - name: Generate coverage badge
+        uses: tj-actions/coverage-badge-py@v2
+        with:
+          working-directory: .
+          output: coverage.svg
+          overwrite: true
+
+      - name: Commit badge
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: update coverage badge"
+          file_pattern: coverage.svg
+          #test
