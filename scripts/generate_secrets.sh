@@ -37,8 +37,8 @@ echo "📝 Generating secrets..."
 
 DJANGO_SECRET_KEY=$(generate_django_secret)
 POSTGRES_PASSWORD=$(generate_random 32)
-POSTGRES_USER="rap_user_$(generate_random 8)"
-POSTGRES_DB="rap_db_$(generate_random 8)"
+POSTGRES_USER="rap_user"
+POSTGRES_DB="rap_db"
 ADMIN_URL="admin-$(generate_random 16)/"
 
 # Create .env.prod file
@@ -49,13 +49,18 @@ cat > "$ENV_FILE" << EOF
 # Django Configuration
 DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY
 DJANGO_DEBUG=False
-DJANGO_ALLOWED_HOSTS=$DOMAIN_NAME,localhost,127.0.0.1
+DJANGO_ALLOWED_HOSTS=$DOMAIN_NAME,localhost,127.0.0.1,0.0.0.0,web
 SECURE_SSL_REDIRECT=True
 SESSION_COOKIE_SECURE=True
 CSRF_COOKIE_SECURE=True
 SECURE_HSTS_SECONDS=31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS=True
 SECURE_HSTS_PRELOAD=True
+
+# Proxy Configuration
+USE_X_FORWARDED_HOST=True
+USE_X_FORWARDED_PORT=True
+SECURE_PROXY_SSL_HEADER=HTTP_X_FORWARDED_PROTO,https
 
 # Database Configuration
 POSTGRES_DB=$POSTGRES_DB
