@@ -1,0 +1,374 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Posities en Rugnummers Beheren - SV Rap 8{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">
+        <i data-feather="edit-3" style="width: 2rem; height: 2rem; margin-right: 0.75rem;"></i>
+        Posities en Rugnummers Beheren
+    </h1>
+    <p class="page-subtitle">Bewerk alle spelerposities en rugnummers in één overzicht</p>
+</div>
+
+<!-- Navigation -->
+<div class="card mb-4">
+    <div class="card-content">
+        <nav class="d-flex justify-content-between align-items-center">
+            <div class="d-flex gap-3">
+                <a href="{% url 'users:admin_dashboard' %}" class="btn btn-ghost">
+                    <i data-feather="arrow-left"></i>
+                    Terug naar Dashboard
+                </a>
+                <a href="{% url 'users:admin_players' %}" class="btn btn-ghost">
+                    <i data-feather="users"></i>
+                    Alle Spelers
+                </a>
+            </div>
+        </nav>
+    </div>
+</div>
+
+<!-- Instructions -->
+<div class="alert alert-info mb-4">
+    <div class="d-flex align-items-start">
+        <i data-feather="info" class="me-2 mt-1" style="width: 1.25rem; height: 1.25rem;"></i>
+        <div>
+            <strong>Instructies:</strong>
+            <ul class="mb-0 mt-2">
+                <li>Bewerk de posities en rugnummers van alle actieve spelers</li>
+                <li>Rugnummers moeten uniek zijn - geen duplicaten toegestaan</li>
+                <li>Laat rugnummer leeg om geen nummer toe te wijzen</li>
+                <li>Alleen actieve spelers worden weergegeven</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Edit Form -->
+<form method="post">
+    {% csrf_token %}
+    
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="card-title">
+                <i data-feather="users" style="width: 1.5rem; height: 1.5rem; margin-right: 0.5rem;"></i>
+                Actieve Spelers ({{ players.count }})
+            </h3>
+            <button type="submit" class="btn btn-primary d-none d-sm-block">
+                <i data-feather="save"></i>
+                Alle Wijzigingen Opslaan
+            </button>
+        </div>
+        
+        <div class="card-content p-0">
+            {% if players %}
+                <div class="table-container">
+                    <table class="table table-responsive">
+                        <thead>
+                            <tr>
+                                <th style="width: 30%;">Speler</th>
+                                <th style="width: 35%;">Positie</th>
+                                <th style="width: 20%;">Rugnummer</th>
+                                <th style="width: 15%;">Huidig</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for player in players %}
+                            <tr {% for key, error in errors.items %}{% if key == "player_"|add:player.pk %}class="table-row-error"{% endif %}{% endfor %}>
+                                <td>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="user-avatar d-none d-sm-flex {% if not player.foto %} default{% endif %}">
+                                            {% if player.foto %}
+                                                <img src="{{ player.foto.url }}" alt="{{ player.get_full_name }}">
+                                            {% else %}
+                                                <div class="avatar-fallback">
+                                                    {% if player.first_name %}
+                                                        {{ player.first_name|first|upper }}{{ player.last_name|first|upper }}
+                                                    {% else %}
+                                                        {{player.username|first|upper}}
+                                                    {% endif %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            <div class="font-medium">{{ player.get_full_name|default:player.username }}</div>
+                                            <div class="text-sm text-secondary">@{{ player.username }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <select name="player_{{ player.pk }}_positie" 
+                                            class="form-select form-select-sm"
+                                            id="positie_{{ player.pk }}">
+                                        {% with current_form_data=form_data|default_if_none:""|add:"player_"|add:player.pk %}
+                                        {% with current_positie=current_form_data.positie|default:player.positie %}
+                                        <option value="">Geen positie</option>
+                                        <option value="Keeper" {% if current_positie == "Keeper" %}selected{% endif %}>Keeper</option>
+                                        <option value="Verdediger" {% if current_positie == "Verdediger" %}selected{% endif %}>Verdediger</option>
+                                        <option value="Middenvelder" {% if current_positie == "Middenvelder" %}selected{% endif %}>Middenvelder</option>
+                                        <option value="Aanvaller" {% if current_positie == "Aanvaller" %}selected{% endif %}>Aanvaller</option>
+                                        <option value="Vleugelspeler" {% if current_positie == "Vleugelspeler" %}selected{% endif %}>Vleugelspeler</option>
+                                        <option value="Centrale verdediger" {% if current_positie == "Centrale verdediger" %}selected{% endif %}>Centrale verdediger</option>
+                                        <option value="Linksback" {% if current_positie == "Linksback" %}selected{% endif %}>Linksback</option>
+                                        <option value="Rechtsback" {% if current_positie == "Rechtsback" %}selected{% endif %}>Rechtsback</option>
+                                        <option value="Defensieve middenvelder" {% if current_positie == "Defensieve middenvelder" %}selected{% endif %}>Defensieve middenvelder</option>
+                                        <option value="Centrale middenvelder" {% if current_positie == "Centrale middenvelder" %}selected{% endif %}>Centrale middenvelder</option>
+                                        <option value="Aanvallende middenvelder" {% if current_positie == "Aanvallende middenvelder" %}selected{% endif %}>Aanvallende middenvelder</option>
+                                        <option value="Linkervleugel" {% if current_positie == "Linkervleugel" %}selected{% endif %}>Linkervleugel</option>
+                                        <option value="Rechtervleugel" {% if current_positie == "Rechtervleugel" %}selected{% endif %}>Rechtervleugel</option>
+                                        <option value="Spits" {% if current_positie == "Spits" %}selected{% endif %}>Spits</option>
+                                        {% endwith %}
+                                        {% endwith %}
+                                    </select>
+                                </td>
+                                <td>
+                                    {% with current_form_data=form_data|default_if_none:""|add:"player_"|add:player.pk %}
+                                    {% with current_rugnummer=current_form_data.rugnummer|default:player.rugnummer %}
+                                    <input type="number" 
+                                           name="player_{{ player.pk }}_rugnummer"
+                                           class="form-control form-control-sm"
+                                           placeholder="#"
+                                           min="1"
+                                           max="99"
+                                           value="{% if current_rugnummer %}{{ current_rugnummer }}{% endif %}"
+                                           id="rugnummer_{{ player.pk }}">
+                                    {% endwith %}
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    <div class="current-info">
+                                        <div class="text-sm">
+                                            <strong>Positie:</strong><br>
+                                            <span class="text-secondary">{{ player.positie|default:"Niet ingesteld" }}</span>
+                                        </div>
+                                        <div class="text-sm mt-1">
+                                            <strong>Nummer:</strong><br>
+                                            {% if player.rugnummer %}
+                                                <span class="badge badge-secondary">#{{ player.rugnummer }}</span>
+                                            {% else %}
+                                                <span class="text-secondary">-</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            
+                            <!-- Error row -->
+                            {% for key, error in errors.items %}
+                                {% if key == "player_"|add:player.pk %}
+                                <tr class="error-row">
+                                    <td colspan="4">
+                                        <div class="alert alert-danger mb-0">
+                                            <i data-feather="alert-circle" style="width: 1rem; height: 1rem;"></i>
+                                            {{ error }}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            {% endfor %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Save button at bottom -->
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="text-secondary d-none d-sm-block">
+                            <i data-feather="info" style="width: 1rem; height: 1rem;"></i>
+                            {{ players.count }} actieve speler{{ players.count|pluralize }} te bewerken
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i data-feather="save"></i>
+                            Alle Wijzigingen Opslaan
+                        </button>
+                    </div>
+                </div>
+            {% else %}
+                <div class="p-6 text-center">
+                    <div class="text-secondary mb-4">
+                        <i data-feather="users" class="fs-1"></i>
+                    </div>
+                    <h4>Geen actieve spelers gevonden</h4>
+                    <p class="text-secondary">Er zijn momenteel geen actieve spelers om te bewerken.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</form>
+
+<!-- Quick actions for jersey numbers -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h4 class="card-title">
+            <i data-feather="zap" style="width: 1.25rem; height: 1.25rem; margin-right: 0.5rem;"></i>
+            Snelle Acties
+        </h4>
+    </div>
+    <div class="card-content">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <button type="button" class="btn btn-secondary w-100" onclick="clearAllJerseyNumbers()">
+                    <i data-feather="x"></i>
+                    Alle Rugnummers Wissen
+                </button>
+            </div>
+            <div class="col-md-4">
+                <button type="button" class="btn btn-secondary w-100" onclick="autoAssignJerseyNumbers()">
+                    <i data-feather="hash"></i>
+                    Automatisch Toewijzen (1-99)
+                </button>
+            </div>
+            <div class="col-md-4">
+                <button type="button" class="btn btn-secondary w-100" onclick="clearAllPositions()">
+                    <i data-feather="minus"></i>
+                    Alle Posities Wissen
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.fs-1 {
+    font-size: 3rem !important;
+}
+
+.user-avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+}
+
+.gap-3 {
+    gap: 0.75rem;
+}
+
+.table-row-error {
+    background-color: rgba(var(--bs-danger-rgb), 0.1);
+}
+
+.error-row {
+    background-color: rgba(var(--bs-danger-rgb), 0.05);
+}
+
+.current-info {
+    font-size: 0.875rem;
+}
+
+.card-footer {
+    background-color: var(--bs-light);
+    border-top: 1px solid var(--bs-border-color);
+    padding: 1rem 1.5rem;
+}
+
+.form-select-sm, .form-control-sm {
+    font-size: 0.875rem;
+}
+
+@media (max-width: 767px) {
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .card-content .row .col-md-4 {
+        margin-bottom: 1rem;
+    }
+    
+    .current-info {
+        font-size: 0.75rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize feather icons
+    feather.replace();
+    
+    // Functions for quick actions
+    window.clearAllJerseyNumbers = function() {
+        if (confirm('Weet je zeker dat je alle rugnummers wilt wissen?')) {
+            const jerseyInputs = document.querySelectorAll('input[name$="_rugnummer"]');
+            jerseyInputs.forEach(input => input.value = '');
+        }
+    };
+    
+    window.autoAssignJerseyNumbers = function() {
+        if (confirm('Weet je zeker dat je automatisch rugnummers wilt toewijzen? Dit overschrijft bestaande nummers.')) {
+            const jerseyInputs = document.querySelectorAll('input[name$="_rugnummer"]');
+            let number = 1;
+            jerseyInputs.forEach(input => {
+                input.value = number;
+                number++;
+            });
+        }
+    };
+    
+    window.clearAllPositions = function() {
+        if (confirm('Weet je zeker dat je alle posities wilt wissen?')) {
+            const positionSelects = document.querySelectorAll('select[name$="_positie"]');
+            positionSelects.forEach(select => select.value = '');
+        }
+    };
+    
+    // Real-time jersey number validation
+    const jerseyInputs = document.querySelectorAll('input[name$="_rugnummer"]');
+    jerseyInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            validateJerseyNumbers();
+        });
+    });
+    
+    function validateJerseyNumbers() {
+        const jerseyInputs = document.querySelectorAll('input[name$="_rugnummer"]');
+        const usedNumbers = new Set();
+        const duplicates = new Set();
+        
+        // Find duplicates
+        jerseyInputs.forEach(input => {
+            const value = input.value.trim();
+            if (value && !isNaN(value)) {
+                const number = parseInt(value);
+                if (usedNumbers.has(number)) {
+                    duplicates.add(number);
+                } else {
+                    usedNumbers.add(number);
+                }
+            }
+        });
+        
+        // Clear previous errors
+        jerseyInputs.forEach(input => {
+            input.classList.remove('is-invalid');
+            const errorDiv = input.parentElement.querySelector('.invalid-feedback');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
+        });
+        
+        // Mark duplicates
+        if (duplicates.size > 0) {
+            jerseyInputs.forEach(input => {
+                const value = input.value.trim();
+                if (value && !isNaN(value)) {
+                    const number = parseInt(value);
+                    if (duplicates.has(number)) {
+                        input.classList.add('is-invalid');
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'invalid-feedback';
+                        errorDiv.textContent = `Rugnummer ${number} wordt meerdere keren gebruikt`;
+                        input.parentElement.appendChild(errorDiv);
+                    }
+                }
+            });
+        }
+    }
+});
+</script>
+{% endblock %}

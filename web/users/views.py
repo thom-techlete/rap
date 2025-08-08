@@ -46,7 +46,7 @@ def login_view(request: HttpRequest):
             messages.success(
                 request, f"Welkom terug, {user.get_full_name() or user.username}!"
             )
-            return redirect("events:list")
+            return redirect("home")
         else:
             # Don't show a generic error message since the form will handle specific errors
             pass
@@ -339,20 +339,42 @@ def admin_player_detail(request: HttpRequest, player_id: int):
         action = request.POST.get("action")
 
         if action == "toggle_active":
-            player.is_active = not player.is_active
-            player.save()
-            status = "geactiveerd" if player.is_active else "gedeactiveerd"
-            messages.success(request, f"Speler {player.get_full_name()} is {status}.")
+            # Prevent staff from deactivating superusers or other staff (unless they are superuser themselves)
+            if player.is_superuser and not request.user.is_superuser:
+                messages.error(request, "Je kunt geen superuser deactiveren.")
+            elif player.is_staff and not request.user.is_superuser:
+                messages.error(request, "Je kunt geen beheerder deactiveren.")
+            else:
+                player.is_active = not player.is_active
+                player.save()
+                status = "geactiveerd" if player.is_active else "gedeactiveerd"
+                messages.success(
+                    request, f"Speler {player.get_full_name()} is {status}."
+                )
 
         elif action == "toggle_staff":
-            player.is_staff = not player.is_staff
-            player.save()
-            status = "toegevoegd aan" if player.is_staff else "verwijderd uit"
-            messages.success(
-                request, f"Speler {player.get_full_name()} is {status} beheerders."
-            )
+            # Prevent staff from modifying superuser status or other staff (unless they are superuser themselves)
+            if player.is_superuser and not request.user.is_superuser:
+                messages.error(
+                    request, "Je kunt de rechten van een superuser niet wijzigen."
+                )
+            elif (
+                player.is_staff
+                and not request.user.is_superuser
+                and player != request.user
+            ):
+                messages.error(
+                    request, "Je kunt de rechten van andere beheerders niet wijzigen."
+                )
+            else:
+                player.is_staff = not player.is_staff
+                player.save()
+                status = "toegevoegd aan" if player.is_staff else "verwijderd uit"
+                messages.success(
+                    request, f"Speler {player.get_full_name()} is {status} beheerders."
+                )
 
-        return redirect("users:admin_player_detail", player_id=player.id)
+        return redirect("users:admin_player_detail", player_id=player.pk)
 
     # Get player's attendance statistics
     now = timezone.now()
@@ -399,3 +421,95 @@ def admin_toggle_invitation(request: HttpRequest, invitation_id: int):
         messages.success(request, f'Uitnodigingscode "{invitation.code}" is {status}.')
 
     return redirect("users:admin_invitations")
+
+
+@user_passes_test(is_staff)
+def admin_bulk_edit_positions(request: HttpRequest):
+    """Admin bulk edit player positions and jersey numbers"""
+    players = Player.objects.filter(is_active=True).order_by("last_name", "first_name")
+
+    if request.method == "POST":
+        # Process the formset
+        forms_data = []
+        for player in players:
+            form_data = {
+                "positie": request.POST.get(f"player_{player.pk}_positie", ""),
+                "rugnummer": request.POST.get(f"player_{player.pk}_rugnummer", "")
+                or None,
+            }
+            forms_data.append(form_data)
+
+        # Validate jersey number uniqueness
+        used_numbers = {}
+        errors = {}
+
+        for _i, (player, form_data) in enumerate(
+            zip(players, forms_data, strict=False)
+        ):
+            rugnummer = form_data.get("rugnummer")
+            if rugnummer:
+                try:
+                    rugnummer = int(rugnummer)
+                    if rugnummer in used_numbers:
+                        other_player = used_numbers[rugnummer]
+                        errors[f"player_{player.pk}"] = (
+                            f"Rugnummer {rugnummer} wordt ook gebruikt door {other_player.get_full_name()}"
+                        )
+                        errors[f"player_{other_player.pk}"] = (
+                            f"Rugnummer {rugnummer} wordt ook gebruikt door {player.get_full_name()}"
+                        )
+                    else:
+                        used_numbers[rugnummer] = player
+                except (ValueError, TypeError):
+                    errors[f"player_{player.pk}"] = (
+                        "Rugnummer moet een geldig getal zijn"
+                    )
+
+        if not errors:
+            # Save all changes
+            updated_count = 0
+            for player, form_data in zip(players, forms_data, strict=False):
+                positie_value = form_data.get("positie") or ""
+                rugnummer_value = form_data.get("rugnummer")
+
+                # Convert rugnummer to int if it's provided
+                if rugnummer_value:
+                    try:
+                        rugnummer_value = int(rugnummer_value)
+                    except (ValueError, TypeError):
+                        rugnummer_value = None
+
+                # Only update if something changed
+                if (
+                    player.positie != positie_value
+                    or player.rugnummer != rugnummer_value
+                ):
+                    player.positie = positie_value
+                    player.rugnummer = rugnummer_value
+                    player.save()
+                    updated_count += 1
+
+            messages.success(
+                request,
+                f"Succesvol {updated_count} speler{'s' if updated_count != 1 else ''} bijgewerkt!",
+            )
+            return redirect("users:admin_bulk_edit_positions")
+        else:
+            # Pass errors to template
+            context = {
+                "players": players,
+                "errors": errors,
+                "form_data": {
+                    f"player_{player.pk}": form_data
+                    for player, form_data in zip(players, forms_data, strict=False)
+                },
+            }
+            return render(request, "users/admin/bulk_edit_positions.html", context)
+
+    context = {
+        "players": players,
+        "errors": {},
+        "form_data": {},
+    }
+
+    return render(request, "users/admin/bulk_edit_positions.html", context)

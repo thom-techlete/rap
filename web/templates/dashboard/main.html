@@ -81,10 +81,10 @@
                         <i data-feather="check-circle" class="text-white" style="width: 1.5rem; height: 1.5rem;"></i>
                     </div>
                 </div>
-                <h3 class="h4 mb-1" style="color: #1e293b;">{{ stats.total_present_attendances }}</h3>
-                <p class="text-muted mb-0 small">Team aanwezigheden</p>
-                <div class="mt-2">
-                    <small class="text-muted">{{ stats.team_attendance_rate }}% van alle mogelijke aanwezigheden</small>
+                <h3 class="h4 mb-1" style="color: #1e293b;">{{ stats.team_attendance_rate }}%</h3>
+                <p class="text-muted mb-0 small">Gemiddelde team aanwezigheid</p>
+                <div class="mt-2 d-none d-sm-block">
+                    <small class="text-muted">{{ stats.total_present_attendances }} van {{ stats.total_attendance_responses }} mogelijke aanwezigheden</small>
                 </div>
             </div>
         </div>
@@ -142,7 +142,7 @@
                         </div>
                         <div class="flex-grow-1">
                             <h6 class="mb-1" style="color: #1e293b;">{{ event.name }}</h6>
-                            <div class="d-flex align-items-center text-muted small">
+                            <div class="d-flex flex-column align-items-start flex-sm-row align-items-sm-center text-muted small">
                                 <span class="me-3">
                                     <i data-feather="calendar" style="width: 0.875rem; height: 0.875rem;"></i>
                                     {{ event.date|date:"d M" }}
@@ -330,7 +330,11 @@
                                     {% if ranking.player.foto %}
                                         <img src="{{ ranking.player.foto.url }}" alt="{{ ranking.player.get_full_name }}">
                                     {% else %}
-                                        <div class="avatar-fallback">{{ ranking.player.first_name|first|upper }}{{ ranking.player.last_name|first|upper }}</div>
+                                        {% if ranking.player.first_name %}
+                                            <div class="avatar-fallback">{{ ranking.player.first_name|first|upper }}{{ ranking.player.last_name|first|upper }}</div>
+                                        {% else %}
+                                            <div class="avatar-fallback">{{ ranking.player.username|first|upper }}</div>
+                                        {% endif %}
                                     {% endif %}
                                 </div>
                             </div>

@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.core.exceptions import ValidationError
+from django.forms import formset_factory
 
 from .models import InvitationCode, Player
 
@@ -39,9 +40,10 @@ class PlayerProfileForm(forms.ModelForm):
             ),
             "geboortedatum": forms.DateInput(
                 attrs={
-                    "class": "form-control",
+                    "class": "form-control datepicker",
                     "placeholder": "dd/mm/jjjj",
                     "type": "text",
+                    "autocomplete": "off",
                 },
                 format="%d/%m/%Y",
             ),
@@ -79,10 +81,6 @@ class PlayerProfileForm(forms.ModelForm):
         }
         help_texts = {
             "foto": "Upload een profielfoto (JPG, PNG). Maximaal 5MB.",
-            "geboortedatum": "Formaat: dd/mm/jjjj (bijvoorbeeld 15/03/1990)",
-            "telefoonnummer": "Optioneel - voor contact bij evenementen",
-            "toevoeging": "Optioneel - bijvoorbeeld A, bis, 1 hoog",
-            "postcode": "Bijvoorbeeld: 1234 AB",
         }
 
     def __init__(self, *args, **kwargs):
@@ -273,3 +271,72 @@ class InvitationCodeRegistrationForm(UserCreationForm):
             invitation.use_code()
 
         return user
+
+
+class PlayerPositionRugnummerForm(forms.ModelForm):
+    """Form for editing a single player's position and jersey number"""
+
+    class Meta:
+        model = Player
+        fields = ["positie", "rugnummer"]
+        widgets = {
+            "positie": forms.Select(
+                choices=[
+                    ("", "Geen positie"),
+                    ("Keeper", "Keeper"),
+                    ("Verdediger", "Verdediger"),
+                    ("Middenvelder", "Middenvelder"),
+                    ("Aanvaller", "Aanvaller"),
+                    ("Vleugelspeler", "Vleugelspeler"),
+                    ("Centrale verdediger", "Centrale verdediger"),
+                    ("Linksback", "Linksback"),
+                    ("Rechtsback", "Rechtsback"),
+                    ("Defensieve middenvelder", "Defensieve middenvelder"),
+                    ("Centrale middenvelder", "Centrale middenvelder"),
+                    ("Aanvallende middenvelder", "Aanvallende middenvelder"),
+                    ("Linkervleugel", "Linkervleugel"),
+                    ("Rechtervleugel", "Rechtervleugel"),
+                    ("Spits", "Spits"),
+                ],
+                attrs={"class": "form-select form-select-sm"},
+            ),
+            "rugnummer": forms.NumberInput(
+                attrs={
+                    "class": "form-control form-control-sm",
+                    "min": "1",
+                    "max": "99",
+                    "placeholder": "#",
+                }
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["positie"].required = False
+        self.fields["rugnummer"].required = False
+
+    def clean_rugnummer(self):
+        """Validate that jersey number is unique (if provided)"""
+        rugnummer = self.cleaned_data.get("rugnummer")
+        if rugnummer:
+            # Check if another player already has this number
+            existing_player = (
+                Player.objects.filter(rugnummer=rugnummer)
+                .exclude(pk=self.instance.pk if self.instance else None)
+                .first()
+            )
+
+            if existing_player:
+                raise ValidationError(
+                    f"Rugnummer {rugnummer} is al in gebruik door {existing_player.get_full_name()}."
+                )
+
+        return rugnummer
+
+
+# Create a formset for bulk editing multiple players
+PlayerPositionRugnummerFormSet = formset_factory(
+    PlayerPositionRugnummerForm,
+    extra=0,  # Don't show extra empty forms
+    can_delete=False,
+)

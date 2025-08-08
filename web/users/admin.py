@@ -157,3 +157,37 @@ class PlayerAdmin(UserAdmin):
 
     get_full_name_display.short_description = "Naam"
     get_full_name_display.admin_order_field = "last_name"
+
+    def has_change_permission(self, request, obj=None):
+        """Prevent staff from editing superusers or other staff (unless they are superuser themselves)"""
+        if obj is not None:
+            # Allow superusers to edit anyone
+            if request.user.is_superuser:
+                return super().has_change_permission(request, obj)
+
+            # Prevent staff from editing superusers
+            if obj.is_superuser:
+                return False
+
+            # Prevent staff from editing other staff (but allow self-editing)
+            if obj.is_staff and obj != request.user:
+                return False
+
+        return super().has_change_permission(request, obj)
+
+    def has_delete_permission(self, request, obj=None):
+        """Prevent staff from deleting superusers or other staff"""
+        if obj is not None:
+            # Allow superusers to delete anyone
+            if request.user.is_superuser:
+                return super().has_delete_permission(request, obj)
+
+            # Prevent staff from deleting superusers
+            if obj.is_superuser:
+                return False
+
+            # Prevent staff from deleting other staff
+            if obj.is_staff:
+                return False
+
+        return super().has_delete_permission(request, obj)

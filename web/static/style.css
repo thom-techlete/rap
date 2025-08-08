@@ -484,7 +484,7 @@ a:hover {
 
 .mobile-menu {
     position: fixed;
-    top: 4rem;
+    top: 5rem;
     left: 0;
     right: 0;
     background: white;
@@ -520,11 +520,13 @@ a:hover {
     height: 3rem;
     border-radius: 50%;
     overflow: hidden;
-    background-color: var(--primary-600);
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+}
+.mobile-avatar.default {
+    background: var(--gradient-primary);
 }
 
 .mobile-avatar img {
@@ -624,23 +626,17 @@ a:hover {
         font-size: var(--font-size-base);
     }
     
-    .nav-logo .logo-image {
-        width: 2rem;
-        height: 2rem;
-    }
-    
     .mobile-menu {
         padding: var(--space-4);
     }
     
     .mobile-user {
-        flex-direction: column;
-        align-items: flex-start;
-        text-align: center;
+        align-items: center;
+        /* text-align: center; */
     }
     
     .mobile-user-info {
-        text-align: center;
+        text-align: left;
         width: 100%;
     }
 }
@@ -1203,7 +1199,7 @@ a:hover {
     
     .btn {
         padding: var(--space-2) var(--space-3);
-        font-size: var(--font-size-xs);
+        font-size: var(--font-size-sm);
     }
     
     .btn-sm {

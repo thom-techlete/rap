@@ -29,7 +29,7 @@
               {% endif %}
               {% if event.description %}
                 <div class="mt-4 mb-2">
-                  <p class="small mb-0" style="color: #6b7280; word-wrap: break-word;">{{ event.description }}</p>
+                  <p class="mb-0" style="color: #6b7280; word-wrap: break-word;">{{ event.description }}</p>
                 </div>
               {% endif %}
             </div>
@@ -40,45 +40,29 @@
       <div class="d-flex flex-row flex-lg-column align-items-end justify-content-between justify-content-lg-start gap-1 w-100 w-lg-auto">
         {% if user.is_authenticated and is_upcoming %}
           {% with user_status=event|user_attendance_status:user %}
-            <div class="d-flex align-items-center gap-2 order-1 order-lg-0 flex-lg-column">
+            <div class="d-flex w-100 w-sm-auto align-items-sm-end gap-2 order-1 order-lg-0 flex-column">
               <!-- Present button -->
               <button onclick="setAttendance({{ event.id }}, true)"
-                class="btn btn-lg attendance-btn {% if user_status == True %}
-                  
-                  btn-success
-
-                {% else %}
-                  
-                  btn-ghost
-
-                {% endif %}"
+                class="btn btn-lg attendance-btn{% if user_status == True %} btn-success{% else %} btn-ghost{% endif %}"
                 id="present-btn-{{ event.id }}"
                 data-tooltip="Markeer als aanwezig">
                 <i data-feather="check" style="width: 0.875rem; height: 0.875rem;"></i>
-                <span class="hidden">Aanwezig</span>
+                <span class="d-block d-sm-none">Aanwezig</span>
               </button>
 
               <!-- Absent button -->
               <button onclick="setAttendance({{ event.id }}, false)"
-                class="btn btn-lg attendance-btn {% if user_status == False %}
-                  
-                  btn-error
-
-                {% else %}
-                  
-                  btn-ghost
-
-                {% endif %}"
+                class="btn btn-lg attendance-btn {% if user_status == False %} btn-error{% else %} btn-ghost{% endif %}"
                 id="absent-btn-{{ event.id }}"
                 data-tooltip="Markeer als afwezig">
                 <i data-feather="x" style="width: 0.875rem; height: 0.875rem;"></i>
-                <span class="hidden">Afwezig</span>
+                <span class="d-block d-sm-none">Afwezig</span>
               </button>
 
               {% if user.is_staff %}
                 <a href="{% url 'events:edit' event.id %}" class="btn btn-lg btn-ghost" style="background-color:#64748b; color: #e2e8f0;" data-bs-toggle="tooltip" title="Bewerk evenement">
                   <i data-feather="edit-2" style="width: 0.875rem; height: 0.875rem;"></i>
-                  <span class="d-none d-xs-inline small">Bewerk</span>
+                  <span class="d-block d-sm-none">Bewerk</span>
                 </a>
               {% endif %}
             </div>

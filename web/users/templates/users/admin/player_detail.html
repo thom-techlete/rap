@@ -26,38 +26,27 @@
 <div class="row">
     <!-- Player Information -->
     <div class="col-lg-4 mb-4">
-        <div class="card">
+        <div class="card mb-4">
             <div class="card-header">
                 <h3 class="card-title">Speler Informatie</h3>
             </div>
             <div class="card-content">
                 <div class="text-center mb-4">
-                    <div class="user-avatar mx-auto mb-3" style="width: 5rem; height: 5rem;">
+                    <div class="user-avatar mx-auto mb-3{% if not player.foto %} default{% endif %}" style="width: 5rem; height: 5rem;">
                         {% if player.foto %}
                             <img src="{{ player.foto.url }}" alt="{{ player.get_full_name }}" class="rounded-full">
                         {% else %}
-                            <div class="avatar-fallback" style="font-size: 2rem;">
-                                {{ player.first_name|first|upper }}{{ player.last_name|first|upper }}
+                            <div class="avatar-fallback" style="font-size: 2rem; color=#fff;">
+                                {% if player.get_full_name %}
+                                    {{ player.first_name|first|upper }}{{ player.last_name|first|upper }}
+                                {% else %}
+                                    {{ player.username|first|upper }}
+                                {% endif %}
                             </div>
                         {% endif %}
                     </div>
                     <h4 class="mb-1">{{ player.get_full_name|default:player.username }}</h4>
-                    <p class="text-secondary mb-3">@{{ player.username }}</p>
-                    
-                    <!-- Status Badges -->
-                    <div class="d-flex justify-content-center gap-2 mb-3">
-                        {% if player.is_active %}
-                            <span class="badge badge-success">Actief</span>
-                        {% else %}
-                            <span class="badge badge-error">Inactief</span>
-                        {% endif %}
-                        {% if player.is_staff %}
-                            <span class="badge badge-warning">Beheerder</span>
-                        {% endif %}
-                        {% if player.is_superuser %}
-                            <span class="badge badge-info">Superuser</span>
-                        {% endif %}
-                    </div>
+                    <p class="page-subtitle">Speler details en beheeropties</p>
                 </div>
                 
                 <!-- Player Details -->
@@ -99,42 +88,59 @@
                 </div>
             </div>
         </div>
-        
+    
+    </div>
+    
+    <!-- Statistics -->
+    <div class="col-lg-4 mb-4">
         <!-- Admin Actions -->
-        <div class="card">
+        <div class="card mb-4">
             <div class="card-header">
                 <h3 class="card-title">Beheer Acties</h3>
             </div>
             <div class="card-content">
                 <div class="d-grid gap-2">
-                    <form method="post" class="d-inline">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="toggle_active">
-                        <button type="submit" class="btn {% if player.is_active %}btn-error{% else %}btn-success{% endif %} btn-block">
-                            {% if player.is_active %}
-                                <i data-feather="user-x"></i>
-                                Deactiveren
-                            {% else %}
-                                <i data-feather="user-check"></i>
-                                Activeren
-                            {% endif %}
+                    <!-- Only show deactivation if user can actually perform the action -->
+                    {% if not player.is_superuser or user.is_superuser %}
+                        {% if not player.is_staff or user.is_superuser %}
+                            <form method="post" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="toggle_active">
+                                <button type="submit" class="btn {% if player.is_active %}btn-error{% else %}btn-success{% endif %} btn-block">
+                                    {% if player.is_active %}
+                                        <i data-feather="user-x"></i>
+                                        Deactiveren
+                                    {% else %}
+                                        <i data-feather="user-check"></i>
+                                        Activeren
+                                    {% endif %}
+                                </button>
+                            </form>
+                        {% endif %}
+                    {% else %}
+                        <button class="btn btn-secondary btn-block" disabled>
+                            <i data-feather="user-x"></i>
+                            Actie niet beschikbaar voor beheerder
                         </button>
-                    </form>
+                    {% endif %}
                     
-                    {% if not player.is_superuser %}
-                    <form method="post" class="d-inline">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="toggle_staff">
-                        <button type="submit" class="btn {% if player.is_staff %}btn-warning{% else %}btn-secondary{% endif %} btn-block">
-                            {% if player.is_staff %}
-                                <i data-feather="shield-off"></i>
-                                Beheerder Rechten Verwijderen
-                            {% else %}
-                                <i data-feather="shield"></i>
-                                Beheerder Rechten Geven
-                            {% endif %}
-                        </button>
-                    </form>
+                    <!-- Only show staff toggle if user can actually perform the action -->
+                    {% if not player.is_superuser or user.is_superuser %}
+                        {% if user.is_superuser or not player.is_staff or player == user %}
+                            <form method="post" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="toggle_staff">
+                                <button type="submit" class="btn {% if player.is_staff %}btn-warning{% else %}btn-secondary{% endif %} btn-block">
+                                    {% if player.is_staff %}
+                                        <i data-feather="shield-off"></i>
+                                        Beheerder Rechten Verwijderen
+                                    {% else %}
+                                        <i data-feather="shield"></i>
+                                        Beheerder Rechten Geven
+                                    {% endif %}
+                                </button>
+                            </form>
+                        {% endif %}
                     {% endif %}
                     
                     {% comment %} <a href="{% url 'admin:users_player_change' player.pk %}" class="btn btn-ghost btn-block">
@@ -144,10 +150,7 @@
                 </div>
             </div>
         </div>
-    </div>
-    
-    <!-- Statistics -->
-    <div class="col-lg-4 mb-4">
+
         <div class="card">
             <div class="card-header">
                 <h3 class="card-title">Aanwezigheid Statistieken</h3>
@@ -172,7 +175,7 @@
                 <!-- Progress Bar -->
                 <div class="mt-4">
                     <div class="progress" style="height: 8px;">
-                        <div class="progress-bar bg-primary" style="width: {{ attendance_rate }}%"></div>
+                        <div class="progress-bar bg-primary" style="width: {{ attendance_rate|floatformat:0 }}%"></div>
                     </div>
                 </div>
             </div>

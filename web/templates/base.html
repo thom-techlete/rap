@@ -105,7 +105,7 @@
     <div class="mobile-menu" id="mobileMenu">
         {% if user.is_authenticated %}
         <div class="mobile-user">
-            <div class="mobile-avatar">
+            <div class="mobile-avatar{% if not user.foto %} default{% endif %}">
                 {% if user.foto %}
                     <img src="{{ user.foto.url }}" alt="{{ user.get_full_name }}">
                 {% else %}

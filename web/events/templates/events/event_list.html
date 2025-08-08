@@ -676,7 +676,7 @@ function showErrorMessage(message) {
 // Generic toast function
 function showToast(message, type) {
     const toastHtml = `
-        <div class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast align-items-center text-white bg-${type} border-0 mb-1" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="d-flex">
                 <div class="toast-body">
                     ${message}
@@ -739,12 +739,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, 500); // Wait 500ms after user stops typing
             });
         }
-    }
-    
-    // Initialize the correct tab on page load
-    const activeTab = sessionStorage.getItem('activeEventTab') || 'upcoming';
-    if (activeTab === 'past') {
-        showTab('past');
     }
     
     // Initialize Feather icons after tab content is loaded

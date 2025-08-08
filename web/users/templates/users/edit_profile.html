@@ -2,6 +2,27 @@
 
 {% block title %}Profiel bewerken - SV Rap 8{% endblock %}
 
+{% block extra_css %}
+<!-- Flatpickr CSS for datepicker -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/bootstrap.css">
+<style>
+.input-group .input-group-text {
+    background-color: var(--bs-light);
+    border-left: 0;
+    color: var(--bs-secondary);
+    transition: color 0.15s ease-in-out;
+}
+.input-group .input-group-text:hover {
+    color: var(--bs-primary);
+}
+.flatpickr-calendar {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--bs-border-color);
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="text-center mb-5">
     <h1 class="display-5 fw-bold text-dark mb-3">
@@ -97,7 +118,12 @@
                             <label for="{{ form.geboortedatum.id_for_label }}" class="form-label fw-medium">
                                 {{ form.geboortedatum.label }}
                             </label>
-                            {{ form.geboortedatum }}
+                            <div class="input-group">
+                                {{ form.geboortedatum }}
+                                <span class="input-group-text">
+                                    <i data-feather="calendar" style="width: 1rem; height: 1rem;"></i>
+                                </span>
+                            </div>
                             {% if form.geboortedatum.help_text %}
                                 <div class="form-text">{{ form.geboortedatum.help_text }}</div>
                             {% endif %}
@@ -252,16 +278,44 @@
         </div>
     </div>
 </div>
+{% block extra_js %}
+<!-- Flatpickr JavaScript for datepicker -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/nl.js"></script>
+{% endblock %}
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Handle birth date field formatting
+    // Initialize Feather icons after dynamic content loads
+    feather.replace();
+    
+    // Initialize the datepicker for birthday field
     const birthdateField = document.getElementById('{{ form.geboortedatum.id_for_label }}');
     if (birthdateField) {
-        // Add pattern validation for dd/mm/yyyy format
-        birthdateField.setAttribute('pattern', '\\d{2}/\\d{2}/\\d{4}');
+        flatpickr(birthdateField, {
+            dateFormat: "d/m/Y",
+            locale: "nl",
+            allowInput: true,
+            maxDate: "today",
+            yearRange: [1900, new Date().getFullYear()],
+            defaultDate: birthdateField.value || null,
+            onChange: function(selectedDates, dateStr, instance) {
+                // Update the input value
+                birthdateField.value = dateStr;
+            },
+            onReady: function(selectedDates, dateStr, instance) {
+                // Add calendar icon click handler
+                const calendarIcon = birthdateField.parentElement.querySelector('.input-group-text');
+                if (calendarIcon) {
+                    calendarIcon.addEventListener('click', function() {
+                        instance.open();
+                    });
+                    calendarIcon.style.cursor = 'pointer';
+                }
+            }
+        });
         
-        // Add input event listener for formatting assistance
+        // Add input validation for manual entry
         birthdateField.addEventListener('input', function(e) {
             let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
             let formatted = '';
@@ -289,10 +343,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 formatted = formatted.substring(0, 10);
             }
             
+            // Only update if the formatted value is different
             if (formatted !== e.target.value) {
+                const cursorPos = e.target.selectionStart;
                 e.target.value = formatted;
+                
+                // Restore cursor position
+                let newPos = cursorPos;
+                if (formatted.length > e.target.value.length) {
+                    newPos++;
+                }
+                e.target.setSelectionRange(newPos, newPos);
             }
         });
+        
+        // Add pattern validation
+        birthdateField.setAttribute('pattern', '\\d{2}/\\d{2}/\\d{4}');
+        birthdateField.setAttribute('title', 'Voer een geldige datum in (dd/mm/jjjj)');
     }
 });
 </script>

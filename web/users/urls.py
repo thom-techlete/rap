@@ -28,4 +28,9 @@ urlpatterns: list[URLPattern | URLResolver] = [
         views.admin_toggle_invitation,
         name="admin_toggle_invitation",
     ),
+    path(
+        "admin/bulk-edit-positions/",
+        views.admin_bulk_edit_positions,
+        name="admin_bulk_edit_positions",
+    ),
 ]
