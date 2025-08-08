@@ -222,7 +222,40 @@ All development tools are configured in `pyproject.toml`:
 3. **[Pre Commit Hooks](docs/3_pre_commit_hooks.md)** - Pre commit hooks to ensure safety and quality
 4. **[Code Quality](docs/4_code_quality.md)** - Rules and guidelines on code quality and how it is enforced
 
+## 🌐 Production Deployment
 
+### Quick VPS Deployment
+
+Deploy to a production server in one command:
+
+```bash
+# On your VPS server (Ubuntu 20.04+):
+curl -fsSL https://raw.githubusercontent.com/your-username/rap/main/scripts/vps-setup.sh | bash
+```
+
+### Manual Production Setup
+
+```bash
+# Clone repository
+git clone https://github.com/your-username/rap.git /opt/rap
+cd /opt/rap
+
+# Generate production secrets
+./scripts/generate_secrets.sh your-domain.com
+
+# Deploy with SSL and security features
+./scripts/deploy.sh your-domain.com --setup
+```
+
+### Production Features
+- 🔒 **SSL/TLS encryption** with Let's Encrypt
+- 🛡️ **Security hardening** (firewall, rate limiting, secure headers)
+- 🐳 **Docker containerization** with health checks
+- 📊 **Monitoring** with health endpoints
+- 🔄 **Automated backups** and updates
+- ⚡ **High performance** with Nginx reverse proxy
+
+See **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** for detailed production setup guide.
 
 ## 🤝 Contributing
 

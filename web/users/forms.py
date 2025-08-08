@@ -1,3 +1,11 @@
+import os
+
+try:
+    import magic
+
+    HAS_MAGIC = True
+except ImportError:
+    HAS_MAGIC = False
 from django import forms
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
@@ -5,6 +13,57 @@ from django.core.exceptions import ValidationError
 from django.forms import formset_factory
 
 from .models import InvitationCode, Player
+
+
+def validate_image_file(file):
+    """Enhanced image file validation"""
+    if not file:
+        return
+
+    # Check file size (5MB max)
+    if file.size > 5 * 1024 * 1024:
+        raise ValidationError("De foto mag maximaal 5MB zijn.")
+
+    # Check file extension
+    allowed_extensions = [".jpg", ".jpeg", ".png", ".gif", ".webp"]
+    _, ext = os.path.splitext(file.name.lower())
+    if ext not in allowed_extensions:
+        raise ValidationError(
+            f"Alleen {', '.join(allowed_extensions)} bestanden zijn toegestaan."
+        )
+
+    # Check MIME type using python-magic if available (more secure than relying on content_type)
+    if HAS_MAGIC:
+        try:
+            file_mime = magic.from_buffer(file.read(1024), mime=True)
+            file.seek(0)  # Reset file pointer
+
+            allowed_mimes = ["image/jpeg", "image/png", "image/gif", "image/webp"]
+            if file_mime not in allowed_mimes:
+                raise ValidationError("Het bestand is geen geldige afbeelding.")
+        except Exception:
+            # Fallback to content_type if python-magic fails
+            if hasattr(file, "content_type") and not file.content_type.startswith(
+                "image/"
+            ):
+                print("geen geldige afbeelding")
+    else:
+        # Fallback to content_type if python-magic is not available
+        if hasattr(file, "content_type") and not file.content_type.startswith("image/"):
+            raise ValidationError("Het bestand is geen geldige afbeelding.")
+
+    # Check for potential malicious content
+    file.seek(0)
+    content = file.read(1024)
+    file.seek(0)
+
+    # Look for common script tags or suspicious content
+    suspicious_patterns = [b"<script", b"<?php", b"<%", b"javascript:", b"vbscript:"]
+    content_lower = content.lower()
+
+    for pattern in suspicious_patterns:
+        if pattern in content_lower:
+            raise ValidationError("Het bestand bevat verdachte inhoud.")
 
 
 class PlayerProfileForm(forms.ModelForm):
@@ -92,22 +151,12 @@ class PlayerProfileForm(forms.ModelForm):
             )
 
     def clean_foto(self):
-        """Validate uploaded photo"""
+        """Enhanced photo validation with security checks"""
         foto = self.cleaned_data.get("foto")
         if foto:
-            # Only validate if it's a new uploaded file (has content_type attribute)
-            # If it's an existing ImageFieldFile, skip validation
-            if hasattr(foto, "content_type"):
-                # Check file size (5MB max)
-                if foto.size > 5 * 1024 * 1024:
-                    raise ValidationError("De foto mag maximaal 5MB zijn.")
-
-                # Check file type
-                if not foto.content_type.startswith("image/"):
-                    raise ValidationError(
-                        "Upload alleen afbeeldingsbestanden (JPG, PNG, etc.)."
-                    )
-
+            # Validate uploaded photo with enhanced security
+            validate_image_file(foto)
+            # Additional checks can be added here
         return foto
 
 

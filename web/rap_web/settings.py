@@ -14,6 +14,36 @@ import os
 from pathlib import Path
 from typing import Any
 
+# Import security configurations
+try:
+    from decouple import config as decouple_config
+
+    def bool_config(key, default=False):
+        return decouple_config(key, default=default, cast=bool)
+
+    def list_config(key, default="", separator=","):
+        value = decouple_config(key, default=default)
+        if isinstance(value, str):
+            return [s.strip() for s in value.split(separator) if s.strip()]
+        return []
+
+except ImportError:
+    # Fallback for when decouple is not available
+    def bool_config(key, default=False):
+        value = os.environ.get(key, str(default))
+        return (
+            value.lower() in ("true", "1", "yes", "on")
+            if isinstance(value, str)
+            else bool(value)
+        )
+
+    def list_config(key, default="", separator=","):
+        value = os.environ.get(key, default)
+        if isinstance(value, str):
+            return [s.strip() for s in value.split(separator) if s.strip()]
+        return []
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -22,16 +52,48 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "changeme")
+SECRET_KEY = os.environ.get(
+    "DJANGO_SECRET_KEY", "changeme-generate-secure-key-for-production"
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get("DJANGO_DEBUG", "True") == "True"
+DEBUG = bool_config("DJANGO_DEBUG", default=False)
 
-ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "*").split(",")
+# More restrictive allowed hosts
+ALLOWED_HOSTS = list_config("DJANGO_ALLOWED_HOSTS", default="localhost,127.0.0.1")
 
+# Proxy settings for reverse proxy (Nginx)
+USE_X_FORWARDED_HOST = bool_config("USE_X_FORWARDED_HOST", default=False)
+USE_X_FORWARDED_PORT = bool_config("USE_X_FORWARDED_PORT", default=False)
+
+# Configure trusted proxy headers
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    # Trust proxy for CSRF - include all protocols
+    CSRF_TRUSTED_ORIGINS = []
+    for host in ALLOWED_HOSTS:
+        if host not in ["*", ""]:
+            CSRF_TRUSTED_ORIGINS.extend([f"http://{host}", f"https://{host}"])
+else:
+    # For development, allow localhost origins
+    CSRF_TRUSTED_ORIGINS = [
+        "http://localhost",
+        "https://localhost",
+        "http://127.0.0.1",
+        "https://127.0.0.1",
+    ]
+
+# Always add these trusted origins for testing
+CSRF_TRUSTED_ORIGINS = getattr(locals(), "CSRF_TRUSTED_ORIGINS", []) + [
+    "http://localhost",
+    "https://localhost",
+    "http://127.0.0.1",
+    "https://127.0.0.1",
+    "http://0.0.0.0",
+    "https://0.0.0.0",
+]
 
 # Application definition
-
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -39,6 +101,11 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # Security apps
+    "axes",  # Account lockout protection
+    "corsheaders",  # CORS handling
+    "csp",  # Content Security Policy
+    # Project apps
     "users",
     "events",
     "attendance",
@@ -46,14 +113,24 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # Static files security
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",  # Must be before custom middleware that uses request.user
+    # Custom security middleware (after authentication)
+    "rap_web.security_middleware.SecurityHeadersMiddleware",  # Custom security headers
+    "rap_web.security_middleware.SecurityLoggingMiddleware",  # Security logging
+    "rap_web.security_middleware.BasicRateLimitMiddleware",  # Basic rate limiting
+    "rap_web.security_middleware.AdminAccessControlMiddleware",  # Admin access control
     # Require login for all non-exempt pages
     "rap_web.middleware.LoginRequiredMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # Will be enabled when packages are installed:
+    # "axes.middleware.AxesMiddleware",  # Account lockout
+    # "corsheaders.middleware.CorsMiddleware",  # CORS
+    # "csp.middleware.CSPMiddleware",  # Content Security Policy
 ]
 
 ROOT_URLCONF = "rap_web.urls"
@@ -91,15 +168,22 @@ DATABASES = {
 }
 
 
-# Password validation
+# Enhanced password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "OPTIONS": {
+            "user_attributes": ("username", "email", "first_name", "last_name"),
+            "max_similarity": 0.7,
+        },
     },
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {
+            "min_length": 12,  # Increased from default 8
+        },
     },
     {
         "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
@@ -153,6 +237,7 @@ STATIC_URL = "/static/"
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
+STATIC_ROOT = BASE_DIR / "staticfiles"  # For production collectstatic
 
 # Media files
 MEDIA_URL = "/media/"
@@ -167,3 +252,180 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = "/users/login/"
 LOGIN_REDIRECT_URL = "/events/"
 LOGOUT_REDIRECT_URL = "/users/login/"
+
+# =============================================================================
+# SECURITY SETTINGS
+# =============================================================================
+
+# Security headers
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+X_FRAME_OPTIONS = "DENY"
+
+# HTTPS settings (for production)
+SECURE_SSL_REDIRECT = bool_config("SECURE_SSL_REDIRECT", default=False)
+SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", "31536000"))  # 1 year
+SECURE_HSTS_INCLUDE_SUBDOMAINS = bool_config(
+    "SECURE_HSTS_INCLUDE_SUBDOMAINS", default=True
+)
+SECURE_HSTS_PRELOAD = bool_config("SECURE_HSTS_PRELOAD", default=True)
+
+# Enhanced session security
+SESSION_COOKIE_SECURE = bool_config("SESSION_COOKIE_SECURE", default=False)
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_NAME = "rap_sessionid"
+SESSION_COOKIE_AGE = 3600  # 1 hour
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_SAVE_EVERY_REQUEST = True
+
+# Enhanced CSRF protection
+CSRF_COOKIE_SECURE = bool_config("CSRF_COOKIE_SECURE", default=False)
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_NAME = "rap_csrftoken"
+
+# File upload security
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # 5MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # 5MB
+FILE_UPLOAD_PERMISSIONS = 0o644
+
+# Admin URL customization
+ADMIN_URL = os.environ.get("ADMIN_URL", "admin/")
+
+# Rate limiting settings
+RATELIMIT_ENABLE = True
+
+# =============================================================================
+# LOGGING CONFIGURATION
+# =============================================================================
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {name} {process:d} {thread:d} {message}",
+            "style": "{",
+        },
+        "simple": {
+            "format": "{levelname} {message}",
+            "style": "{",
+        },
+        "security": {
+            "format": "{levelname} {asctime} {name} {process:d} {thread:d} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "file": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": (
+                "/app/logs/rap_web.log"
+                if "/app" in str(BASE_DIR)
+                else "/tmp/rap_web.log"
+            ),
+            "formatter": "verbose",
+        },
+        "security_file": {
+            "level": "WARNING",
+            "class": "logging.FileHandler",
+            "filename": (
+                "/app/logs/rap_security.log"
+                if "/app" in str(BASE_DIR)
+                else "/tmp/rap_security.log"
+            ),
+            "formatter": "security",
+        },
+        "console": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "simple" if DEBUG else "verbose",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"] if DEBUG else ["file", "console"],
+            "level": "INFO",
+            "propagate": True,
+        },
+        "django.security": {
+            "handlers": ["console"] if DEBUG else ["security_file", "console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "rap_web": {
+            "handlers": ["console"] if DEBUG else ["file", "console"],
+            "level": "INFO",
+            "propagate": True,
+        },
+    },
+}
+
+# =============================================================================
+# SECURITY SETTINGS
+# =============================================================================
+
+# Security headers
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+X_FRAME_OPTIONS = "DENY"
+
+# HTTPS settings (for production)
+SECURE_SSL_REDIRECT = bool_config("SECURE_SSL_REDIRECT", default=False)
+SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0  # 1 year in production
+SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
+SECURE_HSTS_PRELOAD = not DEBUG
+
+# Cookie security
+SESSION_COOKIE_SECURE = bool_config("SESSION_COOKIE_SECURE", default=not DEBUG)
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_NAME = "rap_sessionid"
+SESSION_COOKIE_AGE = 3600  # 1 hour
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+CSRF_COOKIE_SECURE = bool_config("CSRF_COOKIE_SECURE", default=not DEBUG)
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_NAME = "rap_csrftoken"
+
+# File upload restrictions
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # 5MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # 5MB
+FILE_UPLOAD_PERMISSIONS = 0o644
+
+# Session security
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
+SESSION_SAVE_EVERY_REQUEST = True
+
+# Enhanced password validation
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "OPTIONS": {
+            "user_attributes": ("username", "email", "first_name", "last_name"),
+            "max_similarity": 0.7,
+        },
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {
+            "min_length": 12,  # Increased from default 8
+        },
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+    },
+]
+
+# Enable basic rate limiting as fallback
+ENABLE_BASIC_RATE_LIMITING = True
+
+AUTH_USER_MODEL = "users.Player"

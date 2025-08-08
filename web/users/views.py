@@ -8,6 +8,9 @@ from django.db.models import Q
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.http import require_http_methods
 from events.models import Event
 
 from .forms import (
@@ -17,7 +20,23 @@ from .forms import (
 )
 from .models import InvitationCode, Player
 
+# Rate limiting decorator (will be enabled when django-ratelimit is installed)
+try:
+    from django_ratelimit.decorators import ratelimit
+except ImportError:
+    # Fallback decorator when django-ratelimit is not available
+    def ratelimit(group=None, key=None, rate=None, method=None, block=True):
+        def decorator(func):
+            return func
 
+        return decorator
+
+
+@never_cache
+@ratelimit(key="ip", rate="5/m", method="POST", block=True)
+@require_http_methods(["GET", "POST"])
+@csrf_protect
+@never_cache
 def register(request: HttpRequest):
     if request.method == "POST":
         form = InvitationCodeRegistrationForm(request.POST)
@@ -37,6 +56,10 @@ def register(request: HttpRequest):
     return render(request, "users/register.html", {"form": form})
 
 
+@ratelimit(key="ip", rate="10/m", method="POST", block=True)
+@require_http_methods(["GET", "POST"])
+@csrf_protect
+@never_cache
 def login_view(request: HttpRequest):
     if request.method == "POST":
         form = CustomAuthenticationForm(request, data=request.POST)
@@ -297,6 +320,7 @@ def admin_events(request: HttpRequest):
 
 
 @user_passes_test(is_staff)
+@ratelimit(key="user", rate="20/h", method="POST", block=True)
 def admin_invitations(request: HttpRequest):
     """Admin invitation code management"""
     if request.method == "POST":

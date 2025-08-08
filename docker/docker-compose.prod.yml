@@ -1,0 +1,141 @@
+services:
+  db:
+    image: postgres:17
+    restart: always
+    env_file:
+      - .env.prod
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - rap_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+        reservations:
+          memory: 512m
+
+  redis:
+    image: redis:7
+    restart: always
+    networks:
+      - rap_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+        reservations:
+          memory: 64m
+
+  web:
+    build: ..
+    restart: always
+    env_file:
+      - .env.prod
+    volumes:
+      - static_volume:/app/static
+      - media_volume:/app/media
+    networks:
+      - rap_network
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/', timeout=10)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+        reservations:
+          memory: 512m
+
+  nginx:
+    image: nginx:stable
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - static_volume:/app/static:ro
+      - media_volume:/app/media:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    networks:
+      - rap_network
+    depends_on:
+      - web
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+        reservations:
+          memory: 128m
+
+  # celery:
+  #   build: ..
+  #   restart: always
+  #   env_file:
+  #     - .env.prod
+  #   command: celery -A rap_web worker -l info
+  #   volumes:
+  #     - media_volume:/app/media
+  #   networks:
+  #     - rap_network
+  #   depends_on:
+  #     - db
+  #     - redis
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         memory: 128m
+  #       reservations:
+  #         memory: 64m
+
+  # celery-beat:
+  #   build: ..
+  #   restart: always
+  #   env_file:
+  #     - .env.prod
+  #   command: celery -A rap_web beat -l info
+  #   volumes:
+  #     - media_volume:/app/media
+  #   networks:
+  #     - rap_network
+  #   depends_on:
+  #     - db
+  #     - redis
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         memory: 128m
+  #       reservations:
+  #         memory: 64m
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
+
+networks:
+  rap_network:
+    driver: bridge

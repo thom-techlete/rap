@@ -39,6 +39,13 @@ dependencies = [
   "django-anymail",
   "django-environ",
   "pillow",
+  # Security packages
+  "django-ratelimit>=4.1.0",
+  "django-csp>=3.8",
+  "python-decouple>=3.8",
+  "django-cors-headers>=4.3.1",
+  "django-extensions>=3.2.3",
+  "django-axes>=6.1.1",
 ]
 
 [project.optional-dependencies]
