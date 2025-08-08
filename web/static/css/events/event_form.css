@@ -1,0 +1,13 @@
+.input-group .input-group-text {
+    background-color: var(--secondary-100);
+    border-left: 0;
+    color: var(--secondary-500);
+    transition: color 0.15s ease-in-out;
+}
+.input-group .input-group-text:hover {
+    color: var(--primary-600);
+}
+.flatpickr-calendar {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--secondary-300);
+}

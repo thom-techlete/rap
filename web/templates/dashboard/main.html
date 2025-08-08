@@ -1,454 +1,453 @@
 {% extends 'base.html' %}
 
-{% block title %}Dashboard - SV Rap 8{% endblock %}
+{% block title %}
+  Dashboard - SV Rap 8
+{% endblock %}
 
 {% block content %}
-{% csrf_token %}
+  {% csrf_token %}
 
-<!-- Welcome Section -->
-<div class="row mb-4">
+  <!-- Welcome Section -->
+  <div class="row mb-4">
     <div class="col-12">
-        <div class="card border-0 shadow-sm" style="background: var(--gradient-primary);">
-            <div class="card-body text-white p-4">
-                <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <h1 class="h2 mb-2">
-                            Welkom terug, {{ user.first_name|default:user.username }}! 👋
-                        </h1>
-                        <p class="mb-0 opacity-90" style="color: #fff;">
-                            Hier is een overzicht van alle team activiteiten en aanwezigheid.
-                        </p>
-                    </div>
-                </div>
+      <div class="card border-0 shadow-sm" style="background: var(--gradient-primary);">
+        <div class="card-body text-white p-4">
+          <div class="row align-items-center">
+            <div class="col-md-8">
+              <h1 class="h2 mb-2">Welkom terug, {{ user.first_name|default:user.username }}! 👋</h1>
+              <p class="mb-0 opacity-90" style="color: #fff;">Hier is een overzicht van alle team activiteiten en aanwezigheid.</p>
             </div>
+          </div>
         </div>
+      </div>
     </div>
-</div>
+  </div>
 
-<!-- Statistics Cards -->
-<div class="row g-4 mb-5">
+  <!-- Statistics Cards -->
+  <div class="row g-4 mb-5">
     <div class="col-6 col-md-3">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body text-center">
-                <div class="d-flex align-items-center justify-content-center mb-3">
-                    <div class="rounded-circle d-flex align-items-center justify-content-center" 
-                         style="width: 3rem; height: 3rem; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
-                        <i data-feather="calendar" class="text-white" style="width: 1.5rem; height: 1.5rem;"></i>
-                    </div>
-                </div>
-                <h3 class="h4 mb-1" style="color: #1e293b;">{{ stats.total_events }}</h3>
-                <p class="text-muted mb-0 small">Team evenementen</p>
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center">
+          <div class="d-flex align-items-center justify-content-center mb-3">
+            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 3rem; height: 3rem; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+              <i data-feather="calendar" class="text-white" style="width: 1.5rem; height: 1.5rem;"></i>
             </div>
+          </div>
+          <h3 class="h4 mb-1" style="color: #1e293b;">{{ stats.total_events }}</h3>
+          <p class="text-muted mb-0 small">Team evenementen</p>
         </div>
+      </div>
     </div>
-    
-    <div class="col-6 col-md-3">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body text-center">
-                <div class="d-flex align-items-center justify-content-center mb-3">
-                    <div class="rounded-circle d-flex align-items-center justify-content-center" 
-                         style="width: 3rem; height: 3rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
-                        <i data-feather="clock" class="text-white" style="width: 1.5rem; height: 1.5rem;"></i>
-                    </div>
-                </div>
-                <h3 class="h4 mb-1" style="color: #1e293b;">{{ stats.upcoming_events }}</h3>
-                <p class="text-muted mb-0 small">Geplande evenementen</p>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-6 col-md-3">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body text-center">
-                <div class="d-flex align-items-center justify-content-center mb-3">
-                    <div class="rounded-circle d-flex align-items-center justify-content-center" 
-                         style="width: 3rem; height: 3rem; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
-                        <i data-feather="users" class="text-white" style="width: 1.5rem; height: 1.5rem;"></i>
-                    </div>
-                </div>
-                <h3 class="h4 mb-1" style="color: #1e293b;">{{ stats.active_players }}</h3>
-                <p class="text-muted mb-0 small">Teamleden</p>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-6 col-md-3">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body text-center">
-                <div class="d-flex align-items-center justify-content-center mb-3">
-                    <div class="rounded-circle d-flex align-items-center justify-content-center" 
-                         style="width: 3rem; height: 3rem; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">
-                        <i data-feather="check-circle" class="text-white" style="width: 1.5rem; height: 1.5rem;"></i>
-                    </div>
-                </div>
-                <h3 class="h4 mb-1" style="color: #1e293b;">{{ stats.team_attendance_rate }}%</h3>
-                <p class="text-muted mb-0 small">Gemiddelde team aanwezigheid</p>
-                <div class="mt-2 d-none d-sm-block">
-                    <small class="text-muted">{{ stats.total_present_attendances }} van {{ stats.total_attendance_responses }} mogelijke aanwezigheden</small>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Today's Events Alert -->
-{% if today_events %}
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="alert alert-info border-0 shadow-sm">
-            <div class="d-flex align-items-center">
-                <div class="me-3">
-                    <i data-feather="calendar" style="width: 1.5rem; height: 1.5rem;"></i>
-                </div>
-                <div>
-                    <h6 class="mb-1">Vandaag:</h6>
-                    {% for event in today_events %}
-                        <span class="badge bg-primary me-2">{{ event.name }} - {{ event.date|time:"H:i" }}</span>
-                    {% endfor %}
-                </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center">
+          <div class="d-flex align-items-center justify-content-center mb-3">
+            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 3rem; height: 3rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+              <i data-feather="clock" class="text-white" style="width: 1.5rem; height: 1.5rem;"></i>
             </div>
+          </div>
+          <h3 class="h4 mb-1" style="color: #1e293b;">{{ stats.upcoming_events }}</h3>
+          <p class="text-muted mb-0 small">Geplande evenementen</p>
         </div>
+      </div>
     </div>
-</div>
-{% endif %}
 
-<!-- Main Content Grid -->
-<div class="row g-4">
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center">
+          <div class="d-flex align-items-center justify-content-center mb-3">
+            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 3rem; height: 3rem; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+              <i data-feather="users" class="text-white" style="width: 1.5rem; height: 1.5rem;"></i>
+            </div>
+          </div>
+          <h3 class="h4 mb-1" style="color: #1e293b;">{{ stats.active_players }}</h3>
+          <p class="text-muted mb-0 small">Teamleden</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center">
+          <div class="d-flex align-items-center justify-content-center mb-3">
+            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 3rem; height: 3rem; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">
+              <i data-feather="check-circle" class="text-white" style="width: 1.5rem; height: 1.5rem;"></i>
+            </div>
+          </div>
+          <h3 class="h4 mb-1" style="color: #1e293b;">{{ stats.team_attendance_rate }}%</h3>
+          <p class="text-muted mb-0 small">Gemiddelde team aanwezigheid</p>
+          <div class="mt-2 d-none d-sm-block">
+            <small class="text-muted">{{ stats.total_present_attendances }} van {{ stats.total_attendance_responses }} mogelijke aanwezigheden</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Today's Events Alert -->
+  {% if today_events %}
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card p-3 alert-info border-1 shadow-sm" style="border-color: var(--gradient-primary);">
+          <div class="d-flex align-items-center">
+            <div class="me-3">
+              <i data-feather="calendar" style="width: 1.5rem; height: 1.5rem;"></i>
+            </div>
+            <div>
+              <h6 class="mb-1">Vandaag:</h6>
+              <div class="d-flex flex-wrap">
+                {% for event in today_events %}
+                    <span class="badge bg-primary me-2">{{ event.name }} - {{ event.date|time:'H:i' }}</span>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Main Content Grid -->
+  <div class="row g-4">
     <!-- Left Column -->
     <div class="col-lg-8">
-        <!-- Upcoming Events -->
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-transparent border-0 pb-0">
-                <div class="d-flex align-items-center justify-content-between">
-                    <h5 class="mb-0" style="color: #1e293b;">
-                        <i data-feather="calendar" class="me-2" style="width: 1.25rem; height: 1.25rem;"></i>
-                        Aankomende evenementen
-                    </h5>
-                    <a href="{% url 'events:list' %}" class="btn btn-sm btn-outline-primary">
-                        Alle evenementen
-                    </a>
+      <!-- Upcoming Events -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent border-0 pb-0">
+          <div class="d-flex align-items-center justify-content-between">
+            <h5 class="mb-0" style="color: #1e293b;">
+              <i data-feather="calendar" class="me-2" style="width: 1.25rem; height: 1.25rem;"></i>
+              Aankomende evenementen
+            </h5>
+            <a href="{% url 'events:list' %}" class="btn btn-sm btn-outline-primary">Alle evenementen</a>
+          </div>
+        </div>
+        <div class="card-body">
+          {% if upcoming_events %}
+            {% for event in upcoming_events %}
+              <div class="d-flex align-items-center border-bottom pb-3 mb-3">
+                <div class="flex-shrink-0 me-3">
+                  <div class="rounded-circle d-flex align-items-center justify-content-center"
+                    style="width: 2.5rem; height: 2.5rem; background: {% if event.event_type == 'training' %} #dbeafe{% elif event.event_type == 'wedstrijd' %} #fee2e2{% else %} #f3f4f6{% endif %};">
+                    <i data-feather="{% if event.event_type == 'training' %}zap{% elif event.event_type == 'wedstrijd' %}target{% else %}calendar{% endif %}"
+                        style="width: 1rem; height: 1rem; color: {% if event.event_type == 'training' %} #3b82f6{% elif event.event_type == 'wedstrijd' %} #ef4444{% else %} #6b7280{% endif %};">
+                    </i>
+                  </div>
                 </div>
+                <div class="flex-grow-1">
+                  <h6 class="mb-1" style="color: #1e293b;">{{ event.name }}</h6>
+                  <div class="d-flex flex-column align-items-start flex-sm-row align-items-sm-center text-muted small">
+                    <span class="me-3">
+                      <i data-feather="calendar" style="width: 0.875rem; height: 0.875rem;"></i>
+                      {{ event.date|date:'d M' }}
+                    </span>
+                    <span class="me-3">
+                      <i data-feather="clock" style="width: 0.875rem; height: 0.875rem;"></i>
+                      {{ event.date|time:'H:i' }}
+                    </span>
+                    {% if event.location %}
+                      <span>
+                        <i data-feather="map-pin" style="width: 0.875rem; height: 0.875rem;"></i>
+                        {{ event.location }}
+                      </span>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="flex-shrink-0 d-flex flex-column align-items-end gap-2">
+                  <span class="badge bg-light text-dark">{{ event.get_event_type_display }}</span>
+                  {% if user.is_authenticated %}
+                    {% if event.user_attendance %}
+                      {% with attendance=event.user_attendance.0 %}
+                        {% if attendance.present %}
+                          <span class="badge bg-success-subtle text-success small">
+                            <i data-feather="check" style="width: 0.75rem; height: 0.75rem;"></i>
+                            Aanwezig
+                          </span>
+                        {% else %}
+                          <span class="badge bg-danger-subtle text-error small">
+                            <i data-feather="x" style="width: 0.75rem; height: 0.75rem;"></i>
+                            Afwezig
+                          </span>
+                        {% endif %}
+                      {% endwith %}
+                    {% else %}
+                      <a href="{% url 'events:list' %}#event-{{ event.id }}" class="btn btn-sm btn-outline-warning">
+                        <i data-feather="clock" style="width: 0.875rem; height: 0.875rem;"></i>
+                        Reageer
+                      </a>
+                    {% endif %}
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="text-center py-4">
+              <i data-feather="calendar-x" style="width: 3rem; height: 3rem; color: #cbd5e1;"></i>
+              <p class="text-muted mt-2 mb-0">Geen aankomende evenementen</p>
             </div>
-            <div class="card-body">
-                {% if upcoming_events %}
-                    {% for event in upcoming_events %}
-                    <div class="d-flex align-items-center border-bottom pb-3 mb-3">
-                        <div class="flex-shrink-0 me-3">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center"
-                                 style="width: 2.5rem; height: 2.5rem; background: {% if event.event_type == 'training' %}#dbeafe{% elif event.event_type == 'wedstrijd' %}#fee2e2{% else %}#f3f4f6{% endif %};">
-                                <i data-feather="{% if event.event_type == 'training' %}zap{% elif event.event_type == 'wedstrijd' %}target{% else %}calendar{% endif %}"
-                                   style="width: 1rem; height: 1rem; color: {% if event.event_type == 'training' %}#3b82f6{% elif event.event_type == 'wedstrijd' %}#ef4444{% else %}#6b7280{% endif %};"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1">
-                            <h6 class="mb-1" style="color: #1e293b;">{{ event.name }}</h6>
-                            <div class="d-flex flex-column align-items-start flex-sm-row align-items-sm-center text-muted small">
-                                <span class="me-3">
-                                    <i data-feather="calendar" style="width: 0.875rem; height: 0.875rem;"></i>
-                                    {{ event.date|date:"d M" }}
-                                </span>
-                                <span class="me-3">
-                                    <i data-feather="clock" style="width: 0.875rem; height: 0.875rem;"></i>
-                                    {{ event.date|time:"H:i" }}
-                                </span>
-                                {% if event.location %}
-                                <span>
-                                    <i data-feather="map-pin" style="width: 0.875rem; height: 0.875rem;"></i>
-                                    {{ event.location }}
-                                </span>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="flex-shrink-0 d-flex flex-column align-items-end gap-2">
-                            <span class="badge bg-light text-dark">
-                                {{ event.get_event_type_display }}
-                            </span>
-                            {% if user.is_authenticated %}
-                                {% if event.user_attendance %}
-                                    {% with attendance=event.user_attendance.0 %}
-                                        {% if attendance.present %}
-                                            <span class="badge bg-success-subtle text-success small">
-                                                <i data-feather="check" style="width: 0.75rem; height: 0.75rem;"></i>
-                                                Aanwezig
-                                            </span>
-                                        {% else %}
-                                            <span class="badge bg-danger-subtle text-danger small">
-                                                <i data-feather="x" style="width: 0.75rem; height: 0.75rem;"></i>
-                                                Afwezig
-                                            </span>
-                                        {% endif %}
-                                    {% endwith %}
-                                {% else %}
-                                    <a href="{% url 'events:list' %}#event-{{ event.id }}" class="btn btn-sm btn-outline-warning">
-                                        <i data-feather="clock" style="width: 0.875rem; height: 0.875rem;"></i>
-                                        Reageer
-                                    </a>
-                                {% endif %}
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="text-center py-4">
-                        <i data-feather="calendar-x" style="width: 3rem; height: 3rem; color: #cbd5e1;"></i>
-                        <p class="text-muted mt-2 mb-0">Geen aankomende evenementen</p>
-                    </div>
-                {% endif %}
-            </div>
+          {% endif %}
         </div>
+      </div>
 
-        <!-- Recent Activity -->
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-transparent border-0 pb-0">
-                <h5 class="mb-0" style="color: #1e293b;">
-                    <i data-feather="activity" class="me-2" style="width: 1.25rem; height: 1.25rem;"></i>
-                    Recente activiteit
-                </h5>
-            </div>
-            <div class="card-body">
-                {% if recent_attendance %}
-                    {% for attendance in recent_attendance %}
-                    <div class="d-flex align-items-center border-bottom pb-3 mb-3">
-                        <div class="flex-shrink-0 me-3">
-                            <div class="user-avatar user-avatar-sm">
-                                {% if attendance.user.foto %}
-                                    <img src="{{ attendance.user.foto.url }}" alt="{{ attendance.user.get_full_name }}">
-                                {% else %}
-                                    <div class="avatar-fallback">{{ attendance.user.first_name|first|upper }}{{ attendance.user.last_name|first|upper }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="flex-grow-1">
-                            <div class="d-flex align-items-center">
-                                <span class="fw-medium me-2" style="color: #1e293b;">{{ attendance.user.get_full_name|default:attendance.user.username }}</span>
-                                {% if attendance.present %}
-                                    <span class="badge bg-success-subtle text-success">Aanwezig</span>
-                                {% else %}
-                                    <span class="badge bg-danger-subtle text-danger">Afwezig</span>
-                                {% endif %}
-                            </div>
-                            <div class="text-muted small">
-                                {{ attendance.event.name }} - {{ attendance.timestamp|timesince }} geleden
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="text-center py-4">
-                        <i data-feather="clock" style="width: 3rem; height: 3rem; color: #cbd5e1;"></i>
-                        <p class="text-muted mt-2 mb-0">Geen recente activiteit</p>
-                    </div>
-                {% endif %}
-            </div>
+      <!-- Recent Activity -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent border-0 pb-0">
+          <h5 class="mb-0" style="color: #1e293b;">
+            <i data-feather="activity" class="me-2" style="width: 1.25rem; height: 1.25rem;"></i>
+            Recente activiteit
+          </h5>
         </div>
+        <div class="card-body">
+          {% if recent_attendance %}
+            {% for attendance in recent_attendance %}
+              <div class="d-flex align-items-center border-bottom pb-3 mb-3">
+                <div class="flex-shrink-0 me-3">
+                  <div class="user-avatar user-avatar-sm">
+                    {% if attendance.user.foto %}
+                      <img src="{{ attendance.user.foto.url }}" alt="{{ attendance.user.get_full_name }}" />
+                    {% else %}
+                      {% if attendance.user.first_name %}
+                        <div class="avatar-fallback">{{ attendance.user.first_name|first|upper }}{{ attendance.user.last_name|first|upper }}</div>
+                      {% else %}
+                        <div class="avatar-fallback">{{ attendance.user.username|first|upper }}</div>
+                      {% endif %}
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="flex-grow-1">
+                  <div class="d-flex align-items-center">
+                    <span class="fw-medium me-2" style="color: #1e293b;">{{ attendance.user.get_full_name|default:attendance.user.username }}</span>
+                    {% if attendance.present %}
+                      <span class="badge bg-success-subtle text-success">Aanwezig</span>
+                    {% else %}
+                      <span class="badge bg-danger-subtle text-error">Afwezig</span>
+                    {% endif %}
+                  </div>
+                  <div class="text-muted small">{{ attendance.event.name }} - {{ attendance.timestamp|timesince }} geleden</div>
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="text-center py-4">
+              <i data-feather="clock" style="width: 3rem; height: 3rem; color: #cbd5e1;"></i>
+              <p class="text-muted mt-2 mb-0">Geen recente activiteit</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
     </div>
 
     <!-- Right Column -->
     <div class="col-lg-4">
-
-
-        <!-- Quick Actions (Staff Only) -->
-        {% if user.is_staff %}
+      <!-- Quick Actions (Staff Only) -->
+      {% if user.is_staff %}
         <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-transparent border-0 pb-0">
-                <h5 class="mb-0" style="color: #1e293b;">
-                    <i data-feather="zap" class="me-2" style="width: 1.25rem; height: 1.25rem;"></i>
-                    Snelle acties
-                </h5>
+          <div class="card-header bg-transparent border-0 pb-0">
+            <h5 class="mb-0" style="color: #1e293b;">
+              <i data-feather="zap" class="me-2" style="width: 1.25rem; height: 1.25rem;"></i>
+              Snelle acties
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="d-grid gap-2">
+              <a href="{% url 'events:create' %}" class="btn btn-primary">
+                <i data-feather="plus" class="me-2" style="width: 1rem; height: 1rem;"></i>
+                Nieuw evenement
+              </a>
+              <a href="{% url 'users:admin_dashboard' %}" class="btn btn-outline-primary">
+                <i data-feather="users" class="me-2" style="width: 1rem; height: 1rem;"></i>
+                Gebruikers beheren
+              </a>
+              <a href="{% url 'users:admin_invitations' %}" class="btn btn-outline-primary">
+                <i data-feather="mail" class="me-2" style="width: 1rem; height: 1rem;"></i>
+                Uitnodigingen beheren
+              </a>
             </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <a href="{% url 'events:create' %}" class="btn btn-primary">
-                        <i data-feather="plus" class="me-2" style="width: 1rem; height: 1rem;"></i>
-                        Nieuw evenement
-                    </a>
-                    <a href="{% url 'users:admin_dashboard' %}" class="btn btn-outline-primary">
-                        <i data-feather="users" class="me-2" style="width: 1rem; height: 1rem;"></i>
-                        Gebruikers beheren
-                    </a>
-                    <a href="{% url 'users:admin_invitations' %}" class="btn btn-outline-primary">
-                        <i data-feather="mail" class="me-2" style="width: 1rem; height: 1rem;"></i>
-                        Uitnodigingen beheren
-                    </a>
-                </div>
-            </div>
+          </div>
         </div>
-        {% endif %}
+      {% endif %}
 
-                <!-- Event Type Distribution -->
-        {% if event_type_stats %}
+      <!-- Event Type Distribution -->
+      {% if event_type_stats %}
         <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-transparent border-0 pb-0">
-                <h5 class="mb-0" style="color: #1e293b;">
-                    <i data-feather="pie-chart" class="me-2" style="width: 1.25rem; height: 1.25rem;"></i>
-                    Evenement types
-                </h5>
-            </div>
-            <div class="card-body">
-                {% for stat in event_type_stats %}
-                <div class="d-flex align-items-center justify-content-between {% if not forloop.last %}mb-3{% endif %}">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle me-2"
-                             style="width: 0.75rem; height: 0.75rem; 
-                                    background: {% if stat.event_type == 'training' %}#3b82f6{% elif stat.event_type == 'wedstrijd' %}#ef4444{% elif stat.event_type == 'uitje' %}#10b981{% elif stat.event_type == 'vergadering' %}#f59e0b{% else %}#6b7280{% endif %};"></div>
-                        <span style="color: #374151;">{{ stat.event_type|capfirst }}</span>
-                    </div>
-                    <span class="fw-bold" style="color: #1e293b;">{{ stat.count }}</span>
+          <div class="card-header bg-transparent border-0 pb-0">
+            <h5 class="mb-0" style="color: #1e293b;">
+              <i data-feather="pie-chart" class="me-2" style="width: 1.25rem; height: 1.25rem;"></i>
+              Evenement types
+            </h5>
+          </div>
+          <div class="card-body">
+            {% for stat in event_type_stats %}
+              <div class="d-flex align-items-center justify-content-between {% if not forloop.last %}mb-3{% endif %}">
+                <div class="d-flex align-items-center">
+                  <div class="rounded-circle me-2"
+                    style="width: 0.75rem; height: 0.75rem; 
+                                    background: {% if stat.event_type == 'training' %}
+                      #3b82f6
+                    {% elif stat.event_type == 'wedstrijd' %}
+                      #ef4444
+                    {% elif stat.event_type == 'uitje' %}
+                      #10b981
+                    {% elif stat.event_type == 'vergadering' %}
+                      #f59e0b
+                    {% else %}
+                      #6b7280
+                    {% endif %};"></div>
+                  <span style="color: #374151;">{{ stat.event_type|capfirst }}</span>
                 </div>
-                {% endfor %}
-            </div>
+                <span class="fw-bold" style="color: #1e293b;">{{ stat.count }}</span>
+              </div>
+            {% endfor %}
+          </div>
         </div>
-        {% endif %}
+      {% endif %}
 
-                <!-- Player Rankings -->
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-transparent border-0 pb-0">
-                <div class="d-flex align-items-center justify-content-between">
-                    <h5 class="mb-0" style="color: #1e293b;">
-                        <i data-feather="award" class="me-2" style="width: 1.25rem; height: 1.25rem;"></i>
-                        Aanwezigheid Ranking
-                    </h5>
-                    <span class="badge bg-light text-dark">Top {{ player_rankings|length|default:10 }}</span>
+      <!-- Player Rankings -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent border-0 pb-0">
+          <div class="d-flex align-items-center justify-content-between">
+            <h5 class="mb-0" style="color: #1e293b;">
+              <i data-feather="award" class="me-2" style="width: 1.25rem; height: 1.25rem;"></i>
+              Aanwezigheid Ranking
+            </h5>
+            <span class="badge bg-light text-dark">Top {{ player_rankings|length|default:10 }}</span>
+          </div>
+        </div>
+        <div class="card-body">
+          {% if player_rankings %}
+            {% for ranking in player_rankings %}
+              <div class="d-flex align-items-center {% if not forloop.last %}border-bottom pb-3 mb-3{% endif %}">
+                <div class="flex-shrink-0 me-3">
+                  <div class="position-relative">
+                    <!-- Ranking position badge -->
+                    <div class="position-absolute top-0 start-0 translate-middle rounded-circle d-flex align-items-center justify-content-center"
+                      style="width: 1.5rem; height: 1.5rem; 
+                                            background: {% if ranking.position == 1 %}
+                        #fbbf24
+                      {% elif ranking.position == 2 %}
+                        #9ca3af
+                      {% elif ranking.position == 3 %}
+                        #cd7c2f
+                      {% else %}
+                        #e5e7eb
+                      {% endif %}; 
+                                            color: {% if ranking.position <= 3 %}
+                        white
+                      {% else %}
+                        #6b7280
+                      {% endif %}; 
+                                            font-size: 0.75rem; font-weight: 600; z-index: 10;">{{ ranking.position }}</div>
+                    <!-- User avatar -->
+                    <div class="user-avatar user-avatar-sm">
+                      {% if ranking.player.foto %}
+                        <img src="{{ ranking.player.foto.url }}" alt="{{ ranking.player.get_full_name }}" />
+                      {% else %}
+                        {% if ranking.player.first_name %}
+                          <div class="avatar-fallback">{{ ranking.player.first_name|first|upper }}{{ ranking.player.last_name|first|upper }}</div>
+                        {% else %}
+                          <div class="avatar-fallback">{{ ranking.player.username|first|upper }}</div>
+                        {% endif %}
+                      {% endif %}
+                    </div>
+                  </div>
                 </div>
-            </div>
-            <div class="card-body">
-                {% if player_rankings %}
-                    {% for ranking in player_rankings %}
-                    <div class="d-flex align-items-center {% if not forloop.last %}border-bottom pb-3 mb-3{% endif %}">
-                        <div class="flex-shrink-0 me-3">
-                            <div class="position-relative">
-                                <!-- Ranking position badge -->
-                                <div class="position-absolute top-0 start-0 translate-middle rounded-circle d-flex align-items-center justify-content-center"
-                                     style="width: 1.5rem; height: 1.5rem; 
-                                            background: {% if ranking.position == 1 %}#fbbf24{% elif ranking.position == 2 %}#9ca3af{% elif ranking.position == 3 %}#cd7c2f{% else %}#e5e7eb{% endif %}; 
-                                            color: {% if ranking.position <= 3 %}white{% else %}#6b7280{% endif %}; 
-                                            font-size: 0.75rem; font-weight: 600; z-index: 10;">
-                                    {{ ranking.position }}
-                                </div>
-                                <!-- User avatar -->
-                                <div class="user-avatar user-avatar-sm">
-                                    {% if ranking.player.foto %}
-                                        <img src="{{ ranking.player.foto.url }}" alt="{{ ranking.player.get_full_name }}">
-                                    {% else %}
-                                        {% if ranking.player.first_name %}
-                                            <div class="avatar-fallback">{{ ranking.player.first_name|first|upper }}{{ ranking.player.last_name|first|upper }}</div>
-                                        {% else %}
-                                            <div class="avatar-fallback">{{ ranking.player.username|first|upper }}</div>
-                                        {% endif %}
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1">
-                            <h6 class="mb-1" style="color: #1e293b;">{{ ranking.player.get_full_name|default:ranking.player.username }}</h6>
-                            <div class="d-flex align-items-center">
-                                <div class="progress flex-grow-1 me-2" style="height: 4px;">
-                                    <div class="progress-bar" 
-                                         style="width: {{ ranking.attendance_rate|floatformat:0 }}%; 
-                                                background: {% if ranking.attendance_rate >= 80 %}#10b981{% elif ranking.attendance_rate >= 60 %}#f59e0b{% else %}#ef4444{% endif %};">
-                                    </div>
-                                </div>
-                                <span class="fw-bold small" 
-                                      style="color: {% if ranking.attendance_rate >= 80 %}#10b981{% elif ranking.attendance_rate >= 60 %}#f59e0b{% else %}#ef4444{% endif %};">
-                                    {{ ranking.attendance_rate }}%
-                                </span>
-                            </div>
-                            <div class="text-muted small">
-                                {{ ranking.present_count }}/{{ ranking.total_events }} evenementen
-                            </div>
-                        </div>
+                <div class="flex-grow-1">
+                  <h6 class="mb-1" style="color: #1e293b;">{{ ranking.player.get_full_name|default:ranking.player.username }}</h6>
+                  <div class="d-flex align-items-center">
+                    <div class="progress flex-grow-1 me-2" style="height: 4px;">
+                      <div class="progress-bar"
+                        style="width: {{ ranking.attendance_rate|floatformat:0 }}%; 
+                                                background: {% if ranking.attendance_rate >= 80 %}
+                          #10b981
+                        {% elif ranking.attendance_rate >= 60 %}
+                          #f59e0b
+                        {% else %}
+                          #ef4444
+                        {% endif %};"></div>
                     </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="text-center py-4">
-                        <i data-feather="users" style="width: 3rem; height: 3rem; color: #cbd5e1;"></i>
-                        <p class="text-muted mt-2 mb-0">Geen ranking beschikbaar</p>
-                    </div>
-                {% endif %}
+                    <span class="fw-bold small"
+                      style="color: {% if ranking.attendance_rate >= 80 %}
+                        #10b981
+                      {% elif ranking.attendance_rate >= 60 %}
+                        #f59e0b
+                      {% else %}
+                        #ef4444
+                      {% endif %};">
+                      {{ ranking.attendance_rate }}%
+                    </span>
+                  </div>
+                  <div class="text-muted small">{{ ranking.present_count }}/{{ ranking.total_events }} evenementen</div>
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="text-center py-4">
+              <i data-feather="users" style="width: 3rem; height: 3rem; color: #cbd5e1;"></i>
+              <p class="text-muted mt-2 mb-0">Geen ranking beschikbaar</p>
             </div>
+          {% endif %}
         </div>
-
-
+      </div>
     </div>
-</div>
-
+  </div>
 {% endblock %}
 
 {% block extra_css %}
-<style>
-:root {
-    --gradient-primary: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-}
-
-.user-avatar {
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 50%;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f3f4f6;
-}
-
-.user-avatar-sm {
-    width: 2rem;
-    height: 2rem;
-}
-
-.user-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.avatar-fallback {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-    color: white;
-    font-weight: 600;
-    font-size: 0.75rem;
-}
-
-.user-avatar-sm .avatar-fallback {
-    font-size: 0.625rem;
-}
-
-.progress {
-    background-color: #f1f5f9;
-}
-
-.bg-success-subtle {
-    background-color: #dcfce7 !important;
-}
-
-.text-success {
-    color: #16a34a !important;
-}
-
-.bg-danger-subtle {
-    background-color: #fee2e2 !important;
-}
-
-.text-danger {
-    color: #dc2626 !important;
-}
-
-.bg-warning-subtle {
-    background-color: #fef3c7 !important;
-}
-
-.text-warning {
-    color: #d97706 !important;
-}
-
-.badge {
-    font-size: 0.75rem;
-    font-weight: 500;
-}
-</style>
+  <style>
+   
+    .user-avatar {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 50%;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f3f4f6;
+    }
+    
+    .user-avatar-sm {
+      width: 2rem;
+      height: 2rem;
+    }
+    
+    .user-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .avatar-fallback {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      color: white;
+      font-weight: 600;
+      font-size: 0.75rem;
+    }
+    
+    .user-avatar-sm .avatar-fallback {
+      font-size: 0.625rem;
+    }
+    
+    .progress {
+      background-color: #f1f5f9;
+    }
+    
+    .bg-success-subtle {
+      background-color: #dcfce7 !important;
+    }
+    
+    .text-success {
+      color: #16a34a !important;
+    }
+    
+    .bg-danger-subtle {
+      background-color: #fee2e2 !important;
+    }
+  </style>
 {% endblock %}

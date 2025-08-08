@@ -3,50 +3,55 @@
 {% block title %}Aanwezigheid Dashboard - SV Rap 8{% endblock %}
 
 {% block content %}
-<div class="text-center mb-5">
-    <h1 class="display-4 fw-bold d-flex align-items-center justify-content-center" style="color: #475569;">
-        <i data-feather="bar-chart-2" style="width: 2.5rem; height: 2.5rem; margin-right: 1rem; color: #64748b;"></i>
-        Aanwezigheid Overzicht
-    </h1>
-    <p class="lead" style="color: #6b7280;">
-        Bekijk je aanwezigheidsstatistieken en geschiedenis
-    </p>
-</div>
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold d-flex align-items-center justify-content-center" style="color: #475569;">
+            <i data-feather="bar-chart-2" style="width: 2.5rem; height: 2.5rem; margin-right: 1rem; color: #64748b;"></i>
+            Aanwezigheid Overzicht
+        </h1>
+        <p class="lead" style="color: #6b7280;">
+            Bekijk je aanwezigheidsstatistieken en geschiedenis
+        </p>
+    </div>
 
 <!-- Statistics Cards -->
 <div class="row g-3 g-lg-4 mb-5">
     <div class="col-sm-6 col-md-3">
-        <div class="card h-100 border-0 shadow-sm" style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);">
+        <div class="card h-100 border-0 shadow-sm" style="background: var(--gradient-primary);">
             <div class="card-body text-center py-4">
-                <div class="h3 fw-bold mb-2" style="color: #3b82f6;">{{ attendance_rate }}%</div>
-                <div class="small" style="color: #64748b;">Aanwezigheidspercentage</div>
+                <div class="h3 fw-bold mb-2" style="color: #fff;">
+                    {{ attendance_rate }}%
+                </div>
+                <div class="small" style="color: #fff;">Aanwezigheidspercentage</div>
             </div>
         </div>
     </div>
-    
     <div class="col-sm-6 col-md-3">
-        <div class="card h-100 border-0 shadow-sm" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);">
+        <div class="card h-100 border-0 shadow-sm" style="background: var(--gradient-primary);">
             <div class="card-body text-center py-4">
-                <div class="h3 fw-bold mb-2" style="color: #22c55e;">{{ present_count }}</div>
-                <div class="small" style="color: #64748b;">Keer aanwezig</div>
+                <div class="h3 fw-bold mb-2" style="color: #fff;">
+                    {{ present_count }}
+                </div>
+                <div class="small" style="color: #fff;">Keer aanwezig</div>
             </div>
         </div>
     </div>
-    
     <div class="col-sm-6 col-md-3">
-        <div class="card h-100 border-0 shadow-sm" style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);">
+        <div class="card h-100 border-0 shadow-sm" style="background: var(--gradient-primary);">
             <div class="card-body text-center py-4">
-                <div class="h3 fw-bold mb-2" style="color: #f59e0b;">{{ absent_count }}</div>
-                <div class="small" style="color: #64748b;">Keer afwezig</div>
+                <div class="h3 fw-bold mb-2" style="color: #fff;">
+                    {{ absent_count }}
+                </div>
+                <div class="small" style="color: #fff;">Keer afwezig</div>
             </div>
         </div>
     </div>
-    
     <div class="col-sm-6 col-md-3">
-        <div class="card h-100 border-0 shadow-sm" style="background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);">
+        <div class="card h-100 border-0 shadow-sm" style="background: var(--gradient-primary);">
             <div class="card-body text-center py-4">
-                <div class="h3 fw-bold mb-2" style="color: #64748b;">{{ total_events }}</div>
-                <div class="small" style="color: #64748b;">Afgelopen evenementen</div>
+                <div class="h3 fw-bold mb-2" style="color: #fff;">
+                    {{ total_events }}
+                </div>
+                <div class="small" style="color: #fff;">Afgelopen evenementen</div>
             </div>
         </div>
     </div>

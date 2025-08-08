@@ -5,7 +5,7 @@
     <div class="event-card-content d-flex flex-column flex-md-row align-items-stretch justify-content-between mb-4 gap-4">
       <div class="flex-grow-1 w-100">
         <div class="d-flex flex-column flex-sm-row align-items-start gap-3 mb-2">
-          <div class="rounded-2 p-2 flex-shrink-0" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white;">
+          <div class="rounded-2 p-2 flex-shrink-0" style="background: var(--gradient-primary); color: white;">
             {% if 'training' in event.name.lower %}
               <i data-feather="activity" style="width: 1.25rem; height: 1.25rem;"></i>
             {% elif 'wedstrijd' in event.name.lower %}
@@ -43,18 +43,20 @@
           {% with user_status=event|user_attendance_status:user %}
             <div class="attendance-buttons-wrap d-flex gap-2 flex-column align-items-stretch">
               <!-- Present button -->
-              <button onclick="setAttendance({{ event.id }}, true)"
-                class="btn attendance-btn{% if user_status == True %} btn-success{% else %} btn-ghost{% endif %} flex-fill"
+              <button class="btn attendance-btn{% if user_status == True %} btn-success{% else %} btn-ghost{% endif %} flex-fill attendance-present-btn"
                 id="present-btn-{{ event.id }}"
+                data-event-id="{{ event.id }}"
+                data-attendance="true"
                 data-tooltip="Markeer als aanwezig">
                 <i data-feather="check" style="width: 0.875rem; height: 0.875rem;"></i>
                 <span class="d-block">Aanwezig</span>
               </button>
 
               <!-- Absent button -->
-              <button onclick="setAttendance({{ event.id }}, false)"
-                class="btn attendance-btn {% if user_status == False %} btn-error{% else %} btn-ghost{% endif %} flex-fill"
+              <button class="btn attendance-btn {% if user_status == False %} btn-error{% else %} btn-ghost{% endif %} flex-fill attendance-absent-btn"
                 id="absent-btn-{{ event.id }}"
+                data-event-id="{{ event.id }}"
+                data-attendance="false"
                 data-tooltip="Markeer als afwezig">
                 <i data-feather="x" style="width: 0.875rem; height: 0.875rem;"></i>
                 <span class="d-block">Afwezig</span>
@@ -78,7 +80,7 @@
               </li>
               <li><hr class="dropdown-divider"></li>
               <li>
-                <a class="dropdown-item d-flex align-items-center gap-2 text-danger" href="{% url 'events:delete' event.id %}">
+                <a class="dropdown-item d-flex align-items-center gap-2 text-error" href="{% url 'events:delete' event.id %}">
                   <i data-feather="trash-2" style="width: 1rem; height: 1rem;"></i>
                   Verwijder evenement
                 </a>
@@ -94,25 +96,9 @@
       <div class="d-flex flex-wrap align-items-center gap-4">
         <div class="d-flex align-items-center gap-2">
           <div class="rounded-circle"
-            style="width: 8px; height: 8px; background-color: {% if is_upcoming %}
-              
-              #22c55e
-
-            {% else %}
-              
-              #94a3b8
-
-            {% endif %};"></div>
+            style="width: 8px; height: 8px; background-color: {% if is_upcoming %}#22c55e{% else %}#94a3b8{% endif %};"></div>
           <span class="small fw-medium"
-            style="color: {% if is_upcoming %}
-              
-              #15803d
-
-            {% else %}
-              
-              #64748b
-
-            {% endif %};">
+            style="color: {% if is_upcoming %}#15803d{% else %}#64748b{% endif %};">
             {% if is_upcoming %}
               Aankomend
             {% else %}

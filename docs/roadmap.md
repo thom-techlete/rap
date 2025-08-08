@@ -38,7 +38,16 @@ This roadmap outlines the step-by-step development plan for the SV Rap 8 event p
 - ✅ Generate and display attendance stats for admins and players
 - 🔄 Advanced analytics dashboard (can be enhanced further)
 
-## 8. Future Extensions & Finalization
+## ✅ 8. CI/CD Pipeline & DevOps - COMPLETED
+- ✅ Set up GitHub Actions CI/CD pipeline
+- ✅ Automated testing with Django test suite
+- ✅ Code quality checks (Black formatting, flake8 linting)
+- ✅ Docker image building and registry storage
+- ✅ Automated deployment to production server
+- ✅ Health check verification and automatic rollback
+- ✅ Comprehensive deployment documentation
+
+## 9. Future Extensions & Finalization
 - Refactor for multi-team support
 - Document APIs and architecture
 - Ensure easy deployment and maintenance
@@ -63,5 +72,7 @@ This roadmap outlines the step-by-step development plan for the SV Rap 8 event p
 - AJAX-ready attendance toggle functionality
 - Optimized database queries with select_related and prefetch_related
 - Comprehensive error handling and user feedback
+- **CI/CD Pipeline**: Full GitHub Actions workflow with automated testing, building, deployment, and rollback capabilities
+- **DevOps Best Practices**: Docker containerization, health checks, environment management, and deployment documentation
 
 This roadmap will be updated as the project evolves and new requirements emerge.

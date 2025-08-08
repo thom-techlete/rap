@@ -102,15 +102,15 @@
     </div>
     <div class="card-content">
         <div class="d-flex gap-3 flex-wrap">
-            <button type="button" class="btn btn-success" onclick="bulkAction('mark_all_present')">
+            <button type="button" class="btn btn-success bulk-action-btn" data-action="mark_all_present">
                 <i data-feather="check-circle"></i>
                 Markeer Iedereen Aanwezig
             </button>
-            <button type="button" class="btn btn-error" onclick="bulkAction('mark_all_absent')">
+            <button type="button" class="btn btn-error bulk-action-btn" data-action="mark_all_absent">
                 <i data-feather="x-circle"></i>
                 Markeer Iedereen Afwezig
             </button>
-            <button type="button" class="btn btn-secondary" onclick="bulkAction('clear_all')">
+            <button type="button" class="btn btn-secondary bulk-action-btn" data-action="clear_all">
                 <i data-feather="refresh-cw"></i>
                 Wis Alle Aanwezigheid
             </button>
@@ -320,92 +320,9 @@
 </style>
 {% endblock %}
 
+{% load static %}
+
 {% block extra_js %}
-<script>
-function bulkAction(action) {
-    if (action === 'clear_all' && !confirm('Weet je zeker dat je alle aanwezigheidsgegevens wilt wissen?')) {
-        return;
-    }
-    
-    if ((action === 'mark_all_present' || action === 'mark_all_absent') && 
-        !confirm(`Weet je zeker dat je alle spelers wilt markeren als ${action === 'mark_all_present' ? 'aanwezig' : 'afwezig'}?`)) {
-        return;
-    }
-    
-    // Show loading state
-    const buttons = document.querySelectorAll('[onclick^="bulkAction"]');
-    buttons.forEach(btn => {
-        btn.disabled = true;
-        btn.innerHTML = '<i data-feather="loader" class="animate-spin"></i> Bezig...';
-    });
-    
-    fetch('{% url "events:admin_bulk_attendance" event.pk %}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-        },
-        body: JSON.stringify({
-            action: action
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showNotification(data.message, 'success');
-            // Reload page to update UI
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
-        } else {
-            showNotification(data.error || 'Er is een fout opgetreden', 'error');
-            // Reset buttons
-            resetBulkButtons();
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showNotification('Er is een fout opgetreden', 'error');
-        resetBulkButtons();
-    });
-}
-
-function resetBulkButtons() {
-    document.querySelector('[onclick="bulkAction(\'mark_all_present\')"]').innerHTML = 
-        '<i data-feather="check-circle"></i> Markeer Iedereen Aanwezig';
-    document.querySelector('[onclick="bulkAction(\'mark_all_absent\')"]').innerHTML = 
-        '<i data-feather="x-circle"></i> Markeer Iedereen Afwezig';
-    document.querySelector('[onclick="bulkAction(\'clear_all\')"]').innerHTML = 
-        '<i data-feather="refresh-cw"></i> Wis Alle Aanwezigheid';
-    
-    const buttons = document.querySelectorAll('[onclick^="bulkAction"]');
-    buttons.forEach(btn => {
-        btn.disabled = false;
-    });
-    
-    // Re-initialize feather icons
-    feather.replace();
-}
-
-function showNotification(message, type) {
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    notification.textContent = message;
-    document.body.appendChild(notification);
-    
-    notification.classList.add('animate-slide-in');
-    
-    setTimeout(() => {
-        notification.classList.add('animate-slide-out');
-        setTimeout(() => {
-            document.body.removeChild(notification);
-        }, 300);
-    }, 3000);
-}
-
-// Initialize feather icons on page load
-document.addEventListener('DOMContentLoaded', function() {
-    feather.replace();
-});
-</script>
+<script>window.eventId = {{ event.pk }};</script>
+<script src="{% static 'js/events/admin_attendance.js' %}"></script>
 {% endblock %}

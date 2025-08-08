@@ -17,7 +17,7 @@
 
 {% block content %}
 <div class="text-center mb-5">
-    <h1 class="display-5 fw-bold text-danger mb-3">
+    <h1 class="display-5 fw-bold text-error mb-3">
         <i data-feather="trash-2" style="width: 2.5rem; height: 2.5rem; margin-right: 1rem; color: #dc3545;"></i>
         Evenement verwijderen
     </h1>
@@ -180,27 +180,6 @@
     </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Feather icons
-    feather.replace();
-    
-    // Update button text based on selected option
-    const deleteButtons = document.querySelectorAll('input[name="delete_series"]');
-    const submitButton = document.querySelector('button[type="submit"]');
-    
-    if (deleteButtons.length > 0 && submitButton) {
-        deleteButtons.forEach(radio => {
-            radio.addEventListener('change', function() {
-                if (this.value === 'true') {
-                    submitButton.innerHTML = '<i data-feather="trash-2"></i> Reeks verwijderen';
-                } else {
-                    submitButton.innerHTML = '<i data-feather="trash-2"></i> Evenement verwijderen';
-                }
-                feather.replace();
-            });
-        });
-    }
-});
-</script>
+{% load static %}
+<script src="{% static 'js/events/event_delete.js' %}"></script>
 {% endblock %}

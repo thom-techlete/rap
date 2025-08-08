@@ -133,14 +133,14 @@
                 
                 <div class="d-flex flex-column gap-2 mb-3">
                     {% if user.positie %}
-                    <span class="badge bg-primary">
+                    <span class="badge bg-primary" style="background: var(--gradient-primary); color: #fff; padding: .5rem 1rem">
                         <i data-feather="target" style="width: 0.875rem; height: 0.875rem;"></i>
                         {{ user.positie }}
                     </span>
                     {% endif %}
                     
                     {% if user.rugnummer %}
-                    <span class="badge bg-secondary">
+                    <span class="badge bg-secondary" style="background: var(--gradient-primary); color: #fff; padding: .5rem 1rem">
                         <i data-feather="hash" style="width: 0.875rem; height: 0.875rem;"></i>
                         Nummer {{ user.rugnummer }}
                     </span>

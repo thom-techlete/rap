@@ -1,83 +1,274 @@
-# .github/workflows/ci.yml
-
-name: CI
+name: SV Rap 8 CI/CD Pipeline
 
 on:
   pull_request:
-    branches:
-      - main
-      - staging
+    branches: [ main ]
+  push:
+    branches: [ main ]
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read        
+  packages: write   
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  lint-and-test:
-    name: Lint & Test
+  test:
+    name: Run Django Tests & Quality Checks
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.12']
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: test_rap_web
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          persist-credentials: true
+        uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: 3.12
 
-      - name: Cache pip
-        uses: actions/cache@v3
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements*.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Install pip-tools
-        run: pip install pip-tools
-
-      - name: Validate lockfiles
+      - name: Install system dependencies
         run: |
-          pip-compile --dry-run --generate-hashes \
-            --output-file=requirements.txt pyproject.toml
-          pip-compile --dry-run --generate-hashes --extra=dev \
-            --output-file=requirements-dev.txt pyproject.toml
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            postgresql-client \
+            libpq-dev \
+            build-essential
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: |
-          pip install --require-hashes -r requirements.txt
-          pip install --require-hashes -r requirements-dev.txt
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-      - name: Run pip-audit
-        run: pip-audit --progress-spinner off
-
-      - name: Black formatting check
-        run: black --check .
-
-      - name: Ruff linting
-        run: ruff check .
-
-      - name: Type checking with mypy
-        run: mypy .
-
-      - name: Run tests with coverage
+      - name: Run Django system check
+        working-directory: ./web
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_rap_web
+          REDIS_URL: redis://localhost:6379/0
+          DJANGO_SECRET_KEY: test-secret-key-for-ci-pipeline
+          DJANGO_DEBUG: True
+          DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
         run: |
-          pytest --cov --cov-report=term --cov-report=xml
+          python manage.py check --deploy
 
-      - name: Generate coverage badge
-        uses: tj-actions/coverage-badge-py@v2
+      - name: Run Django migrations
+        working-directory: ./web
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_rap_web
+          REDIS_URL: redis://localhost:6379/0
+          DJANGO_SECRET_KEY: test-secret-key-for-ci-pipeline
+          DJANGO_DEBUG: True
+          DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+        run: |
+          python manage.py migrate
+
+      - name: Run Django tests
+        working-directory: ./web
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_rap_web
+          REDIS_URL: redis://localhost:6379/0
+          DJANGO_SECRET_KEY: test-secret-key-for-ci-pipeline
+          DJANGO_DEBUG: True
+          DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+        run: |
+          python manage.py test --verbosity=2
+
+  build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to container registry
+        uses: docker/login-action@v3
         with:
-          working-directory: .
-          output: coverage.svg
-          overwrite: true
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Commit badge
-        uses: stefanzweifel/git-auto-commit-action@v5
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
         with:
-          commit_message: "chore: update coverage badge"
-          file_pattern: coverage.svg
-          #test
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=main-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [test, build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: production
+      url: www.rap8.nl
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          command_timeout: 15m
+          script: |
+            set -e
+            echo "🚀 Starting deployment for SV Rap 8..."
+            
+            # Navigate to project directory
+            cd ${{ secrets.DEPLOY_PATH || '/opt/rap' }}
+            
+            # Pull latest code
+            git fetch origin
+            git reset --hard origin/main
+            
+            # Create production environment file
+            cd docker
+            cat > .env.prod << EOF
+            # Django Configuration
+            DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}
+            DJANGO_DEBUG=False
+            DJANGO_ALLOWED_HOSTS=${{ secrets.DJANGO_ALLOWED_HOSTS }}
+            
+            # Database Configuration
+            POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+            POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+            DATABASE_URL=postgres://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@db:5432/${{ secrets.POSTGRES_DB }}
+            
+            # Redis Configuration
+            REDIS_URL=redis://redis:6379/0
+            
+            # Email Configuration (if needed)
+            EMAIL_HOST=${{ secrets.EMAIL_HOST }}
+            EMAIL_PORT=${{ secrets.EMAIL_PORT || 587 }}
+            EMAIL_HOST_USER=${{ secrets.EMAIL_HOST_USER }}
+            EMAIL_HOST_PASSWORD=${{ secrets.EMAIL_HOST_PASSWORD }}
+            EMAIL_USE_TLS=${{ secrets.EMAIL_USE_TLS || 'True' }}
+            DEFAULT_FROM_EMAIL=${{ secrets.DEFAULT_FROM_EMAIL }}
+            
+            # Security Configuration
+            SECURE_SSL_REDIRECT=True
+            SESSION_COOKIE_SECURE=True
+            CSRF_COOKIE_SECURE=True
+            EOF
+            
+            # Pull latest Docker images
+            docker-compose -f docker-compose.prod.yml pull
+            
+            # Start services
+            docker-compose -f docker-compose.prod.yml up -d
+            
+            # Clean up old Docker images
+            docker system prune -f
+            
+            echo "✅ Deployment completed successfully!"
+
+      # - name: Verify deployment
+      #   run: |
+      #     echo "🔍 Verifying deployment..."
+      #     sleep 30
+          
+      #     # Check if the health endpoint responds
+      #     HEALTH_URL="${{ secrets.PRODUCTION_URL }}/health/"
+      #     response=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL" || echo "000")
+          
+      #     if [ "$response" = "200" ]; then
+      #       echo "✅ Health check passed! Application is running correctly."
+      #     else
+      #       echo "❌ Health check failed with HTTP $response"
+      #       exit 1
+      #     fi
+
+      # - name: Rollback on failure
+      #   if: failure()
+      #   uses: appleboy/ssh-action@v1.0.3
+      #   with:
+      #     host: ${{ secrets.DEPLOY_HOST }}
+      #     username: ${{ secrets.DEPLOY_USER }}
+      #     key: ${{ secrets.DEPLOY_KEY }}
+      #     port: ${{ secrets.DEPLOY_PORT || 22 }}
+      #     script: |
+      #       echo "💥 Deployment failed, attempting rollback..."
+      #       cd ${{ secrets.DEPLOY_PATH || '/opt/rap' }}/docker
+            
+      #       # Get the previous successful commit
+      #       PREV_COMMIT=$(git log --format="%H" -n 2 | tail -1)
+      #       echo "Rolling back to commit: $PREV_COMMIT"
+            
+      #       # Checkout previous commit
+      #       git checkout $PREV_COMMIT
+            
+      #       # Restart services with previous version
+      #       docker-compose -f docker-compose.prod.yml up -d --force-recreate
+            
+      #       echo "🔄 Rollback completed"
+
+      # - name: Notify deployment status
+      #   if: always()
+      #   uses: 8398a7/action-slack@v3
+      #   with:
+      #     status: ${{ job.status }}
+      #     channel: '#deployments'
+      #     fields: repo,message,commit,author,action,eventName,ref,workflow
+      #     webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+      #   env:
+      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}

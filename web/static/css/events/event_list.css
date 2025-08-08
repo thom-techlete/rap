@@ -1,0 +1,145 @@
+/* Timeline Styles */
+.timeline-container {
+    position: relative;
+    min-height: 200px;
+}
+
+.timeline-spine {
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, #e5e7eb 0%, #e5e7eb 100%);
+    z-index: 1;
+}
+
+.timeline-item {
+    position: relative;
+}
+
+.timeline-line-container {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.timeline-dot {
+    position: relative;
+    z-index: 2;
+    transition: all 0.3s ease;
+}
+
+.timeline-month-dot {
+    position: relative;
+    z-index: 3;
+    transition: all 0.3s ease;
+}
+
+.timeline-item:hover .timeline-dot {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.timeline-month-separator:hover .timeline-month-dot {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+.timeline-content {
+    position: relative;
+}
+
+.timeline-month-label {
+    transition: all 0.3s ease;
+}
+
+.timeline-month-separator:hover .timeline-month-label {
+    transform: translateX(2px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .timeline-spine {
+        left: 8px !important;
+    }
+    
+    .timeline-line-container {
+        min-width: 16px !important;
+        margin-right: 1rem !important;
+    }
+    
+    .timeline-dot,
+    .timeline-month-dot {
+        width: 16px !important;
+        height: 16px !important;
+    }
+    
+    .timeline-dot > div {
+        width: 6px !important;
+        height: 6px !important;
+    }
+    
+    .timeline-month-dot > div {
+        width: 4px !important;
+        height: 4px !important;
+    }
+    
+    .timeline-month-label {
+        font-size: 0.75rem !important;
+        padding: 0.25rem 0.5rem !important;
+    }
+}
+
+/* Animation for timeline items */
+.timeline-item {
+    opacity: 0;
+    transform: translateX(-20px);
+    animation: slideInTimeline 0.6s ease forwards;
+}
+
+.timeline-month-separator {
+    opacity: 0;
+    transform: translateX(-20px);
+    animation: slideInTimeline 0.6s ease forwards;
+}
+
+.timeline-item:nth-child(1) { animation-delay: 0.1s; }
+.timeline-item:nth-child(2) { animation-delay: 0.2s; }
+.timeline-item:nth-child(3) { animation-delay: 0.3s; }
+.timeline-item:nth-child(4) { animation-delay: 0.4s; }
+.timeline-item:nth-child(5) { animation-delay: 0.5s; }
+.timeline-item:nth-child(n+6) { animation-delay: 0.6s; }
+
+.timeline-month-separator:nth-child(1) { animation-delay: 0.05s; }
+.timeline-month-separator:nth-child(2) { animation-delay: 0.15s; }
+.timeline-month-separator:nth-child(3) { animation-delay: 0.25s; }
+.timeline-month-separator:nth-child(4) { animation-delay: 0.35s; }
+.timeline-month-separator:nth-child(5) { animation-delay: 0.45s; }
+.timeline-month-separator:nth-child(n+6) { animation-delay: 0.55s; }
+
+@keyframes slideInTimeline {
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Enhanced active filter badges */
+.event-filters .badge {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+    color: white;
+    font-weight: 500;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+}
+
+/* Improve timeline spacing */
+.timeline-container > .timeline-month-separator,
+.timeline-container > .timeline-item {
+    margin-bottom: 2rem;
+}
+
+.timeline-container > .timeline-month-separator + .timeline-item {
+    margin-top: -1rem;
+}

@@ -15,6 +15,7 @@ function initializeApp() {
     initializeAnimations();
     initializeFormValidation();
     initializeTooltips();
+    feather.replace(); // Initialize Feather icons
 }
 
 // Handle event highlighting from dashboard links
@@ -351,65 +352,6 @@ function hideTooltip(event) {
     }
 }
 
-// Notification system
-function showNotification(message, type = 'info', duration = 5000) {
-    const notification = document.createElement('div');
-    notification.className = `alert alert-${type}`;
-    notification.innerHTML = `
-        <div class="alert-content">
-            <div class="alert-icon">
-                <i data-feather="${getNotificationIcon(type)}"></i>
-            </div>
-            <div class="alert-text">${message}</div>
-        </div>
-        <button class="alert-close" onclick="this.parentElement.remove()">
-            <i data-feather="x"></i>
-        </button>
-    `;
-    
-    // Add to page
-    let messagesContainer = document.querySelector('.messages');
-    if (!messagesContainer) {
-        messagesContainer = document.createElement('div');
-        messagesContainer.className = 'messages';
-        const mainContent = document.querySelector('.main-content .container');
-        if (mainContent) {
-            mainContent.insertBefore(messagesContainer, mainContent.firstChild);
-        }
-    }
-    
-    messagesContainer.appendChild(notification);
-    
-    // Initialize feather icons
-    if (typeof feather !== 'undefined') {
-        feather.replace();
-    }
-    
-    // Auto-remove after duration
-    if (duration > 0) {
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.style.opacity = '0';
-                notification.style.transform = 'translateX(100%)';
-                setTimeout(() => {
-                    notification.remove();
-                }, 300);
-            }
-        }, duration);
-    }
-}
-
-// Get notification icon based on type
-function getNotificationIcon(type) {
-    const icons = {
-        success: 'check-circle',
-        error: 'alert-circle',
-        warning: 'alert-triangle',
-        info: 'info'
-    };
-    return icons[type] || 'info';
-}
-
 // AJAX utilities
 function makeRequest(url, options = {}) {
     const defaultOptions = {
@@ -484,6 +426,90 @@ function debounce(func, wait) {
         timeout = setTimeout(later, wait);
     };
 }
+
+// Common Events JavaScript Utilities
+// Shared functions and utilities for all event templates
+
+// CSRF token helper
+function getCSRFToken() {
+    // Try to get from meta tag first (most reliable)
+    const metaToken = document.querySelector('meta[name=csrf-token]');
+    if (metaToken && metaToken.content) {
+        return metaToken.content;
+    }
+    
+    // Try to get from input field
+    const inputToken = document.querySelector('input[name=csrfmiddlewaretoken]');
+    if (inputToken && inputToken.value) {
+        return inputToken.value;
+    }
+    
+    // Finally try cookie as fallback
+    let cookieValue = getCookie('rap_csrftoken');
+    if (cookieValue) {
+        return cookieValue;
+    }
+    
+    console.error('CSRF token not found!');
+    return null;
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Generic toast function that can be used across all event pages
+function showNotification(message, type) {
+    const toastHtml = `
+        <div class="toast align-items-center text-white bg-${type} border-0 mb-1" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    `;
+    
+    // Create toast container if it doesn't exist
+    let toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        toastContainer.className = 'position-fixed top-0 end-0 p-3';
+        toastContainer.style.zIndex = '1070';
+        document.body.appendChild(toastContainer);
+    }
+    
+    // Add toast to container
+    const toastElement = document.createElement('div');
+    toastElement.innerHTML = toastHtml;
+    toastContainer.appendChild(toastElement.firstElementChild);
+    
+    // Initialize and show toast
+    const toast = new bootstrap.Toast(toastContainer.lastElementChild, {
+        autohide: true,
+        delay: 3000
+    });
+    toast.show();
+    
+    // Remove toast element after it's hidden
+    toastContainer.lastElementChild.addEventListener('hidden.bs.toast', function() {
+        this.remove();
+    });
+}
+
 
 // Export functions for global use
 window.toggleUserMenu = toggleUserMenu;

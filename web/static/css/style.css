@@ -81,8 +81,6 @@
     --transition-fast: 150ms ease;
     --transition-base: 250ms ease;
     --transition-slow: 300ms ease;
-
-    ---bs-nav-pills-link-active-color: 
 }
 
 /* Reset */
@@ -963,8 +961,6 @@ a:hover {
     gap: var(--space-6);
 }
 
-/* Remove custom grid classes since we're using Bootstrap */
-
 /* =======================
    Tables
    ======================= */
@@ -1374,7 +1370,10 @@ a:hover {
 /* =======================
    Event Highlighting
    ======================= */
-
+.nav-pills .nav-link.active, 
+.nav-pills .show>.nav-link {
+    background: var(--gradient-primary);
+}
 .event-filters .badge {
     background: var(--gradient-primary);
 }
@@ -1449,15 +1448,15 @@ a:hover {
 .text-warning-600 { color: var(--warning-600); }
 .text-error-600 { color: var(--error-600); }
 
-.bg-primary { background-color: var(--gradient-primary); }
-.bg-secondary { background-color: var(--secondary-100); }
-.bg-success { background-color: var(--success-600); }
-.bg-warning { background-color: var(--warning-600); }
-.bg-error { background-color: var(--error-600); }
+.bg-primary { background: var(--gradient-primary) !important; }
+.bg-secondary { background: var(--secondary-100); }
+.bg-success { background: var(--success-600); }
+.bg-warning { background: var(--warning-600); }
+.bg-error { background: var(--error-600); }
 
-.bg-success-500 { background-color: var(--success-500); }
-.bg-warning-500 { background-color: var(--warning-500); }
-.bg-error-500 { background-color: var(--error-500); }
+.bg-success-500 { background: var(--success-500); }
+.bg-warning-500 { background: var(--warning-500); }
+.bg-error-500 { background: var(--error-500); }
 
 .mt-0 { margin-top: 0; }
 .mt-2 { margin-top: var(--space-2); }
@@ -1505,8 +1504,3 @@ a:hover {
 .shadow { box-shadow: var(--shadow-md); }
 .shadow-lg { box-shadow: var(--shadow-lg); }
 .shadow-none { box-shadow: none; }
-
-.nav-pills .nav-link.active, .nav-pills .show>.nav-link {
-    background: var(--gradient-primary);
-    color: #fff;
-}
