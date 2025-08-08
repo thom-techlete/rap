@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Nieuw evenement aanmaken - SV Rap 8{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">
+        <i data-feather="plus" style="width: 2.5rem; height: 2.5rem; margin-right: 1rem; color: var(--primary-600);"></i>
+        Nieuw evenement aanmaken
+    </h1>
+    <p class="page-subtitle">Vul de gegevens in om een nieuw evenement toe te voegen.</p>
+</div>
+
+<div class="max-w-xl mx-auto">
+    <div class="card">
+        <div class="card-content">
+            <form method="post">
+                {% csrf_token %}
+                {{ form.non_field_errors }}
+                {% for field in form %}
+                    <div class="form-group mb-6">
+                        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}
+                            <div class="form-help">{{ field.help_text }}</div>
+                        {% endif %}
+                        {% for error in field.errors %}
+                            <div class="form-error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+                <div class="flex justify-end gap-4">
+                    <a href="{% url 'events:list' %}" class="btn btn-secondary">Annuleren</a>
+                    <button type="submit" class="btn btn-primary">
+                        <i data-feather="plus"></i>
+                        Opslaan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

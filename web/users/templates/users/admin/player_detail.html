@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ player.get_full_name }} - Speler Details - SV Rap 8{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">{{ player.get_full_name|default:player.username }}</h1>
+    <p class="page-subtitle">Speler details en beheeropties</p>
+</div>
+
+<!-- Navigation -->
+<div class="card mb-4">
+    <div class="card-content">
+        <nav class="d-flex justify-content-between align-items-center">
+            <div class="d-flex gap-3">
+                <a href="{% url 'users:admin_players' %}" class="btn btn-ghost">
+                    <i data-feather="arrow-left"></i>
+                    Terug naar Spelers
+                </a>
+            </div>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Player Information -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Speler Informatie</h3>
+            </div>
+            <div class="card-content">
+                <div class="text-center mb-4">
+                    <div class="user-avatar mx-auto mb-3" style="width: 5rem; height: 5rem;">
+                        {% if player.foto %}
+                            <img src="{{ player.foto.url }}" alt="{{ player.get_full_name }}" class="rounded-full">
+                        {% else %}
+                            <div class="avatar-fallback" style="font-size: 2rem;">
+                                {{ player.first_name|first|upper }}{{ player.last_name|first|upper }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <h4 class="mb-1">{{ player.get_full_name|default:player.username }}</h4>
+                    <p class="text-secondary mb-3">@{{ player.username }}</p>
+                    
+                    <!-- Status Badges -->
+                    <div class="d-flex justify-content-center gap-2 mb-3">
+                        {% if player.is_active %}
+                            <span class="badge badge-success">Actief</span>
+                        {% else %}
+                            <span class="badge badge-error">Inactief</span>
+                        {% endif %}
+                        {% if player.is_staff %}
+                            <span class="badge badge-warning">Beheerder</span>
+                        {% endif %}
+                        {% if player.is_superuser %}
+                            <span class="badge badge-info">Superuser</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Player Details -->
+                <div class="space-y-3">
+                    <div class="d-flex justify-content-between">
+                        <span class="text-secondary">Email:</span>
+                        <span>{{ player.email|default:"Niet ingesteld" }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-secondary">Telefoonnummer:</span>
+                        <span>{{ player.telefoonnummer|default:"Niet ingesteld" }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-secondary">Positie:</span>
+                        <span>{{ player.positie|default:"Niet ingesteld" }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-secondary">Rugnummer:</span>
+                        <span>
+                            {% if player.rugnummer %}
+                                <span class="badge badge-secondary">#{{ player.rugnummer }}</span>
+                            {% else %}
+                                Niet ingesteld
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-secondary">Geboortedatum:</span>
+                        <span>{{ player.geboortedatum|date:"d/m/Y"|default:"Niet ingesteld" }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-secondary">Adres:</span>
+                        <span>{{ player.adres|default:"Niet ingesteld" }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-secondary">Aangemeld op:</span>
+                        <span>{{ player.date_joined|date:"d/m/Y" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Admin Actions -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Beheer Acties</h3>
+            </div>
+            <div class="card-content">
+                <div class="d-grid gap-2">
+                    <form method="post" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="toggle_active">
+                        <button type="submit" class="btn {% if player.is_active %}btn-error{% else %}btn-success{% endif %} btn-block">
+                            {% if player.is_active %}
+                                <i data-feather="user-x"></i>
+                                Deactiveren
+                            {% else %}
+                                <i data-feather="user-check"></i>
+                                Activeren
+                            {% endif %}
+                        </button>
+                    </form>
+                    
+                    {% if not player.is_superuser %}
+                    <form method="post" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="toggle_staff">
+                        <button type="submit" class="btn {% if player.is_staff %}btn-warning{% else %}btn-secondary{% endif %} btn-block">
+                            {% if player.is_staff %}
+                                <i data-feather="shield-off"></i>
+                                Beheerder Rechten Verwijderen
+                            {% else %}
+                                <i data-feather="shield"></i>
+                                Beheerder Rechten Geven
+                            {% endif %}
+                        </button>
+                    </form>
+                    {% endif %}
+                    
+                    {% comment %} <a href="{% url 'admin:users_player_change' player.pk %}" class="btn btn-ghost btn-block">
+                        <i data-feather="edit"></i>
+                        Bewerk in Django Admin
+                    </a> {% endcomment %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Statistics -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Aanwezigheid Statistieken</h3>
+            </div>
+            <div class="card-content">
+                <div class="text-center mb-4">
+                    <h2 class="text-primary mb-1">{{ attendance_rate }}%</h2>
+                    <p class="text-secondary">Aanwezigheidspercentage dit seizoen</p>
+                </div>
+                
+                <div class="space-y-3">
+                    <div class="d-flex justify-content-between">
+                        <span class="text-secondary">Bijgewoond:</span>
+                        <span class="font-medium">{{ attended_events }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-secondary">Totaal evenementen:</span>
+                        <span class="font-medium">{{ total_events }}</span>
+                    </div>
+                </div>
+                
+                <!-- Progress Bar -->
+                <div class="mt-4">
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-primary" style="width: {{ attendance_rate }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Attendance -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Recente Aanwezigheid</h3>
+            </div>
+            <div class="card-content">
+                {% if recent_attendance %}
+                    <div class="space-y-3">
+                        {% for attendance in recent_attendance %}
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div>
+                                <h6 class="mb-1">{{ attendance.event.name }}</h6>
+                                <p class="text-sm text-secondary mb-0">
+                                    {{ attendance.event.date|date:"d/m/Y" }}
+                                </p>
+                            </div>
+                            <div>
+                                {% if attendance.present %}
+                                    <span class="badge badge-success">Aanwezig</span>
+                                {% else %}
+                                    <span class="badge badge-error">Afwezig</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-secondary">Nog geen aanwezigheidsgegevens</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.space-y-3 > * + * {
+    margin-top: 0.75rem;
+}
+
+.card-content .py-2:last-child {
+    border-bottom: none !important;
+}
+
+.progress {
+    background-color: var(--secondary-200);
+    border-radius: 0.25rem;
+    overflow: hidden;
+}
+
+.progress-bar {
+    background-color: var(--primary-600);
+    transition: width 0.3s ease;
+}
+
+.d-grid {
+    display: grid;
+}
+
+.gap-2 {
+    gap: 0.5rem;
+}
+
+.mx-auto {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.rounded-full {
+    border-radius: 50%;
+}
+
+.user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+</style>
+{% endblock %}

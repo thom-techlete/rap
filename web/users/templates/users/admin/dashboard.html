@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Beheerdersdashboard - SV Rap 8{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Beheerdersdashboard</h1>
+    <p class="page-subtitle">Overzicht van alle belangrijke statistieken en snelle toegang tot beheerfuncties</p>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-5">
+    <div class="col-md-3 mb-4">
+        <div class="card">
+            <div class="card-content">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="text-primary mb-1">{{ total_players }}</h3>
+                        <p class="text-secondary mb-0">Totaal Spelers</p>
+                    </div>
+                    <div class="text-primary">
+                        <i data-feather="users" class="fs-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card">
+            <div class="card-content">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="text-success mb-1">{{ active_players }}</h3>
+                        <p class="text-secondary mb-0">Actieve Spelers</p>
+                    </div>
+                    <div class="text-success">
+                        <i data-feather="user-check" class="fs-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card">
+            <div class="card-content">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="text-warning mb-1">{{ total_events }}</h3>
+                        <p class="text-secondary mb-0">Totaal Evenementen</p>
+                    </div>
+                    <div class="text-warning">
+                        <i data-feather="calendar" class="fs-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card">
+            <div class="card-content">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="text-info mb-1">{{ upcoming_events }}</h3>
+                        <p class="text-secondary mb-0">Komende Evenementen</p>
+                    </div>
+                    <div class="text-info">
+                        <i data-feather="clock" class="fs-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Snelle Acties</h3>
+            </div>
+            <div class="card-content">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'users:admin_players' %}" class="btn btn-primary btn-block">
+                            <i data-feather="users"></i>
+                            Beheer Spelers
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'users:admin_events' %}" class="btn btn-warning btn-block">
+                            <i data-feather="calendar"></i>
+                            Beheer Evenementen
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'users:admin_invitations' %}" class="btn btn-success btn-block">
+                            <i data-feather="mail"></i>
+                            Uitnodigingscodes
+                        </a>
+                    </div>
+                    {% comment %} <div class="col-md-3 mb-3">
+                        <a href="{% url 'admin:index' %}" class="btn btn-secondary btn-block">
+                            <i data-feather="settings"></i>
+                            Django Admin
+                        </a>
+                    </div> {% endcomment %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Events -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="card-title">Recente Evenementen</h3>
+                <a href="{% url 'users:admin_events' %}" class="btn btn-sm btn-ghost">
+                    Bekijk Alle
+                    <i data-feather="arrow-right"></i>
+                </a>
+            </div>
+            <div class="card-content">
+                {% if recent_events %}
+                    <div class="space-y-3">
+                        {% for item in recent_events %}
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div>
+                                <h6 class="mb-1">{{ item.event.name }}</h6>
+                                <p class="text-sm text-secondary mb-0">
+                                    {{ item.event.date|date:"d/m/Y H:i" }}
+                                </p>
+                            </div>
+                            <div class="text-end d-flex align-items-center gap-2">
+                                <div>
+                                    <span class="badge {% if item.attendance_rate >= 80 %}badge-success{% elif item.attendance_rate >= 60 %}badge-warning{% else %}badge-error{% endif %}">
+                                        {{ item.attendance_rate }}%
+                                    </span>
+                                    <p class="text-xs text-secondary mb-0">
+                                        {{ item.present_count }}/{{ item.total_responses }}
+                                    </p>
+                                </div>
+                                <a href="{% url 'events:admin_attendance' item.event.pk %}" 
+                                   class="btn btn-xs btn-ghost"
+                                   title="Beheer Aanwezigheid">
+                                    <i data-feather="users"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-secondary">Nog geen recente evenementen</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Upcoming Events -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="card-title">Komende Evenementen</h3>
+                <a href="{% url 'events:create' %}" class="btn btn-sm btn-primary">
+                    <i data-feather="plus"></i>
+                    Nieuw Evenement
+                </a>
+            </div>
+            <div class="card-content">
+                {% if next_events %}
+                    <div class="space-y-3">
+                        {% for event in next_events %}
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div>
+                                <h6 class="mb-1">{{ event.name }}</h6>
+                                <p class="text-sm text-secondary mb-0">
+                                    {{ event.date|date:"d/m/Y H:i" }}
+                                </p>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge badge-info">{{ event.get_event_type_display }}</span>
+                                {% if event.location %}
+                                <p class="text-xs text-secondary mb-0">{{ event.location }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-secondary">Geen komende evenementen</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Invitation Codes -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="card-title">Recente Uitnodigingscodes</h3>
+                <a href="{% url 'users:admin_invitations' %}" class="btn btn-sm btn-ghost">
+                    Bekijk Alle
+                    <i data-feather="arrow-right"></i>
+                </a>
+            </div>
+            <div class="card-content">
+                {% if invitation_codes %}
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Beschrijving</th>
+                                    <th class="hide-mobile">Gebruikt</th>
+                                    <th class="hide-mobile">Max Gebruik</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for invitation in invitation_codes %}
+                                <tr>
+                                    <td><code>{{ invitation.code }}</code></td>
+                                    <td>{{ invitation.description|default:"Geen beschrijving" }}</td>
+                                    <td class="hide-mobile">{{ invitation.used_count }}</td>
+                                    <td class="hide-mobile">{{ invitation.max_uses|default:"Onbeperkt" }}</td>
+                                    <td>
+                                        {% if invitation.is_active %}
+                                            <span class="badge badge-success">Actief</span>
+                                        {% else %}
+                                            <span class="badge badge-secondary">Inactief</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-secondary">Nog geen uitnodigingscodes aangemaakt</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.fs-2 {
+    font-size: 2rem !important;
+}
+
+.space-y-3 > * + * {
+    margin-top: 0.75rem;
+}
+
+.card-content .py-2:last-child {
+    border-bottom: none !important;
+}
+
+.btn-xs {
+    padding: 0.125rem 0.25rem;
+    font-size: 0.75rem;
+    border-radius: 0.25rem;
+}
+
+.gap-2 {
+    gap: 0.5rem;
+}
+</style>
+{% endblock %}

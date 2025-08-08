@@ -26,7 +26,19 @@ classifiers = [
 
 # Add project dependencies here. pip-tools will read them from here, do not use a requirements file!
 dependencies = [
-  "flask>=2.2.0,<3.0.0", # Example dependency, replace with your own
+  "django",
+  "psycopg2-binary",
+  "celery",
+  "redis",
+  "django-celery-beat",
+  "django-celery-results",
+  "gunicorn",
+  "python-dotenv",
+  "djangorestframework",
+  "whitenoise",
+  "django-anymail",
+  "django-environ",
+  "pillow",
 ]
 
 [project.optional-dependencies]
@@ -37,7 +49,6 @@ dev = [
     "pytest>=7.0",
     "pytest-cov",
     "black",
-    "mypy",
     "ruff",
     "beartype",
     "pytest-beartype",

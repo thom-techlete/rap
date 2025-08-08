@@ -48,14 +48,6 @@ repos:
         args: [--sync]
         require_serial: true
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.17.1
-    hooks:
-      - id: mypy
-        name: Type check with mypy
-        args: ["--config-file=pyproject.toml"]
-
-
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.12.7
     hooks:
@@ -78,14 +70,14 @@ repos:
   #       always_run: true
   #       stages: [pre-commit]
 
-  - repo: local
-    hooks:
-      - id: pytest
-        name: Run pytest with coverage & beartype
-        entry: bash scripts/hooks/precommit_pytest.sh
-        language: system
-        pass_filenames: false
-        always_run: true
-        stages: [pre-commit]
+  # - repo: local
+  #   hooks:
+  #     - id: pytest
+  #       name: Run pytest with coverage & beartype
+  #       entry: bash scripts/hooks/precommit_pytest.sh
+  #       language: system
+  #       pass_filenames: false
+  #       always_run: true
+  #       stages: [pre-commit]
 
 

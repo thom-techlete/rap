@@ -1,0 +1,276 @@
+{% extends 'base.html' %}
+
+{% block title %}Aanwezigheid Dashboard - SV Rap 8{% endblock %}
+
+{% block content %}
+<div class="text-center mb-5">
+    <h1 class="display-4 fw-bold d-flex align-items-center justify-content-center" style="color: #475569;">
+        <i data-feather="bar-chart-2" style="width: 2.5rem; height: 2.5rem; margin-right: 1rem; color: #64748b;"></i>
+        Aanwezigheid Overzicht
+    </h1>
+    <p class="lead" style="color: #6b7280;">
+        Bekijk je aanwezigheidsstatistieken en geschiedenis
+    </p>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row g-3 g-lg-4 mb-5">
+    <div class="col-sm-6 col-md-3">
+        <div class="card h-100 border-0 shadow-sm" style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);">
+            <div class="card-body text-center py-4">
+                <div class="h3 fw-bold mb-2" style="color: #3b82f6;">{{ attendance_rate }}%</div>
+                <div class="small" style="color: #64748b;">Aanwezigheidspercentage</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-sm-6 col-md-3">
+        <div class="card h-100 border-0 shadow-sm" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);">
+            <div class="card-body text-center py-4">
+                <div class="h3 fw-bold mb-2" style="color: #22c55e;">{{ present_count }}</div>
+                <div class="small" style="color: #64748b;">Keer aanwezig</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-sm-6 col-md-3">
+        <div class="card h-100 border-0 shadow-sm" style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);">
+            <div class="card-body text-center py-4">
+                <div class="h3 fw-bold mb-2" style="color: #f59e0b;">{{ absent_count }}</div>
+                <div class="small" style="color: #64748b;">Keer afwezig</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-sm-6 col-md-3">
+        <div class="card h-100 border-0 shadow-sm" style="background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);">
+            <div class="card-body text-center py-4">
+                <div class="h3 fw-bold mb-2" style="color: #64748b;">{{ total_events }}</div>
+                <div class="small" style="color: #64748b;">Afgelopen evenementen</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Insights -->
+<div class="row g-4 mb-5">
+    <div class="col-lg-6">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0">
+                <h3 class="card-title mb-0" style="color: #475569;">
+                    <i data-feather="trending-up" style="width: 1.25rem; height: 1.25rem; margin-right: 0.5rem; color: #64748b;"></i>
+                    Prestatie Inzichten
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-column gap-3">
+                    {% if attendance_rate >= 90 %}
+                    <div class="d-flex align-items-start gap-3">
+                        <div style="color: #22c55e;">
+                            <i data-feather="thumbs-up" style="width: 1.25rem; height: 1.25rem;"></i>
+                        </div>
+                        <div>
+                            <h4 class="fw-semibold mb-1" style="color: #15803d;">Uitstekende aanwezigheid!</h4>
+                            <p class="small mb-0" style="color: #6b7280;">Je hebt een geweldige aanwezigheidsrecord.</p>
+                        </div>
+                    </div>
+                    {% elif attendance_rate >= 75 %}
+                    <div class="d-flex align-items-start gap-3">
+                        <div style="color: #f59e0b;">
+                            <i data-feather="zap" style="width: 1.25rem; height: 1.25rem;"></i>
+                        </div>
+                        <div>
+                            <h4 class="fw-semibold mb-1" style="color: #d97706;">Goede aanwezigheid</h4>
+                            <p class="small mb-0" style="color: #6b7280;">Je bent regelmatig aanwezig, goed bezig!</p>
+                        </div>
+                    </div>
+                    {% elif attendance_rate < 50 %}
+                    <div class="d-flex align-items-start gap-3">
+                        <div style="color: #ef4444;">
+                            <i data-feather="alert-octagon" style="width: 1.25rem; height: 1.25rem;"></i>
+                        </div>
+                        <div>
+                            <h4 class="fw-semibold mb-1" style="color: #b91c1c;">Zeer slechte aanwezigheid</h4>
+                            <p class="small mb-0" style="color: #6b7280;">Je aanwezigheid is erg laag. Probeer je inzet te verbeteren voor het team!</p>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="d-flex align-items-start gap-3">
+                        <div style="color: #f97316;">
+                            <i data-feather="alert-triangle" style="width: 1.25rem; height: 1.25rem;"></i>
+                        </div>
+                        <div>
+                            <h4 class="fw-semibold mb-1" style="color: #ea580c;">Kan beter</h4>
+                            <p class="small mb-0" style="color: #6b7280;">Probeer vaker aanwezig te zijn bij trainingen en wedstrijden.</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="pt-3" style="border-top: 1px solid #e5e7eb;">
+                        <p class="small mb-0" style="color: #9ca3af;">
+                            Aanwezigheidspercentage gebaseerd op afgelopen evenementen. Geen reactie telt als afwezig.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0">
+                <h3 class="card-title mb-0" style="color: #475569;">
+                    <i data-feather="target" style="width: 1.25rem; height: 1.25rem; margin-right: 0.5rem; color: #64748b;"></i>
+                    Doelen
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-column gap-3">
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="small fw-medium" style="color: #374151;">Doel: {{target_rate}}% aanwezigheid</span>
+                            <span class="small" style="color: #6b7280;">{{ attendance_rate }}%</span>
+                        </div>
+                        <div class="progress" style="height: 8px; background-color: #f3f4f6;">
+                            <div class="progress-bar" role="progressbar" 
+                                 style="width: {{ attendance_rate|floatformat:0 }}%; background: linear-gradient(90deg, #60a5fa 0%, #3b82f6 100%);" 
+                                 aria-valuenow="{{ attendance_rate|floatformat:0 }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    
+                    {% if attendance_rate < 90 %}
+                    <div class="small" style="color: #6b7280;">
+                        <p class="mb-0">Nog {{ remaining_to_goal }}% te gaan om je doel te bereiken!</p>
+                    </div>
+                    {% else %}
+                    <div class="small" style="color: #15803d;">
+                        <p class="mb-0">🎉 Doel bereikt! Geweldig gedaan!</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Attendance -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent border-0">
+        <h2 class="card-title mb-0" style="color: #475569;">
+            <i data-feather="calendar" style="width: 1.5rem; height: 1.5rem; margin-right: 0.5rem; color: #64748b;"></i>
+            Recente Aanwezigheid
+        </h2>
+    </div>
+    
+    <div class="card-body p-0">
+        {% if attendances %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead style="background-color: #f8fafc;">
+                    <tr>
+                        <th style="color: #475569; font-weight: 500;">Evenement</th>
+                        <th class="d-none d-sm-table-cell" style="color: #475569; font-weight: 500;">Datum</th>
+                        <th class="d-none d-md-table-cell" style="color: #475569; font-weight: 500;">Locatie</th>
+                        <th style="color: #475569; font-weight: 500;">Status</th>
+                        <th class="d-none d-md-table-cell" style="color: #475569; font-weight: 500;">Laatst gewijzigd</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for attendance in attendances %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="flex-shrink-0" style="color: #64748b;">
+                                    {% if 'training' in attendance.event.name.lower %}
+                                        <i data-feather="activity" style="width: 1.125rem; height: 1.125rem;"></i>
+                                    {% elif 'wedstrijd' in attendance.event.name.lower %}
+                                        <i data-feather="target" style="width: 1.125rem; height: 1.125rem;"></i>
+                                    {% else %}
+                                        <i data-feather="calendar" style="width: 1.125rem; height: 1.125rem;"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="min-w-0 flex-grow-1">
+                                    <div class="fw-medium text-truncate" style="color: #374151;">{{ attendance.event.name }}</div>
+                                    <!-- Show date on mobile -->
+                                    <div class="d-sm-none small mt-1" style="color: #6b7280;">
+                                        {{ attendance.event.date|date:"d/m/Y, H:i" }}
+                                    </div>
+                                    {% if attendance.event.description %}
+                                    <div class="d-sm-none small" style="color: #6b7280;">
+                                        {{ attendance.event.description|truncatechars:50 }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="d-none d-sm-table-cell">
+                            <div class="small">
+                                <div class="fw-medium" style="color: #374151;">{{ attendance.event.date|date:"d/m/Y" }}</div>
+                                <div style="color: #6b7280;">{{ attendance.event.date|date:"H:i" }}</div>
+                            </div>
+                        </td>
+                        <td class="d-none d-md-table-cell">
+                            {% if attendance.event.location %}
+                                <div class="d-flex align-items-center gap-1 small" style="color: #6b7280;">
+                                    <i data-feather="map-pin" style="width: 1rem; height: 1rem;"></i>
+                                    <span>{{ attendance.event.location }}</span>
+                                </div>
+                            {% else %}
+                                <span style="color: #9ca3af;">Niet opgegeven</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if attendance.has_response %}
+                                {% if attendance.present %}
+                                    <span class="badge d-inline-flex align-items-center gap-1" style="background-color: #dcfce7; color: #15803d; font-weight: 500;">
+                                        <i data-feather="check" style="width: 0.75rem; height: 0.75rem;"></i>
+                                        <span class="d-none d-sm-inline">Aanwezig</span>
+                                    </span>
+                                {% else %}
+                                    <span class="badge d-inline-flex align-items-center gap-1" style="background-color: #fee2e2; color: #dc2626; font-weight: 500;">
+                                        <i data-feather="x" style="width: 0.75rem; height: 0.75rem;"></i>
+                                        <span class="d-none d-sm-inline">Afwezig</span>
+                                    </span>
+                                {% endif %}
+                            {% else %}
+                                <span class="badge d-inline-flex align-items-center gap-1" style="background-color: #f3f4f6; color: #6b7280; font-weight: 500;">
+                                    <i data-feather="minus" style="width: 0.75rem; height: 0.75rem;"></i>
+                                    <span class="d-none d-sm-inline">Geen reactie</span>
+                                    <span class="d-sm-none">-</span>
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="d-none d-md-table-cell">
+                            {% if attendance.has_response and attendance.timestamp %}
+                                <div class="small" style="color: #6b7280;">
+                                    {{ attendance.timestamp|date:"d/m, H:i" }}
+                                </div>
+                            {% else %}
+                                <span class="small" style="color: #9ca3af;">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i data-feather="calendar-x" style="width: 3rem; height: 3rem; color: #cbd5e1; margin: 0 auto;"></i>
+            </div>
+            <h3 class="h5 fw-semibold mb-2" style="color: #64748b;">Nog geen aanwezigheidsgeschiedenis</h3>
+            <p class="mb-4" style="color: #9ca3af;">
+                Zodra je je aanwezigheid bij evenementen markeert, verschijnen deze hier.
+            </p>
+            <a href="{% url 'events:list' %}" class="btn" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; border: none; padding: 0.5rem 1.5rem; border-radius: 0.5rem; font-weight: 500;">
+                <i data-feather="calendar"></i>
+                Bekijk evenementen
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

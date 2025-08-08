@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Spelers Beheer - SV Rap 8{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Spelers Beheer</h1>
+    <p class="page-subtitle">Beheer en bekijk alle spelers in het systeem</p>
+</div>
+
+<!-- Navigation -->
+<div class="card mb-4">
+    <div class="card-content">
+        <nav class="d-flex justify-content-between align-items-center">
+            <div class="d-flex gap-3">
+                <a href="{% url 'users:admin_dashboard' %}" class="btn btn-ghost">
+                    <i data-feather="arrow-left"></i>
+                    Terug naar Dashboard
+                </a>
+            </div>
+        </nav>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-content">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label for="search" class="form-label">Zoeken</label>
+                <input type="text" id="search" name="search" class="form-input" 
+                       placeholder="Zoek op naam, gebruikersnaam of email..." 
+                       value="{{ search }}">
+            </div>
+            <div class="col-md-3">
+                <label for="status" class="form-label">Status</label>
+                <select id="status" name="status" class="form-select">
+                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>Alle spelers</option>
+                    <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Actieve spelers</option>
+                    <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactieve spelers</option>
+                    <option value="staff" {% if status_filter == 'staff' %}selected{% endif %}>Beheerders</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">
+                    <i data-feather="search"></i>
+                    Zoeken
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Players Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h3 class="card-title">Spelers ({{ players.count }})</h3>
+    </div>
+    <div class="card-content p-0">
+        {% if players %}
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Speler</th>
+                            <th class="hide-mobile">Email</th>
+                            <th class="hide-mobile">Positie</th>
+                            <th class="hide-mobile">Rugnummer</th>
+                            <th>Status</th>
+                            <th>Acties</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for player in players %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="user-avatar">
+                                        {% if player.foto %}
+                                            <img src="{{ player.foto.url }}" alt="{{ player.get_full_name }}">
+                                        {% else %}
+                                            <div class="avatar-fallback">
+                                                {{ player.first_name|first|upper }}{{ player.last_name|first|upper }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <div class="font-medium">{{ player.get_full_name|default:player.username }}</div>
+                                        <div class="text-sm text-secondary">@{{ player.username }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="hide-mobile">{{ player.email|default:"Geen email" }}</td>
+                            <td class="hide-mobile">{{ player.positie|default:"Niet ingesteld" }}</td>
+                            <td class="hide-mobile">
+                                {% if player.rugnummer %}
+                                    <span class="badge badge-secondary">#{{ player.rugnummer }}</span>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column gap-1">
+                                    {% if player.is_active %}
+                                        <span class="badge badge-success">Actief</span>
+                                    {% else %}
+                                        <span class="badge badge-error">Inactief</span>
+                                    {% endif %}
+                                    {% if player.is_staff %}
+                                        <span class="badge badge-warning">Beheerder</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <a href="{% url 'users:admin_player_detail' player.id %}" 
+                                   class="btn btn-sm btn-ghost">
+                                    <i data-feather="eye"></i>
+                                    Bekijk
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="p-6 text-center">
+                <div class="text-secondary mb-4">
+                    <i data-feather="users" class="fs-1"></i>
+                </div>
+                <h4>Geen spelers gevonden</h4>
+                <p class="text-secondary">Er zijn geen spelers die voldoen aan de zoekfilters.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.fs-1 {
+    font-size: 3rem !important;
+}
+
+.user-avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+}
+
+.gap-3 {
+    gap: 0.75rem;
+}
+
+.gap-1 {
+    gap: 0.25rem;
+}
+
+@media (max-width: 767px) {
+    .card-content .row .col-md-4,
+    .card-content .row .col-md-3,
+    .card-content .row .col-md-2 {
+        margin-bottom: 1rem;
+    }
+}
+</style>
+{% endblock %}

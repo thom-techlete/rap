@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+
+{% block title %}Registreren - SV Rap 8{% endblock %}
+
+{% block content %}
+<div class="text-center mb-5">
+    <h1 class="display-6 fw-bold">Word lid van het team</h1>
+    <p class="lead text-muted">
+        Maak een account aan om deel te nemen aan SV Rap 8 evenementen
+    </p>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow">
+            <div class="card-header bg-light">
+                <h2 class="card-title h5 mb-0">
+                    <i data-feather="user-plus" style="width: 1.5rem; height: 1.5rem; margin-right: 0.5rem;"></i>
+                    Nieuw account
+                </h2>
+            </div>
+            
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            <div class="d-flex align-items-center">
+                                <i data-feather="alert-circle" class="me-2"></i>
+                                <div>
+                                    {% for error in form.non_field_errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.invitation_code.id_for_label }}" class="form-label fw-medium">
+                            <i data-feather="key" style="width: 1rem; height: 1rem; margin-right: 0.25rem;"></i>
+                            Uitnodigingscode *
+                        </label>
+                        <input type="text" 
+                               name="{{ form.invitation_code.name }}" 
+                               id="{{ form.invitation_code.id_for_label }}"
+                               class="form-control{% if form.invitation_code.errors %} is-invalid{% endif %}"
+                               placeholder="Voer je uitnodigingscode in"
+                               value="{{ form.invitation_code.value|default:'' }}"
+                               required>
+                        {% if form.invitation_code.errors %}
+                            {% for error in form.invitation_code.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                        {% if form.invitation_code.help_text %}
+                            <div class="form-text">{{ form.invitation_code.help_text }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.username.id_for_label }}" class="form-label fw-medium">
+                            <i data-feather="user" style="width: 1rem; height: 1rem; margin-right: 0.25rem;"></i>
+                            Gebruikersnaam *
+                        </label>
+                        <input type="text" 
+                               name="{{ form.username.name }}" 
+                               id="{{ form.username.id_for_label }}"
+                               class="form-control{% if form.username.errors %} is-invalid{% endif %}"
+                               placeholder="Kies een gebruikersnaam"
+                               value="{{ form.username.value|default:'' }}"
+                               required>
+                        {% if form.username.errors %}
+                            {% for error in form.username.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                        {% if form.username.help_text %}
+                            <div class="form-text">{{ form.username.help_text }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.first_name.id_for_label }}" class="form-label fw-medium">
+                                <i data-feather="user" style="width: 1rem; height: 1rem; margin-right: 0.25rem;"></i>
+                                Voornaam *
+                            </label>
+                            <input type="text" 
+                                   name="{{ form.first_name.name }}" 
+                                   id="{{ form.first_name.id_for_label }}"
+                                   class="form-control{% if form.first_name.errors %} is-invalid{% endif %}"
+                                   placeholder="Je voornaam"
+                                   value="{{ form.first_name.value|default:'' }}"
+                                   required>
+                            {% if form.first_name.errors %}
+                                {% for error in form.first_name.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.last_name.id_for_label }}" class="form-label fw-medium">
+                                <i data-feather="user" style="width: 1rem; height: 1rem; margin-right: 0.25rem;"></i>
+                                Achternaam *
+                            </label>
+                            <input type="text" 
+                                   name="{{ form.last_name.name }}" 
+                                   id="{{ form.last_name.id_for_label }}"
+                                   class="form-control{% if form.last_name.errors %} is-invalid{% endif %}"
+                                   placeholder="Je achternaam"
+                                   value="{{ form.last_name.value|default:'' }}"
+                                   required>
+                            {% if form.last_name.errors %}
+                                {% for error in form.last_name.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.email.id_for_label }}" class="form-label fw-medium">
+                            <i data-feather="mail" style="width: 1rem; height: 1rem; margin-right: 0.25rem;"></i>
+                            E-mailadres *
+                        </label>
+                        <input type="email" 
+                               name="{{ form.email.name }}" 
+                               id="{{ form.email.id_for_label }}"
+                               class="form-control{% if form.email.errors %} is-invalid{% endif %}"
+                               placeholder="je@email.com"
+                               value="{{ form.email.value|default:'' }}"
+                               required>
+                        {% if form.email.errors %}
+                            {% for error in form.email.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.password1.id_for_label }}" class="form-label fw-medium">
+                            <i data-feather="lock" style="width: 1rem; height: 1rem; margin-right: 0.25rem;"></i>
+                            Wachtwoord *
+                        </label>
+                        <input type="password" 
+                               name="{{ form.password1.name }}" 
+                               id="{{ form.password1.id_for_label }}"
+                               class="form-control{% if form.password1.errors %} is-invalid{% endif %}"
+                               placeholder="Maak een sterk wachtwoord"
+                               required>
+                        {% if form.password1.errors %}
+                            {% for error in form.password1.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                        {% if form.password1.help_text %}
+                            <div class="form-text">{{ form.password1.help_text }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.password2.id_for_label }}" class="form-label fw-medium">
+                            <i data-feather="check-circle" style="width: 1rem; height: 1rem; margin-right: 0.25rem;"></i>
+                            Bevestig wachtwoord *
+                        </label>
+                        <input type="password" 
+                               name="{{ form.password2.name }}" 
+                               id="{{ form.password2.id_for_label }}"
+                               class="form-control{% if form.password2.errors %} is-invalid{% endif %}"
+                               placeholder="Herhaal je wachtwoord"
+                               required>
+                        {% if form.password2.errors %}
+                            {% for error in form.password2.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i data-feather="user-plus" style="width: 1rem; height: 1rem;"></i>
+                        Account aanmaken
+                    </button>
+                </form>
+            </div>
+            
+            <div class="card-footer bg-light text-center">
+                <p class="small text-muted mb-0">
+                    Al een account? 
+                    <a href="{% url 'users:login' %}" class="fw-medium text-decoration-none">
+                        Log hier in
+                    </a>
+                </p>
+            </div>
+        </div>
+        
+        <!-- Important notice card -->
+        <div class="card mt-4 shadow-sm">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i data-feather="info" style="width: 2rem; height: 2rem; color: var(--primary-600);"></i>
+                </div>
+                <h3 class="h6 fw-semibold mb-2">Belangrijk</h3>
+                <p class="small text-muted mb-2">
+                    Je hebt een geldige uitnodigingscode nodig om een account aan te maken. 
+                    Deze ontvang je van een teamlid of beheerder.
+                </p>
+                <p class="small text-muted mb-0">
+                    Na registratie wordt je account geactiveerd door een beheerder. 
+                    Je ontvangt bericht zodra je kunt inloggen.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

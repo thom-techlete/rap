@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Evenementen Beheer - SV Rap 8{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Evenementen Beheer</h1>
+    <p class="page-subtitle">Beheer en bekijk alle evenementen met aanwezigheidsstatistieken</p>
+</div>
+
+<!-- Navigation -->
+<div class="card mb-4">
+    <div class="card-content">
+        <nav class="d-flex justify-content-between align-items-center">
+            <div class="d-flex gap-3">
+                <a href="{% url 'users:admin_dashboard' %}" class="btn btn-ghost">
+                    <i data-feather="arrow-left"></i>
+                    Terug naar Dashboard
+                </a>
+            </div>
+            <div>
+                <a href="{% url 'events:create' %}" class="btn btn-primary">
+                    <i data-feather="plus"></i>
+                    Nieuw Evenement
+                </a>
+            </div>
+        </nav>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-content">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="search" class="form-label">Zoeken</label>
+                <input type="text" id="search" name="search" class="form-input" 
+                       placeholder="Zoek evenementen..." 
+                       value="{{ search }}">
+            </div>
+            <div class="col-md-3">
+                <label for="type" class="form-label">Type</label>
+                <select id="type" name="type" class="form-select">
+                    <option value="all" {% if event_type == 'all' %}selected{% endif %}>Alle types</option>
+                    {% for value, label in event_types %}
+                    <option value="{{ value }}" {% if event_type == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="time" class="form-label">Datum</label>
+                <select id="time" name="time" class="form-select">
+                    <option value="all" {% if time_filter == 'all' %}selected{% endif %}>Alle evenementen</option>
+                    <option value="upcoming" {% if time_filter == 'upcoming' %}selected{% endif %}>Aankomend</option>
+                    <option value="past" {% if time_filter == 'past' %}selected{% endif %}>Geweest</option>
+                    <option value="today" {% if time_filter == 'today' %}selected{% endif %}>Vandaag</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    <i data-feather="search"></i>
+                    Zoeken
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Events Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h3 class="card-title">Evenementen ({{ events_with_stats|length }})</h3>
+    </div>
+    <div class="card-content p-0">
+        {% if events_with_stats %}
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Evenement</th>
+                            <th class="hide-mobile">Type</th>
+                            <th>Datum</th>
+                            <th class="hide-mobile">Locatie</th>
+                            <th>Aanwezigheid</th>
+                            <th>Acties</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in events_with_stats %}
+                        {% with event=item.event %}
+                        <tr>
+                            <td>
+                                <div>
+                                    <div class="font-medium">{{ event.name }}</div>
+                                    {% if event.description %}
+                                    <div class="text-sm text-secondary truncate">{{ event.description|truncatewords:8 }}</div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="hide-mobile">
+                                <span class="badge badge-info">{{ event.get_event_type_display }}</span>
+                                {% if event.is_mandatory %}
+                                    <span class="badge badge-warning">Verplicht</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div>
+                                    <div class="font-medium">{{ event.date|date:"d/m/Y" }}</div>
+                                    <div class="text-sm text-secondary">{{ event.date|date:"H:i" }}</div>
+                                </div>
+                            </td>
+                            <td class="hide-mobile">{{ event.location|default:"Niet opgegeven" }}</td>
+                            <td>
+                                <div class="text-center">
+                                    <div class="font-medium">
+                                        <span class="{% if item.attendance_rate >= 80 %}text-success{% elif item.attendance_rate >= 60 %}text-warning{% else %}text-error{% endif %}">
+                                            {{ item.attendance_rate }}%
+                                        </span>
+                                    </div>
+                                    <div class="text-sm text-secondary">
+                                        {{ item.present_count }}/{{ item.total_responses }}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <a href="{% url 'events:admin_attendance' event.pk %}" 
+                                       class="btn btn-sm btn-ghost"
+                                       title="Beheer Aanwezigheid">
+                                        <i data-feather="users"></i>
+                                    </a>
+                                    <a href="{% url 'events:edit' event.pk %}" 
+                                       class="btn btn-sm btn-secondary"
+                                       title="Bewerk Evenement">
+                                        <i data-feather="edit"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endwith %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="p-6 text-center">
+                <div class="text-secondary mb-4">
+                    <i data-feather="calendar" class="fs-1"></i>
+                </div>
+                <h4>Geen evenementen gevonden</h4>
+                <p class="text-secondary">Er zijn geen evenementen die voldoen aan de zoekfilters.</p>
+                <a href="{% url 'events:create' %}" class="btn btn-primary">
+                    <i data-feather="plus"></i>
+                    Maak je eerste evenement aan
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.fs-1 {
+    font-size: 3rem !important;
+}
+
+.gap-2 {
+    gap: 0.5rem;
+}
+
+.gap-3 {
+    gap: 0.75rem;
+}
+
+.text-success {
+    color: var(--success-600) !important;
+}
+
+.text-warning {
+    color: var(--warning-600) !important;
+}
+
+.text-error {
+    color: var(--error-600) !important;
+}
+
+@media (max-width: 767px) {
+    .card-content .row .col-md-3,
+    .card-content .row .col-md-2 {
+        margin-bottom: 1rem;
+    }
+    
+    .d-flex.gap-2 {
+        flex-direction: column;
+    }
+    
+    .d-flex.gap-2 .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}

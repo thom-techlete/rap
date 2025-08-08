@@ -1,0 +1,411 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Aanwezigheid Beheer - {{ event.name }} - SV Rap 8{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Aanwezigheid Beheer</h1>
+    <p class="page-subtitle">{{ event.name }} - {{ event.date|date:"d/m/Y H:i" }}</p>
+</div>
+
+<!-- Navigation -->
+<div class="card mb-4">
+    <div class="card-content">
+        <nav class="d-flex justify-content-between align-items-center">
+            <div class="d-flex gap-3">
+                <a href="{% url 'users:admin_events' %}" class="btn btn-ghost">
+                    <i data-feather="arrow-left"></i>
+                    Terug naar Evenementen
+                </a>
+                <a href="{% url 'events:edit' event.pk %}" class="btn btn-secondary">
+                    <i data-feather="edit"></i>
+                    Bewerk Evenement
+                </a>
+            </div>
+        </nav>
+    </div>
+</div>
+
+<!-- Event Info -->
+<div class="card mb-4">
+    <div class="card-content">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <h3 class="mb-0">{{ event.name }}</h3>
+                    <span class="badge badge-info">{{ event.get_event_type_display }}</span>
+                    {% if event.is_mandatory %}
+                        <span class="badge badge-warning">Verplicht</span>
+                    {% endif %}
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <p class="mb-2">
+                            <i data-feather="calendar" class="me-2"></i>
+                            {{ event.date|date:"d/m/Y" }}
+                        </p>
+                        <p class="mb-2">
+                            <i data-feather="clock" class="me-2"></i>
+                            {{ event.date|date:"H:i" }}
+                        </p>
+                    </div>
+                    <div class="col-sm-6">
+                        {% if event.location %}
+                        <p class="mb-2">
+                            <i data-feather="map-pin" class="me-2"></i>
+                            {{ event.location }}
+                        </p>
+                        {% endif %}
+                        {% if event.max_participants %}
+                        <p class="mb-2">
+                            <i data-feather="users" class="me-2"></i>
+                            Max {{ event.max_participants }} deelnemers
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if event.description %}
+                <p class="text-secondary mt-3">{{ event.description }}</p>
+                {% endif %}
+            </div>
+            <div class="col-md-4">
+                <!-- Statistics -->
+                <div class="text-center">
+                    <h2 class="text-primary mb-1">{{ present_count }}/{{ total_players }}</h2>
+                    <p class="text-secondary mb-3">Aanwezig</p>
+                    
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="text-success font-semibold">{{ present_count }}</div>
+                            <div class="text-xs text-secondary">Aanwezig</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="text-error font-semibold">{{ absent_count }}</div>
+                            <div class="text-xs text-secondary">Afwezig</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="text-secondary font-semibold">{{ no_response_count }}</div>
+                            <div class="text-xs text-secondary">Geen reactie</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Actions -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3 class="card-title">Bulk Acties</h3>
+    </div>
+    <div class="card-content">
+        <div class="d-flex gap-3 flex-wrap">
+            <button type="button" class="btn btn-success" onclick="bulkAction('mark_all_present')">
+                <i data-feather="check-circle"></i>
+                Markeer Iedereen Aanwezig
+            </button>
+            <button type="button" class="btn btn-error" onclick="bulkAction('mark_all_absent')">
+                <i data-feather="x-circle"></i>
+                Markeer Iedereen Afwezig
+            </button>
+            <button type="button" class="btn btn-warning" onclick="bulkAction('clear_all')">
+                <i data-feather="refresh-cw"></i>
+                Wis Alle Aanwezigheid
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Attendance Form -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h3 class="card-title">Speler Aanwezigheid ({{ total_players }} spelers)</h3>
+        <button type="submit" form="attendance-form" class="btn btn-primary">
+            <i data-feather="save"></i>
+            Aanwezigheid Opslaan
+        </button>
+    </div>
+    <div class="card-content p-0">
+        <form id="attendance-form" method="post">
+            {% csrf_token %}
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Speler</th>
+                            <th class="hide-mobile">Email</th>
+                            <th class="hide-mobile">Positie</th>
+                            <th class="text-center">Aanwezigheid</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pa in player_attendance %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="user-avatar">
+                                        {% if pa.player.foto %}
+                                            <img src="{{ pa.player.foto.url }}" alt="{{ pa.player.get_full_name }}">
+                                        {% else %}
+                                            <div class="avatar-fallback">
+                                                {{ pa.player.first_name|first|upper }}{{ pa.player.last_name|first|upper }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <div class="font-medium">{{ pa.player.get_full_name|default:pa.player.username }}</div>
+                                        <div class="text-sm text-secondary">@{{ pa.player.username }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="hide-mobile">{{ pa.player.email|default:"Geen email" }}</td>
+                            <td class="hide-mobile">{{ pa.player.positie|default:"Niet ingesteld" }}</td>
+                            <td class="text-center">
+                                <div class="attendance-buttons">
+                                    <div class="btn-group" role="group">
+                                        <input type="radio" 
+                                               id="present_{{ pa.player.id }}" 
+                                               name="attendance_{{ pa.player.id }}" 
+                                               value="present" 
+                                               class="btn-check"
+                                               {% if pa.present == True %}checked{% endif %}>
+                                        <label for="present_{{ pa.player.id }}" 
+                                               class="btn btn-sm btn-outline-success">
+                                            <i data-feather="check"></i>
+                                            <span class="hide-mobile">Aanwezig</span>
+                                        </label>
+                                        
+                                        <input type="radio" 
+                                               id="absent_{{ pa.player.id }}" 
+                                               name="attendance_{{ pa.player.id }}" 
+                                               value="absent" 
+                                               class="btn-check"
+                                               {% if pa.present == False %}checked{% endif %}>
+                                        <label for="absent_{{ pa.player.id }}" 
+                                               class="btn btn-sm btn-outline-error">
+                                            <i data-feather="x"></i>
+                                            <span class="hide-mobile">Afwezig</span>
+                                        </label>
+                                        
+                                        <input type="radio" 
+                                               id="none_{{ pa.player.id }}" 
+                                               name="attendance_{{ pa.player.id }}" 
+                                               value="" 
+                                               class="btn-check"
+                                               {% if pa.present == None %}checked{% endif %}>
+                                        <label for="none_{{ pa.player.id }}" 
+                                               class="btn btn-sm btn-outline-secondary">
+                                            <i data-feather="minus"></i>
+                                            <span class="hide-mobile">Wissen</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.user-avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+}
+
+.gap-3 {
+    gap: 0.75rem;
+}
+
+.btn-group {
+    display: inline-flex;
+}
+
+.btn-check {
+    position: absolute;
+    clip: rect(0, 0, 0, 0);
+    pointer-events: none;
+}
+
+.btn-check:checked + .btn-outline-success {
+    background-color: var(--success-500);
+    border-color: var(--success-500);
+    color: white;
+}
+
+.btn-check:checked + .btn-outline-error {
+    background-color: var(--error-500);
+    border-color: var(--error-500);
+    color: white;
+}
+
+.btn-check:checked + .btn-outline-secondary {
+    background-color: var(--secondary-500);
+    border-color: var(--secondary-500);
+    color: white;
+}
+
+.btn-outline-success {
+    border-color: var(--success-500);
+    color: var(--success-600);
+}
+
+.btn-outline-error {
+    border-color: var(--error-500);
+    color: var(--error-600);
+}
+
+.btn-outline-secondary {
+    border-color: var(--secondary-300);
+    color: var(--secondary-600);
+}
+
+.btn-outline-success:hover {
+    background-color: var(--success-50);
+}
+
+.btn-outline-error:hover {
+    background-color: var(--error-50);
+}
+
+.btn-outline-secondary:hover {
+    background-color: var(--secondary-50);
+}
+
+.attendance-buttons {
+    display: flex;
+    justify-content: center;
+}
+
+.me-2 {
+    margin-right: 0.5rem;
+}
+
+.text-xs {
+    font-size: 0.75rem;
+}
+
+.font-semibold {
+    font-weight: 600;
+}
+
+@media (max-width: 767px) {
+    .btn-group {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn-group .btn {
+        border-radius: 0.375rem !important;
+        margin-bottom: 0.25rem;
+    }
+    
+    .d-flex.gap-3 {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .d-flex.gap-3 .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function bulkAction(action) {
+    if (action === 'clear_all' && !confirm('Weet je zeker dat je alle aanwezigheidsgegevens wilt wissen?')) {
+        return;
+    }
+    
+    if ((action === 'mark_all_present' || action === 'mark_all_absent') && 
+        !confirm(`Weet je zeker dat je alle spelers wilt markeren als ${action === 'mark_all_present' ? 'aanwezig' : 'afwezig'}?`)) {
+        return;
+    }
+    
+    // Show loading state
+    const buttons = document.querySelectorAll('[onclick^="bulkAction"]');
+    buttons.forEach(btn => {
+        btn.disabled = true;
+        btn.innerHTML = '<i data-feather="loader" class="animate-spin"></i> Bezig...';
+    });
+    
+    fetch('{% url "events:admin_bulk_attendance" event.pk %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            action: action
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            // Reload page to update UI
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            showNotification(data.error || 'Er is een fout opgetreden', 'error');
+            // Reset buttons
+            resetBulkButtons();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Er is een fout opgetreden', 'error');
+        resetBulkButtons();
+    });
+}
+
+function resetBulkButtons() {
+    document.querySelector('[onclick="bulkAction(\'mark_all_present\')"]').innerHTML = 
+        '<i data-feather="check-circle"></i> Markeer Iedereen Aanwezig';
+    document.querySelector('[onclick="bulkAction(\'mark_all_absent\')"]').innerHTML = 
+        '<i data-feather="x-circle"></i> Markeer Iedereen Afwezig';
+    document.querySelector('[onclick="bulkAction(\'clear_all\')"]').innerHTML = 
+        '<i data-feather="refresh-cw"></i> Wis Alle Aanwezigheid';
+    
+    const buttons = document.querySelectorAll('[onclick^="bulkAction"]');
+    buttons.forEach(btn => {
+        btn.disabled = false;
+    });
+    
+    // Re-initialize feather icons
+    feather.replace();
+}
+
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    notification.classList.add('animate-slide-in');
+    
+    setTimeout(() => {
+        notification.classList.add('animate-slide-out');
+        setTimeout(() => {
+            document.body.removeChild(notification);
+        }, 300);
+    }, 3000);
+}
+
+// Initialize feather icons on page load
+document.addEventListener('DOMContentLoaded', function() {
+    feather.replace();
+});
+</script>
+{% endblock %}

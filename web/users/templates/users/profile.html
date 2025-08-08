@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+
+{% block title %}Profiel - SV Rap 8{% endblock %}
+
+{% block content %}
+<div class="text-center mb-5">
+    <h1 class="display-5 fw-bold text-dark mb-3">
+        <i data-feather="user" style="width: 2.5rem; height: 2.5rem; margin-right: 1rem; color: var(--primary-600);"></i>
+        Mijn Profiel
+    </h1>
+    <p class="lead text-muted">
+        Bekijk en beheer je accountgegevens
+    </p>
+</div>
+
+<div class="row g-4">
+    <!-- Profile Information -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h2 class="card-title h5 mb-0">
+                    <i data-feather="info" style="width: 1.5rem; height: 1.5rem; margin-right: 0.5rem;"></i>
+                    Persoonlijke gegevens
+                </h2>
+            </div>
+            
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-medium">Voornaam</label>
+                        <div class="form-control bg-light">
+                            {{ user.first_name|default:"Niet ingevuld" }}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label fw-medium">Achternaam</label>
+                        <div class="form-control bg-light">
+                            {{ user.last_name|default:"Niet ingevuld" }}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label fw-medium">E-mailadres</label>
+                        <div class="form-control bg-light">
+                            {{ user.email|default:"Niet ingevuld" }}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label fw-medium">Telefoonnummer</label>
+                        <div class="form-control bg-light">
+                            {{ user.telefoonnummer|default:"Niet ingevuld" }}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label fw-medium">Positie</label>
+                        <div class="form-control bg-light">
+                            {{ user.positie|default:"Niet ingevuld" }}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label fw-medium">Rugnummer</label>
+                        <div class="form-control bg-light">
+                            {{ user.rugnummer|default:"Niet toegewezen" }}
+                        </div>
+                    </div>
+                    
+                    <div class="col-12">
+                        <label class="form-label fw-medium">Adres</label>
+                        <div class="form-control bg-light">
+                            {% if user.full_address %}
+                                {{ user.full_address }}
+                            {% elif user.adres %}
+                                {{ user.adres }}
+                            {% else %}
+                                Niet ingevuld
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if user.geboortedatum %}
+                    <div class="col-md-6">
+                        <label class="form-label fw-medium">Geboortedatum</label>
+                        <div class="form-control bg-light">
+                            {{ user.geboortedatum|date:"d/m/Y" }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <hr class="my-4">
+                <div class="d-flex gap-2 flex-wrap">
+                    <a href="{% url 'users:edit_profile' %}" class="btn btn-primary">
+                        <i data-feather="edit-2"></i>
+                        Profiel bewerken
+                    </a>
+                    {% if user.is_staff %}
+                    <a href="{% url 'admin:auth_user_password_change' user.id %}" class="btn btn-outline-secondary">
+                        <i data-feather="key"></i>
+                        Wachtwoord wijzigen
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right Column -->
+    <div class="col-lg-4">
+        <!-- Profile Card -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    {% if user.foto %}
+                        <img src="{{ user.foto.url }}" 
+                             alt="{{ user.get_full_name }}"
+                             class="rounded-circle border border-primary border-3"
+                             style="width: 96px; height: 96px; object-fit: cover;">
+                    {% else %}
+                        <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold fs-4 mx-auto"
+                             style="width: 96px; height: 96px; background: var(--gradient-primary);">
+                            {{ user.first_name|first|upper|default:user.username|first|upper }}{{ user.last_name|first|upper }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <h3 class="h5 fw-semibold text-dark mb-3">
+                    {{ user.get_full_name|default:user.username }}
+                </h3>
+                
+                <div class="d-flex flex-column gap-2 mb-3">
+                    {% if user.positie %}
+                    <span class="badge bg-primary">
+                        <i data-feather="target" style="width: 0.875rem; height: 0.875rem;"></i>
+                        {{ user.positie }}
+                    </span>
+                    {% endif %}
+                    
+                    {% if user.rugnummer %}
+                    <span class="badge bg-secondary">
+                        <i data-feather="hash" style="width: 0.875rem; height: 0.875rem;"></i>
+                        Nummer {{ user.rugnummer }}
+                    </span>
+                    {% endif %}
+                    
+                    <span class="badge" style="background: var(--gradient-primary); color: #fff;">
+                        <i data-feather="calendar" style="width: 0.875rem; height: 0.875rem;"></i>
+                        Lid sinds {{ user.date_joined|date:"m/Y" }}
+                    </span>
+                </div>
+                
+                {% if user.is_staff %}
+                <div class="alert alert-info">
+                    <div class="d-flex align-items-center">
+                        <i data-feather="shield" class="me-2"></i>
+                        <div style="text-align: left;">
+                            <strong>Beheerder</strong><br>
+                            <small>Je hebt beheerrechten</small>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Quick Stats -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h3 class="card-title h6 mb-0">
+                    <i data-feather="bar-chart-2" style="width: 1.25rem; height: 1.25rem; margin-right: 0.5rem;"></i>
+                    Statistieken ({{ stats.season_start }})
+                </h3>
+            </div>
+            <div class="card-body">
+                {% if stats.season_total > 0 %}
+                <div class="d-flex flex-column gap-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="small text-muted">Algemene aanwezigheid</span>
+                        <span class="fw-semibold">
+                            {{ stats.season_attendance_rate }}%
+                            <small class="text-muted">({{ stats.season_present }}/{{ stats.season_total }})</small>
+                        </span>
+                    </div>
+                    
+                    {% if stats.training_total > 0 %}
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="small text-muted">Trainingen bijgewoond</span>
+                        <span class="fw-semibold">{{ stats.training_present }}/{{ stats.training_total }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if stats.match_total > 0 %}
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="small text-muted">Wedstrijden gespeeld</span>
+                        <span class="fw-semibold">{{ stats.match_present }}/{{ stats.match_total }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if stats.recent_total > 0 %}
+                    <hr class="my-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="small text-muted">Laatste 30 dagen</span>
+                        <span class="fw-semibold">{{ stats.recent_present }}/{{ stats.recent_total }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="text-center py-3">
+                    <i data-feather="calendar" style="width: 2rem; height: 2rem; color: var(--muted);" class="mb-2"></i>
+                    <p class="text-muted mb-0">Nog geen evenementen bijgewoond dit seizoen</p>
+                    <small class="text-muted">Je statistieken verschijnen hier zodra je begint met het markeren van aanwezigheid</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

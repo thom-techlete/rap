@@ -1,0 +1,757 @@
+{% extends 'base.html' %}
+
+{% block title %}Evenementen - SV Rap 8{% endblock %}
+
+{% block content %}
+<style>
+/* Timeline Styles */
+.timeline-container {
+    position: relative;
+    min-height: 200px;
+}
+
+.timeline-spine {
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, #e5e7eb 0%, #e5e7eb 100%);
+    z-index: 1;
+}
+
+.timeline-item {
+    position: relative;
+}
+
+.timeline-line-container {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.timeline-dot {
+    position: relative;
+    z-index: 2;
+    transition: all 0.3s ease;
+}
+
+.timeline-month-dot {
+    position: relative;
+    z-index: 3;
+    transition: all 0.3s ease;
+}
+
+.timeline-item:hover .timeline-dot {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.timeline-month-separator:hover .timeline-month-dot {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+.timeline-content {
+    position: relative;
+}
+
+.timeline-month-label {
+    transition: all 0.3s ease;
+}
+
+.timeline-month-separator:hover .timeline-month-label {
+    transform: translateX(2px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .timeline-spine {
+        left: 8px !important;
+    }
+    
+    .timeline-line-container {
+        min-width: 16px !important;
+        margin-right: 1rem !important;
+    }
+    
+    .timeline-dot,
+    .timeline-month-dot {
+        width: 16px !important;
+        height: 16px !important;
+    }
+    
+    .timeline-dot > div {
+        width: 6px !important;
+        height: 6px !important;
+    }
+    
+    .timeline-month-dot > div {
+        width: 4px !important;
+        height: 4px !important;
+    }
+    
+    .timeline-month-label {
+        font-size: 0.75rem !important;
+        padding: 0.25rem 0.5rem !important;
+    }
+}
+
+/* Animation for timeline items */
+.timeline-item {
+    opacity: 0;
+    transform: translateX(-20px);
+    animation: slideInTimeline 0.6s ease forwards;
+}
+
+.timeline-month-separator {
+    opacity: 0;
+    transform: translateX(-20px);
+    animation: slideInTimeline 0.6s ease forwards;
+}
+
+.timeline-item:nth-child(1) { animation-delay: 0.1s; }
+.timeline-item:nth-child(2) { animation-delay: 0.2s; }
+.timeline-item:nth-child(3) { animation-delay: 0.3s; }
+.timeline-item:nth-child(4) { animation-delay: 0.4s; }
+.timeline-item:nth-child(5) { animation-delay: 0.5s; }
+.timeline-item:nth-child(n+6) { animation-delay: 0.6s; }
+
+.timeline-month-separator:nth-child(1) { animation-delay: 0.05s; }
+.timeline-month-separator:nth-child(2) { animation-delay: 0.15s; }
+.timeline-month-separator:nth-child(3) { animation-delay: 0.25s; }
+.timeline-month-separator:nth-child(4) { animation-delay: 0.35s; }
+.timeline-month-separator:nth-child(5) { animation-delay: 0.45s; }
+.timeline-month-separator:nth-child(n+6) { animation-delay: 0.55s; }
+
+@keyframes slideInTimeline {
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Enhanced active filter badges */
+.event-filters .badge {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+    color: white;
+    font-weight: 500;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+}
+
+/* Improve timeline spacing */
+.timeline-container > .timeline-month-separator,
+.timeline-container > .timeline-item {
+    margin-bottom: 2rem;
+}
+
+.timeline-container > .timeline-month-separator + .timeline-item {
+    margin-top: -1rem;
+}
+</style>
+
+{% csrf_token %}
+<div class="text-center mb-5">
+    <h1 class="display-5 fw-bold" style="color: #475569;">
+        <i data-feather="calendar" style="width: 2.5rem; height: 2.5rem; margin-right: 1rem; color: #64748b;"></i>
+        Evenementen
+    </h1>
+    <p class="lead" style="color: #6b7280;">
+        Bekijk aankomende trainingen, wedstrijden en teamactiviteiten
+    </p>
+</div>
+
+{% if user.is_staff %}
+<div class="mb-4">
+    <div class="card border-0 shadow-sm" style="background: var(--gradient-primary);">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="d-flex align-items-center">
+                        <div>
+                            <h5 class="mb-1" style="color: #fff;">Beheerder acties</h5>
+                            <small style="color: #fff;">Voeg nieuwe evenementen toe</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 text-md-end mt-2 mt-md-0">
+                    <a href="{% url 'events:create' %}" class="btn" style="color: var(--gradient-primary); background: white; border: none; padding: 0.5rem 1.5rem; border-radius: 0.5rem; font-weight: 500; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);">
+                        <i data-feather="plus"></i>
+                        <span class="d-none d-sm-inline">Nieuw evenement</span>
+                        <span class="d-sm-none">Nieuw</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Filter and Search Section -->
+<div class="mb-4">
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <form method="GET" id="filter-form">
+                <div class="row g-3">
+                    <!-- Search Box -->
+                    <div class="col-md-4">
+                        <div class="position-relative">
+                            <i data-feather="search" class="position-absolute" style="left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #9ca3af;"></i>
+                            <input type="text" 
+                                   class="form-control ps-5" 
+                                   name="search" 
+                                   placeholder="Zoek evenementen..."
+                                   value="{{ search_query }}"
+                                   style="border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 0.75rem 0.75rem 0.75rem 2.5rem;">
+                        </div>
+                    </div>
+                    
+                    <!-- Event Type Filter -->
+                    <div class="col-md-2">
+                        <select class="form-select" name="type" style="border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 0.75rem;">
+                            <option value="">Alle types</option>
+                            {% for type_key, type_label in event_types %}
+                                <option value="{{ type_key }}" {% if event_type_filter == type_key %}selected{% endif %}>
+                                    {{ type_label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Location Filter -->
+                    <div class="col-md-2">
+                        <select class="form-select" name="location" style="border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 0.75rem;">
+                            <option value="">Alle locaties</option>
+                            {% for location in unique_locations %}
+                                <option value="{{ location }}" {% if location_filter == location %}selected{% endif %}>
+                                    {{ location }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Mandatory Filter -->
+                    <div class="col-md-2">
+                        <select class="form-select" name="mandatory" style="border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 0.75rem;">
+                            <option value="">Alle evenementen</option>
+                            <option value="true" {% if mandatory_filter == 'true' %}selected{% endif %}>Alleen verplicht</option>
+                            <option value="false" {% if mandatory_filter == 'false' %}selected{% endif %}>Alleen optioneel</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Filter Actions -->
+                    <div class="col-md-2">
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary flex-fill" style="border-radius: 0.5rem; padding: 0.75rem;">
+                                <i data-feather="filter" style="width: 1rem; height: 1rem;"></i>
+                                <span class="d-none d-sm-inline ms-1">Filter</span>
+                            </button>
+                            <button type="button" onclick="clearFilters()" class="btn btn-outline-secondary" style="border-radius: 0.5rem; padding: 0.75rem;">
+                                <i data-feather="x" style="width: 1rem; height: 1rem;"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Active Filters Display -->
+                {% if search_query or event_type_filter or location_filter or mandatory_filter %}
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="d-flex align-items-center gap-2 flex-wrap event-filters">
+                            <small class="text-muted me-2">Actieve filters:</small>
+                            {% if search_query %}
+                                <span class="badge">Zoeken: "{{ search_query }}"</span>
+                            {% endif %}
+                            {% if event_type_filter %}
+                                <span class="badge bg-secondary">
+                                    Type: {% for type_key, type_label in event_types %}{% if type_key == event_type_filter %}{{ type_label }}{% endif %}{% endfor %}
+                                </span>
+                            {% endif %}
+                            {% if location_filter %}
+                                <span class="badge">Locatie: {{ location_filter }}</span>
+                            {% endif %}
+                            {% if mandatory_filter %}
+                                <span class="badge bg-warning text-dark">
+                                    {% if mandatory_filter == 'true' %}Alleen verplicht{% else %}Alleen optioneel{% endif %}
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs -->
+<div class="mb-4">
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-2">
+            <nav class="nav nav-pills nav-fill gap-2">
+                <button id="upcoming-tab" 
+                        class="nav-link active"
+                        type="button"
+                        onclick="showTab('upcoming')"
+                        style="border-radius: 0.5rem; font-weight: 500; transition: all 0.2s ease;">
+                    <i data-feather="calendar" style="width: 1rem; height: 1rem; margin-right: 0.375rem;"></i>
+                    <span class="d-none d-xs-inline">Aankomende</span>
+                    <span class="d-xs-none">Aankomend</span>
+                    {% if upcoming_events %}
+                        <span class="badge ms-2" style="background-color: #fff; color: #1d4ed8;">{{ upcoming_events|length }}</span>
+                    {% endif %}
+                </button>
+                <button id="past-tab" 
+                        class="nav-link"
+                        type="button"
+                        onclick="showTab('past')"
+                        style="border-radius: 0.5rem; font-weight: 500; transition: all 0.2s ease;">
+                    <i data-feather="archive" style="width: 1rem; height: 1rem; margin-right: 0.375rem;"></i>
+                    <span class="d-none d-xs-inline">Afgelopen</span>
+                    <span class="d-xs-none">Afgelopen</span>
+                    {% if past_events %}
+                        <span class="badge ms-2" style="background-color: #fff; color: #1d4ed8;">{{ past_events|length }}</span>
+                    {% endif %}
+                </button>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Upcoming Events Tab Content -->
+<div id="upcoming-content" class="tab-content">
+    {% if upcoming_events %}
+        <div class="timeline-container position-relative">
+            <!-- Continuous timeline line -->
+            <div class="timeline-spine position-absolute" style="left: 10px; top: 0; bottom: 0; width: 2px; background: linear-gradient(to bottom, #e5e7eb 0%, #e5e7eb 100%); z-index: 0;"></div>
+            
+            {% for event in upcoming_events %}
+                {% ifchanged event.date.year event.date.month %}
+                    {% if not forloop.first %}
+                        <!-- Month separator -->
+                        <div class="timeline-month-separator d-flex align-items-center mb-4">
+                            <div class="timeline-month-dot rounded-circle d-flex align-items-center justify-content-center me-4" 
+                                 style="width: 20px; height: 20px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3); z-index: 3; position: relative;">
+                                <div class="rounded-circle" style="width: 6px; height: 6px; background-color: white;"></div>
+                            </div>
+                            <div class="timeline-month-label px-3 py-1 rounded-pill" style="background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%); color: #92400e; font-weight: 600; font-size: 0.875rem; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
+                                {{ event.date|date:'F Y' }}
+                            </div>
+                        </div>
+                    {% else %}
+                        <!-- First month indicator -->
+                        <div class="timeline-month-separator d-flex align-items-center mb-4">
+                            <div class="timeline-month-dot rounded-circle d-flex align-items-center justify-content-center me-4" 
+                                 style="width: 20px; height: 20px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3); z-index: 3; position: relative;">
+                                <div class="rounded-circle" style="width: 6px; height: 6px; background-color: white;"></div>
+                            </div>
+                            <div class="timeline-month-label px-3 py-1 rounded-pill" style="background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%); color: #92400e; font-weight: 600; font-size: 0.875rem; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
+                                {{ event.date|date:'F Y' }}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endifchanged %}
+                
+                <div class="timeline-item d-flex align-items-start mb-4">
+                    <!-- Timeline Event Dot -->
+                    <div class="timeline-line-container d-flex flex-column align-items-center me-4" style="min-width: 20px;">
+                        <div class="timeline-dot rounded-circle d-flex align-items-center justify-content-center" 
+                             style="width: 20px; height: 20px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3); z-index: 2; position: relative;">
+                            <div class="rounded-circle" style="width: 8px; height: 8px; background-color: white;"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Event Card -->
+                    <div class="timeline-content flex-grow-1">
+                        {% include 'events/event_card.html' with event=event is_upcoming=True %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i data-feather="calendar-x" style="width: 4rem; height: 4rem; color: #cbd5e1;"></i>
+            </div>
+            {% if search_query or event_type_filter or location_filter or mandatory_filter %}
+                <h3 class="h4 mb-3" style="color: #64748b;">Geen evenementen gevonden</h3>
+                <p class="mb-4" style="color: #9ca3af;">
+                    Er zijn geen aankomende evenementen die voldoen aan je zoekcriteria.
+                </p>
+                <button onclick="clearFilters()" class="btn btn-outline-primary" style="border-radius: 0.5rem; padding: 0.5rem 1.5rem;">
+                    <i data-feather="x"></i>
+                    Filters wissen
+                </button>
+            {% else %}
+                <h3 class="h4 mb-3" style="color: #64748b;">Geen aankomende evenementen</h3>
+                <p class="mb-4" style="color: #9ca3af;">
+                    Er zijn momenteel geen evenementen gepland voor de toekomst.
+                </p>
+                {% if user.is_staff %}
+                <a href="{% url 'events:create' %}" class="btn" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; border: none; padding: 0.5rem 1.5rem; border-radius: 0.5rem; font-weight: 500;">
+                    <i data-feather="plus"></i>
+                    Voeg een evenement toe
+                </a>
+                {% endif %}
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+<!-- Past Events Tab Content -->
+<div id="past-content" class="tab-content d-none">
+    {% if past_events %}
+        <div class="timeline-container position-relative">
+            <!-- Continuous timeline line -->
+            <div class="timeline-spine position-absolute" style="left: 10px; top: 0; bottom: 0; width: 2px; background: linear-gradient(to bottom, #e5e7eb 0%, #e5e7eb 100%); z-index: 1;"></div>
+            
+            {% for event in past_events %}
+                {% ifchanged event.date.year event.date.month %}
+                    {% if not forloop.first %}
+                        <!-- Month separator -->
+                        <div class="timeline-month-separator d-flex align-items-center mb-4">
+                            <div class="timeline-month-dot rounded-circle d-flex align-items-center justify-content-center me-4" 
+                                 style="width: 20px; height: 20px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3); z-index: 3; position: relative;">
+                                <div class="rounded-circle" style="width: 6px; height: 6px; background-color: white;"></div>
+                            </div>
+                            <div class="timeline-month-label px-3 py-1 rounded-pill" style="background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%); color: #92400e; font-weight: 600; font-size: 0.875rem; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
+                                {{ event.date|date:'F Y' }}
+                            </div>
+                        </div>
+                    {% else %}
+                        <!-- First month indicator -->
+                        <div class="timeline-month-separator d-flex align-items-center mb-4">
+                            <div class="timeline-month-dot rounded-circle d-flex align-items-center justify-content-center me-4" 
+                                 style="width: 20px; height: 20px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3); z-index: 3; position: relative;">
+                                <div class="rounded-circle" style="width: 6px; height: 6px; background-color: white;"></div>
+                            </div>
+                            <div class="timeline-month-label px-3 py-1 rounded-pill" style="background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%); color: #92400e; font-weight: 600; font-size: 0.875rem; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
+                                {{ event.date|date:'F Y' }}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endifchanged %}
+                
+                <div class="timeline-item d-flex align-items-start mb-4">
+                    <!-- Timeline Event Dot -->
+                    <div class="timeline-line-container d-flex flex-column align-items-center me-4" style="min-width: 20px;">
+                        <div class="timeline-dot rounded-circle d-flex align-items-center justify-content-center" 
+                             style="width: 20px; height: 20px; background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%); box-shadow: 0 2px 8px rgba(148, 163, 184, 0.3); z-index: 2; position: relative;">
+                            <div class="rounded-circle" style="width: 8px; height: 8px; background-color: white;"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Event Card -->
+                    <div class="timeline-content flex-grow-1">
+                        {% include 'events/event_card.html' with event=event is_upcoming=False %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i data-feather="archive" style="width: 4rem; height: 4rem; color: #cbd5e1;"></i>
+            </div>
+            {% if search_query or event_type_filter or location_filter or mandatory_filter %}
+                <h3 class="h4 mb-3" style="color: #64748b;">Geen evenementen gevonden</h3>
+                <p class="mb-4" style="color: #9ca3af;">
+                    Er zijn geen afgelopen evenementen die voldoen aan je zoekcriteria.
+                </p>
+                <button onclick="clearFilters()" class="btn btn-outline-primary" style="border-radius: 0.5rem; padding: 0.5rem 1.5rem;">
+                    <i data-feather="x"></i>
+                    Filters wissen
+                </button>
+            {% else %}
+                <h3 class="h4 mb-3" style="color: #64748b;">Geen afgelopen evenementen</h3>
+                <p style="color: #9ca3af;">
+                    Er zijn nog geen evenementen uit het verleden.
+                </p>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+<script>
+function showTab(tabName) {
+    // Get all tab contents and buttons
+    const allContents = document.querySelectorAll('.tab-content');
+    const allButtons = document.querySelectorAll('.nav-link');
+    
+    // Hide all content
+    allContents.forEach(content => {
+        content.classList.add('d-none');
+    });
+    
+    // Remove active class from all buttons
+    allButtons.forEach(button => {
+        button.classList.remove('active');
+    });
+    
+    // Show selected tab content
+    const targetContent = document.getElementById(tabName + '-content');
+    targetContent.classList.remove('d-none');
+    
+    // Activate the selected button
+    const activeButton = document.getElementById(tabName + '-tab');
+    activeButton.classList.add('active');
+    
+    // Store the active tab in sessionStorage for persistence
+    sessionStorage.setItem('activeEventTab', tabName);
+}
+
+// Clear all filters
+function clearFilters() {
+    const form = document.getElementById('filter-form');
+    form.querySelectorAll('input, select').forEach(input => {
+        if (input.type === 'text') {
+            input.value = '';
+        } else if (input.tagName === 'SELECT') {
+            input.selectedIndex = 0;
+        }
+    });
+    form.submit();
+}
+
+// CSRF token helper
+function getCSRFToken() {
+    // Try to get from cookie first
+    let cookieValue = getCookie('csrftoken');
+    if (cookieValue) {
+        return cookieValue;
+    }
+    
+    // Try to get from meta tag or input
+    const metaToken = document.querySelector('meta[name=csrf-token]');
+    if (metaToken) {
+        return metaToken.content;
+    }
+    
+    const inputToken = document.querySelector('input[name=csrfmiddlewaretoken]');
+    if (inputToken) {
+        return inputToken.value;
+    }
+    
+    return null;
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Toggle attendance function
+async function setAttendance(eventId, present) {
+    const presentBtn = document.getElementById(`present-btn-${eventId}`);
+    const absentBtn = document.getElementById(`absent-btn-${eventId}`);
+    const attendanceCount = document.getElementById(`attendance-count-${eventId}`);
+    const userStatusElement = document.querySelector(`[data-event-id="${eventId}"] .user-status`);
+    
+    // Prevent multiple simultaneous requests
+    if (presentBtn.disabled || absentBtn.disabled) {
+        return;
+    }
+    
+    // Disable buttons during request
+    presentBtn.disabled = true;
+    absentBtn.disabled = true;
+    
+    try {
+        const response = await fetch(`/attendance/set/${eventId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken(),
+            },
+            body: JSON.stringify({ present: present })
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            
+            // Update button colors
+            updateAttendanceButtons(eventId, data.present);
+            
+            // Update attendance count
+            if (attendanceCount) {
+                updateAttendanceCount(attendanceCount, data.attendance_count);
+            }
+            
+            // Update user status display
+            if (userStatusElement) {
+                updateUserStatusDisplay(userStatusElement, data.present);
+            }
+            
+            // Show success message
+            showSuccessMessage(data.message);
+            
+        } else {
+            console.error('Failed to update attendance');
+            showErrorMessage('Er is een fout opgetreden bij het bijwerken van je aanwezigheid.');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showErrorMessage('Er is een fout opgetreden bij het bijwerken van je aanwezigheid.');
+    } finally {
+        // Always re-enable buttons
+        presentBtn.disabled = false;
+        absentBtn.disabled = false;
+    }
+}
+
+// Update attendance buttons with Bootstrap classes
+function updateAttendanceButtons(eventId, present) {
+    const presentBtn = document.getElementById(`present-btn-${eventId}`);
+    const absentBtn = document.getElementById(`absent-btn-${eventId}`);
+    
+    if (!presentBtn || !absentBtn) return;
+    
+    // Reset both buttons to default state
+    presentBtn.className = 'btn btn-lg attendance-btn btn-ghost';
+    absentBtn.className = 'btn btn-lg attendance-btn btn-ghost';
+    
+    // Set active button color
+    if (present === true) {
+        presentBtn.className = 'btn btn-lg attendance-btn btn-success';
+    } else if (present === false) {
+        absentBtn.className = 'btn btn-lg attendance-btn btn-danger';
+    }
+}
+
+// Update attendance count
+function updateAttendanceCount(countElement, newCount) {
+    if (!countElement) return;
+    countElement.textContent = newCount;
+}
+
+// Update user status display
+function updateUserStatusDisplay(element, status) {
+    if (!element) return;
+    
+    if (status === true) {
+        element.innerHTML = `
+            <div class="d-flex align-items-center">
+                <div class="rounded-circle bg-success me-2" style="width: 8px; height: 8px;"></div>
+                <span class="text-success fw-medium">Je bent aanwezig</span>
+            </div>
+        `;
+    } else if (status === false) {
+        element.innerHTML = `
+            <div class="d-flex align-items-center">
+                <div class="rounded-circle bg-danger me-2" style="width: 8px; height: 8px;"></div>
+                <span class="text-danger fw-medium">Je bent afwezig</span>
+            </div>
+        `;
+    } else {
+        element.innerHTML = `
+            <div class="d-flex align-items-center">
+                <div class="rounded-circle bg-warning me-2" style="width: 8px; height: 8px;"></div>
+                <span class="text-warning fw-medium">Geen reactie</span>
+            </div>
+        `;
+    }
+}
+
+// Show success message using Bootstrap toast
+function showSuccessMessage(message) {
+    showToast(message, 'success');
+}
+
+// Show error message using Bootstrap toast
+function showErrorMessage(message) {
+    showToast(message, 'danger');
+}
+
+// Generic toast function
+function showToast(message, type) {
+    const toastHtml = `
+        <div class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    `;
+    
+    // Create toast container if it doesn't exist
+    let toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        toastContainer.className = 'position-fixed top-0 end-0 p-3';
+        toastContainer.style.zIndex = '1070';
+        document.body.appendChild(toastContainer);
+    }
+    
+    // Add toast to container
+    const toastElement = document.createElement('div');
+    toastElement.innerHTML = toastHtml;
+    toastContainer.appendChild(toastElement.firstElementChild);
+    
+    // Initialize and show toast
+    const toast = new bootstrap.Toast(toastContainer.lastElementChild, {
+        autohide: true,
+        delay: 3000
+    });
+    toast.show();
+    
+    // Remove toast element after it's hidden
+    toastContainer.lastElementChild.addEventListener('hidden.bs.toast', function() {
+        this.remove();
+    });
+}
+
+// Auto-submit form on filter change and initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    const filterForm = document.getElementById('filter-form');
+    
+    if (filterForm) {
+        const filterInputs = filterForm.querySelectorAll('select');
+        
+        filterInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                filterForm.submit();
+            });
+        });
+        
+        // Auto-submit search after typing delay
+        const searchInput = filterForm.querySelector('input[name="search"]');
+        let searchTimeout;
+        
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    filterForm.submit();
+                }, 500); // Wait 500ms after user stops typing
+            });
+        }
+    }
+    
+    // Initialize the correct tab on page load
+    const activeTab = sessionStorage.getItem('activeEventTab') || 'upcoming';
+    if (activeTab === 'past') {
+        showTab('past');
+    }
+    
+    // Initialize Feather icons after tab content is loaded
+    if (typeof feather !== 'undefined') {
+        feather.replace();
+    }
+});
+
+</script>
+{% endblock %}

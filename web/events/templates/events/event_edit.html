@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Evenement bewerken - SV Rap 8{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">
+        <i data-feather="edit-2" style="width: 2.5rem; height: 2.5rem; margin-right: 1rem; color: var(--primary-600);"></i>
+        Evenement bewerken
+    </h1>
+    <p class="page-subtitle">Pas de gegevens van het evenement aan en sla de wijzigingen op.</p>
+</div>
+
+<div class="max-w-xl mx-auto">
+    <div class="card">
+        <div class="card-content">
+            <form method="post">
+                {% csrf_token %}
+                {{ form.non_field_errors }}
+                {% for field in form %}
+                    {% if field.name == 'description' %}
+                        <div class="form-group mb-6">
+                            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            <div class="rounded-lg shadow-sm border border-secondary-200 bg-secondary-50 p-3">
+                                {{ field }}
+                            </div>
+                            {% if field.help_text %}
+                                <div class="form-help">{{ field.help_text }}</div>
+                            {% endif %}
+                            {% for error in field.errors %}
+                                <div class="form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% elif field.name == 'event_type' %}
+                        <div class="form-group mb-6">
+                            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            <div class="rounded-lg shadow-sm border border-primary-200 bg-primary-50 p-2">
+                                {{ field }}
+                            </div>
+                            {% if field.help_text %}
+                                <div class="form-help">{{ field.help_text }}</div>
+                            {% endif %}
+                            {% for error in field.errors %}
+                                <div class="form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="form-group mb-6">
+                            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <div class="form-help">{{ field.help_text }}</div>
+                            {% endif %}
+                            {% for error in field.errors %}
+                                <div class="form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                <div class="flex justify-end gap-4">
+                    <a href="{% url 'events:list' %}" class="btn btn-secondary">Annuleren</a>
+                    <button type="submit" class="btn btn-primary">
+                        <i data-feather="save"></i>
+                        Opslaan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

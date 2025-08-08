@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Uitnodigingscodes Beheer - SV Rap 8{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Uitnodigingscodes Beheer</h1>
+    <p class="page-subtitle">Beheer uitnodigingscodes voor nieuwe speler registraties</p>
+</div>
+
+<!-- Navigation -->
+<div class="card mb-4">
+    <div class="card-content">
+        <nav class="d-flex justify-content-between align-items-center">
+            <div class="d-flex gap-3">
+                <a href="{% url 'users:admin_dashboard' %}" class="btn btn-ghost">
+                    <i data-feather="arrow-left"></i>
+                    Terug naar Dashboard
+                </a>
+            </div>
+        </nav>
+    </div>
+</div>
+
+<!-- Create New Invitation Code -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3 class="card-title">Nieuwe Uitnodigingscode Aanmaken</h3>
+    </div>
+    <div class="card-content">
+        <form method="post" class="row g-3">
+            {% csrf_token %}
+            <div class="col-md-3">
+                <label for="description" class="form-label">Beschrijving</label>
+                <input type="text" id="description" name="description" class="form-input" 
+                       placeholder="Bijv. Nieuwe spelers 2025">
+            </div>
+            <div class="col-md-2">
+                <label for="max_uses" class="form-label">Max Gebruik</label>
+                <input type="number" id="max_uses" name="max_uses" class="form-input" 
+                       placeholder="Onbeperkt" min="1">
+            </div>
+            <div class="col-md-2">
+                <label for="expires_at" class="form-label">Verloopt op</label>
+                <input type="date" id="expires_at" name="expires_at" class="form-input">
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">
+                    <i data-feather="plus"></i>
+                    Aanmaken
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Invitation Codes Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h3 class="card-title">Uitnodigingscodes ({{ invitations.count }})</h3>
+    </div>
+    <div class="card-content p-0">
+        {% if invitations %}
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Beschrijving</th>
+                            <th class="hide-mobile">Aangemaakt</th>
+                            <th class="hide-mobile">Gebruikt</th>
+                            <th class="hide-mobile">Max Gebruik</th>
+                            <th class="hide-mobile">Verloopt</th>
+                            <th>Status</th>
+                            <th>Acties</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for invitation in invitations %}
+                        <tr>
+                            <td>
+                                <code class="bg-secondary p-1 rounded">{{ invitation.code }}</code>
+                            </td>
+                            <td>{{ invitation.description|default:"Geen beschrijving" }}</td>
+                            <td class="hide-mobile">
+                                <div>{{ invitation.created_at|date:"d/m/Y" }}</div>
+                                <div class="text-sm text-secondary">{{ invitation.created_at|date:"H:i" }}</div>
+                            </td>
+                            <td class="hide-mobile text-center">
+                                <span class="font-medium">{{ invitation.used_count }}</span>
+                            </td>
+                            <td class="hide-mobile text-center">
+                                {{ invitation.max_uses|default:"∞" }}
+                            </td>
+                            <td class="hide-mobile">
+                                {% if invitation.expires_at %}
+                                    <div>{{ invitation.expires_at|date:"d M Y" }}</div>
+                                    {% if invitation.expires_at|date:"Y-m-d" < today|date:"Y-m-d" %}
+                                        <span class="text-error text-sm">Verlopen</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-secondary">Geen vervaldatum</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if invitation.is_active %}
+                                    {% if invitation.expires_at and invitation.expires_at|date:"Y-m-d" < today|date:"Y-m-d" %}
+                                        <span class="badge badge-error">Verlopen</span>
+                                    {% elif invitation.max_uses and invitation.used_count >= invitation.max_uses %}
+                                        <span class="badge badge-warning">Vol</span>
+                                    {% else %}
+                                        <span class="badge badge-success">Actief</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge badge-secondary">Inactief</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <form method="post" action="{% url 'users:admin_toggle_invitation' invitation.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm {% if invitation.is_active %}btn-warning{% else %}btn-success{% endif %}">
+                                            {% if invitation.is_active %}
+                                                <i data-feather="pause"></i>
+                                            {% else %}
+                                                <i data-feather="play"></i>
+                                            {% endif %}
+                                        </button>
+                                    </form>
+                                    
+                                    <button type="button" class="btn btn-sm btn-ghost" 
+                                            onclick="copyToClipboard('{{ invitation.code }}')"
+                                            title="Kopieer code">
+                                        <i data-feather="copy"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="p-6 text-center">
+                <div class="text-secondary mb-4">
+                    <i data-feather="mail" class="fs-1"></i>
+                </div>
+                <h4>Nog geen uitnodigingscodes</h4>
+                <p class="text-secondary">Maak je eerste uitnodigingscode aan om nieuwe spelers te laten registreren.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Usage Instructions -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Hoe werken uitnodigingscodes?</h3>
+    </div>
+    <div class="card-content">
+        <div class="row">
+            <div class="col-md-6">
+                <h5><i data-feather="info"></i> Voor nieuwe spelers:</h5>
+                <p class="text-secondary">
+                    Nieuwe spelers hebben een uitnodigingscode nodig om zich te kunnen registreren. 
+                    Zonder een geldige code kunnen zij geen account aanmaken.
+                </p>
+            </div>
+            <div class="col-md-6">
+                <h5><i data-feather="settings"></i> Beheer opties:</h5>
+                <ul class="text-secondary">
+                    <li>Stel een maximaal aantal gebruiken in</li>
+                    <li>Voeg een vervaldatum toe</li>
+                    <li>Activeer/deactiveer codes wanneer nodig</li>
+                    <li>Kopieer codes om te delen</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.fs-1 {
+    font-size: 3rem !important;
+}
+
+.gap-2 {
+    gap: 0.5rem;
+}
+
+.gap-3 {
+    gap: 0.75rem;
+}
+
+.text-error {
+    color: var(--error-600) !important;
+}
+
+.bg-secondary {
+    background-color: var(--secondary-100) !important;
+}
+
+.p-1 {
+    padding: 0.25rem;
+}
+
+.rounded {
+    border-radius: var(--radius-sm);
+}
+
+@media (max-width: 767px) {
+    .card-content .row .col-md-3,
+    .card-content .row .col-md-2 {
+        margin-bottom: 1rem;
+    }
+    
+    .d-flex.gap-2 {
+        flex-direction: column;
+    }
+    
+    .d-flex.gap-2 .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        // Create a temporary notification
+        const notification = document.createElement('div');
+        notification.className = 'notification notification-success';
+        notification.textContent = `Code "${text}" gekopieerd naar klembord!`;
+        document.body.appendChild(notification);
+        
+        // Animate in
+        notification.classList.add('animate-slide-in');
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            notification.classList.add('animate-slide-out');
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 3000);
+    }).catch(function(err) {
+        console.error('Could not copy text: ', err);
+        alert('Kon code niet kopiëren. Probeer handmatig te selecteren en kopiëren.');
+    });
+}
+</script>
+{% endblock %}
