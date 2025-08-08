@@ -1,9 +1,35 @@
+from datetime import date, timedelta
+
 from django import forms
+from django.utils import timezone
 
 from .models import Event
 
 
 class EventForm(forms.ModelForm):
+    # Additional fields for recurring events
+    recurrence_type = forms.ChoiceField(
+        choices=Event.RECURRENCE_TYPES,
+        initial="none",
+        required=False,
+        widget=forms.Select(attrs={"class": "form-select"}),
+        label="Herhaling",
+        help_text="Selecteer hoe vaak dit evenement herhaald moet worden",
+    )
+
+    recurrence_end_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(
+            attrs={
+                "type": "date",
+                "class": "form-control",
+                "min": date.today().strftime("%Y-%m-%d"),
+            }
+        ),
+        label="Einddatum herhaling",
+        help_text="Tot welke datum moet het evenement herhaald worden?",
+    )
+
     class Meta:
         model = Event
         fields = [
@@ -51,4 +77,45 @@ class EventForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Format datetime for display in dd/mm/yyyy hh:mm format
         if self.instance and self.instance.pk and self.instance.date:
-            self.initial["date"] = self.instance.date.strftime("%d/%m/%Y %H:%M")
+            # Convert to local timezone before formatting
+            local_date = timezone.localtime(self.instance.date)
+            self.initial["date"] = local_date.strftime("%d/%m/%Y %H:%M")
+            # Set recurring fields if editing an existing recurring event
+            if self.instance.is_recurring:
+                self.initial["recurrence_type"] = self.instance.recurrence_type
+                self.initial["recurrence_end_date"] = self.instance.recurrence_end_date
+
+        # Set default end date to 3 months from now for new events
+        if not self.instance.pk:
+            self.initial["recurrence_end_date"] = date.today() + timedelta(days=90)
+
+    def clean_date(self):
+        """Convert the date from local timezone to UTC for storage"""
+        date_value = self.cleaned_data.get("date")
+        if date_value:
+            # If the date is naive (no timezone info), treat it as local time
+            if timezone.is_naive(date_value):
+                # Convert from local timezone to UTC
+                date_value = timezone.make_aware(date_value)
+        return date_value
+
+    def clean(self):
+        cleaned_data = super().clean()
+        recurrence_type = cleaned_data.get("recurrence_type")
+        recurrence_end_date = cleaned_data.get("recurrence_end_date")
+        event_date = cleaned_data.get("date")
+
+        # If recurrence is enabled, end date is required
+        if recurrence_type and recurrence_type != "none":
+            if not recurrence_end_date:
+                raise forms.ValidationError(
+                    "Einddatum is verplicht voor herhalende evenementen."
+                )
+
+            # End date must be after event date
+            if event_date and recurrence_end_date <= event_date.date():
+                raise forms.ValidationError(
+                    "Einddatum moet na de eerste evenementdatum liggen."
+                )
+
+        return cleaned_data

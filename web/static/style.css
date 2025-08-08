@@ -1378,6 +1378,9 @@ a:hover {
 .event-filters .badge {
     background: var(--gradient-primary);
 }
+.event-card-content {
+    min-height: 120px;
+}
 .card.event-highlight,
 [data-event-id].event-highlight,
 .event-highlight {
@@ -1408,6 +1411,12 @@ a:hover {
     100% {
         box-shadow: 0 0 0 4px #3b82f6, 0 8px 25px -5px rgba(59, 130, 246, 0.5);
         transform: translateY(-4px) scale(1);
+    }
+}
+
+@media (max-width: 480px) {
+    .attendance-buttons-wrap {
+        width: 100%;
     }
 }
 

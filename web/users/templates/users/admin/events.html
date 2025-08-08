@@ -135,6 +135,11 @@
                                        title="Bewerk Evenement">
                                         <i data-feather="edit"></i>
                                     </a>
+                                    <a href="{% url 'events:delete' event.pk %}" 
+                                       class="btn btn-sm btn-outline-danger"
+                                       title="Verwijder Evenement">
+                                        <i data-feather="trash-2"></i>
+                                    </a>
                                 </div>
                             </td>
                         </tr>

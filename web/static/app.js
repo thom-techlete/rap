@@ -1,6 +1,3 @@
-// SV Rap 8 Event Presence - Modern JavaScript
-console.log('🏈 SV Rap 8 Event Presence loaded');
-
 // Global state
 let userMenuOpen = false;
 let mobileMenuOpen = false;
@@ -18,8 +15,6 @@ function initializeApp() {
     initializeAnimations();
     initializeFormValidation();
     initializeTooltips();
-    
-    console.log('✅ App initialized successfully');
 }
 
 // Handle event highlighting from dashboard links
@@ -34,14 +29,11 @@ function handleEventHighlighting() {
 
 // Highlight specific event with blue glow
 function highlightEvent(eventId) {
-    console.log('Attempting to highlight event:', eventId);
     
     // Find the event card by ID or data attribute
     const eventElement = document.querySelector(`[data-event-id="${eventId}"]`) ||
                         document.querySelector(`#event-${eventId}`) ||
                         document.querySelector(`.event-card[data-id="${eventId}"]`);
-    
-    console.log('Found event element:', eventElement);
     
     if (eventElement) {
         // Scroll to the event
@@ -52,7 +44,6 @@ function highlightEvent(eventId) {
         
         // Add highlight classes with a slight delay
         setTimeout(() => {
-            console.log('Adding highlight classes to:', eventElement);
             eventElement.classList.add('event-highlight');
             eventElement.classList.add('event-highlight-pulse');
             
@@ -81,10 +72,6 @@ function highlightEvent(eventId) {
         }, 2000); // Increased delay so we can see the effect
     } else {
         console.error('Event element not found for ID:', eventId);
-        // Try alternative selectors
-        console.log('Trying alternative selectors...');
-        const allEventElements = document.querySelectorAll('[data-event-id]');
-        console.log('All elements with data-event-id:', allEventElements);
     }
 }
 

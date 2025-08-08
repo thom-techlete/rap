@@ -285,6 +285,7 @@ CSRF_COOKIE_SECURE = bool_config("CSRF_COOKIE_SECURE", default=False)
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_NAME = "rap_csrftoken"
+CSRF_HEADER_NAME = "HTTP_X_CSRFTOKEN"  # Default, but being explicit
 
 # File upload security
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # 5MB

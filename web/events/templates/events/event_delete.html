@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Evenement verwijderen - SV Rap 8
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.alert-danger {
+    border-left: 4px solid #dc3545;
+}
+.alert-warning {
+    border-left: 4px solid #ffc107;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="text-center mb-5">
+    <h1 class="display-5 fw-bold text-danger mb-3">
+        <i data-feather="trash-2" style="width: 2.5rem; height: 2.5rem; margin-right: 1rem; color: #dc3545;"></i>
+        Evenement verwijderen
+    </h1>
+    <p class="lead text-muted">
+        Weet u zeker dat u dit evenement wilt verwijderen?
+    </p>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h2 class="card-title h5 mb-0">
+                    <i data-feather="info" style="width: 1.5rem; height: 1.5rem; margin-right: 0.5rem;"></i>
+                    Evenement details
+                </h2>
+            </div>
+            
+            <div class="card-body">
+                <!-- Event Information -->
+                <div class="alert alert-light mb-4">
+                    <div class="d-flex align-items-start">
+                        <div class="rounded-2 p-2 flex-shrink-0 me-3" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white;">
+                            {% if 'training' in event.name.lower %}
+                                <i data-feather="activity" style="width: 1.25rem; height: 1.25rem;"></i>
+                            {% elif 'wedstrijd' in event.name.lower %}
+                                <i data-feather="target" style="width: 1.25rem; height: 1.25rem;"></i>
+                            {% else %}
+                                <i data-feather="calendar" style="width: 1.25rem; height: 1.25rem;"></i>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1">
+                            <h4 class="mb-2">{{ event.name }}</h4>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-1">
+                                        <i data-feather="calendar" class="me-2" style="width: 1rem; height: 1rem;"></i>
+                                        <strong>Datum:</strong> {{ event.date|date:"l j F Y" }}
+                                    </p>
+                                    <p class="mb-1">
+                                        <i data-feather="clock" class="me-2" style="width: 1rem; height: 1rem;"></i>
+                                        <strong>Tijd:</strong> {{ event.date|date:"H:i" }} uur
+                                    </p>
+                                    <p class="mb-1">
+                                        <i data-feather="tag" class="me-2" style="width: 1rem; height: 1rem;"></i>
+                                        <strong>Type:</strong> {{ event.get_event_type_display }}
+                                    </p>
+                                </div>
+                                <div class="col-md-6">
+                                    {% if event.location %}
+                                    <p class="mb-1">
+                                        <i data-feather="map-pin" class="me-2" style="width: 1rem; height: 1rem;"></i>
+                                        <strong>Locatie:</strong> {{ event.location }}
+                                    </p>
+                                    {% endif %}
+                                    {% if event.is_mandatory %}
+                                    <p class="mb-1">
+                                        <i data-feather="alert-circle" class="me-2" style="width: 1rem; height: 1rem;"></i>
+                                        <span class="badge bg-warning text-dark">Verplicht</span>
+                                    </p>
+                                    {% endif %}
+                                    {% if event.is_recurring %}
+                                    <p class="mb-1">
+                                        <i data-feather="repeat" class="me-2" style="width: 1rem; height: 1rem;"></i>
+                                        <span class="badge bg-info">{{ event.get_recurrence_display }}</span>
+                                    </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% if event.description %}
+                            <div class="mt-3">
+                                <p class="mb-0 text-muted">{{ event.description }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Warning about deletion -->
+                <div class="alert alert-danger">
+                    <div class="d-flex align-items-start">
+                        <i data-feather="alert-triangle" class="me-2 mt-1" style="width: 1.25rem; height: 1.25rem;"></i>
+                        <div>
+                            <strong>Waarschuwing!</strong> Deze actie kan niet ongedaan worden gemaakt.
+                            <ul class="mt-2 mb-0">
+                                <li>Alle aanwezigheidsgegevens voor dit evenement worden ook verwijderd</li>
+                                <li>Spelers die al hebben gereageerd, verliezen hun reactie</li>
+                                {% if is_recurring_event %}
+                                <li>Dit evenement is onderdeel van een herhalingsserie</li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recurring Event Delete Options -->
+                {% if is_recurring_event %}
+                <div class="alert alert-warning">
+                    <div class="d-flex align-items-start">
+                        <i data-feather="repeat" class="me-2 mt-1" style="width: 1.25rem; height: 1.25rem;"></i>
+                        <div class="w-100">
+                            <strong>Herhalend evenement verwijderen</strong>
+                            <p class="mb-3 mt-2">Dit evenement is onderdeel van een reeks. Wat wilt u verwijderen?</p>
+                            
+                            <form method="post">
+                                {% csrf_token %}
+                                
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="radio" name="delete_series" value="false" id="delete_single" checked>
+                                    <label class="form-check-label fw-medium" for="delete_single">
+                                        Alleen dit evenement verwijderen
+                                    </label>
+                                    <div class="form-text">
+                                        Het evenement wordt verwijderd uit de reeks. Andere evenementen blijven bestaan.
+                                    </div>
+                                </div>
+                                
+                                <div class="form-check mb-4">
+                                    <input class="form-check-input" type="radio" name="delete_series" value="true" id="delete_all">
+                                    <label class="form-check-label fw-medium" for="delete_all">
+                                        Dit en alle toekomstige evenementen verwijderen
+                                    </label>
+                                    <div class="form-text">
+                                        Alle evenementen in deze reeks vanaf dit evenement worden verwijderd ({{ future_events_count }} evenementen).
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <button type="submit" class="btn btn-danger">
+                                        <i data-feather="trash-2"></i>
+                                        Verwijderen
+                                    </button>
+                                    <a href="{% url 'events:list' %}" class="btn btn-outline-secondary">
+                                        <i data-feather="x"></i>
+                                        Annuleren
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <!-- Single Event Delete -->
+                <form method="post" class="mt-4">
+                    {% csrf_token %}
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button type="submit" class="btn btn-danger">
+                            <i data-feather="trash-2"></i>
+                            Ja, verwijder dit evenement
+                        </button>
+                        <a href="{% url 'events:list' %}" class="btn btn-outline-secondary">
+                            <i data-feather="x"></i>
+                            Annuleren
+                        </a>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Feather icons
+    feather.replace();
+    
+    // Update button text based on selected option
+    const deleteButtons = document.querySelectorAll('input[name="delete_series"]');
+    const submitButton = document.querySelector('button[type="submit"]');
+    
+    if (deleteButtons.length > 0 && submitButton) {
+        deleteButtons.forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (this.value === 'true') {
+                    submitButton.innerHTML = '<i data-feather="trash-2"></i> Reeks verwijderen';
+                } else {
+                    submitButton.innerHTML = '<i data-feather="trash-2"></i> Evenement verwijderen';
+                }
+                feather.replace();
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

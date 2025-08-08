@@ -404,7 +404,7 @@
     {% if past_events %}
         <div class="timeline-container position-relative">
             <!-- Continuous timeline line -->
-            <div class="timeline-spine position-absolute" style="left: 10px; top: 0; bottom: 0; width: 2px; background: linear-gradient(to bottom, #e5e7eb 0%, #e5e7eb 100%); z-index: 1;"></div>
+            <div class="timeline-spine position-absolute" style="left: 10px; top: 0; bottom: 0; width: 2px; background: linear-gradient(to bottom, #e5e7eb 0%, #e5e7eb 100%); z-index: 0;"></div>
             
             {% for event in past_events %}
                 {% ifchanged event.date.year event.date.month %}
@@ -516,23 +516,25 @@ function clearFilters() {
 
 // CSRF token helper
 function getCSRFToken() {
-    // Try to get from cookie first
-    let cookieValue = getCookie('csrftoken');
+    // Try to get from meta tag first (most reliable)
+    const metaToken = document.querySelector('meta[name=csrf-token]');
+    if (metaToken && metaToken.content) {
+        return metaToken.content;
+    }
+    
+    // Try to get from input field
+    const inputToken = document.querySelector('input[name=csrfmiddlewaretoken]');
+    if (inputToken && inputToken.value) {
+        return inputToken.value;
+    }
+    
+    // Finally try cookie as fallback
+    let cookieValue = getCookie('rap_csrftoken');
     if (cookieValue) {
         return cookieValue;
     }
     
-    // Try to get from meta tag or input
-    const metaToken = document.querySelector('meta[name=csrf-token]');
-    if (metaToken) {
-        return metaToken.content;
-    }
-    
-    const inputToken = document.querySelector('input[name=csrfmiddlewaretoken]');
-    if (inputToken) {
-        return inputToken.value;
-    }
-    
+    console.error('CSRF token not found!');
     return null;
 }
 
@@ -563,6 +565,17 @@ async function setAttendance(eventId, present) {
         return;
     }
     
+    // Get CSRF token
+    const csrfToken = getCSRFToken();
+    if (!csrfToken) {
+        console.error('No CSRF token found');
+        console.error('Meta tag:', document.querySelector('meta[name=csrf-token]'));
+        console.error('Input field:', document.querySelector('input[name=csrfmiddlewaretoken]'));
+        console.error('Cookie:', getCookie('rap_csrftoken'));
+        showErrorMessage('Beveiligingstoken niet gevonden. Ververs de pagina en probeer opnieuw.');
+        return;
+    }
+    
     // Disable buttons during request
     presentBtn.disabled = true;
     absentBtn.disabled = true;
@@ -572,7 +585,7 @@ async function setAttendance(eventId, present) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': getCSRFToken(),
+                'X-CSRFToken': csrfToken,
             },
             body: JSON.stringify({ present: present })
         });

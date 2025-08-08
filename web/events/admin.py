@@ -12,10 +12,17 @@ class EventAdmin(admin.ModelAdmin):
         "date",
         "location",
         "is_mandatory",
+        "recurrence_display",
         "attendance_info",
         "is_upcoming_display",
     ]
-    list_filter = ["event_type", "is_mandatory", "date", "created_at"]
+    list_filter = [
+        "event_type",
+        "is_mandatory",
+        "recurrence_type",
+        "date",
+        "created_at",
+    ]
     search_fields = ["name", "description", "location"]
     date_hierarchy = "date"
     ordering = ["-date"]
@@ -28,6 +35,18 @@ class EventAdmin(admin.ModelAdmin):
             {"fields": ("is_mandatory", "max_participants"), "classes": ("collapse",)},
         ),
         (
+            "Herhaling",
+            {
+                "fields": (
+                    "recurrence_type",
+                    "recurrence_end_date",
+                    "recurring_event_link_id",
+                ),
+                "classes": ("collapse",),
+                "description": "Instellingen voor herhalende evenementen",
+            },
+        ),
+        (
             "Metadata",
             {
                 "fields": ("created_at", "updated_at"),
@@ -37,7 +56,7 @@ class EventAdmin(admin.ModelAdmin):
         ),
     )
 
-    readonly_fields = ("created_at", "updated_at")
+    readonly_fields = ("created_at", "updated_at", "recurring_event_link_id")
 
     def attendance_info(self, obj):
         """Show attendance information with link to attendance overview"""
@@ -59,6 +78,25 @@ class EventAdmin(admin.ModelAdmin):
         )
 
     attendance_info.short_description = "Aanwezigheid"
+
+    def recurrence_display(self, obj):
+        """Show recurrence information"""
+        if obj.recurrence_type == "none" or not obj.recurrence_type:
+            return "-"
+
+        display = dict(Event.RECURRENCE_TYPES)[obj.recurrence_type]
+        if obj.recurrence_end_date:
+            display += f" (tot {obj.recurrence_end_date.strftime('%d-%m-%Y')})"
+
+        if obj.recurring_event_link_id:
+            count = Event.objects.filter(
+                recurring_event_link_id=obj.recurring_event_link_id
+            ).count()
+            display += f" ({count} evenementen)"
+
+        return display
+
+    recurrence_display.short_description = "Herhaling"
 
     def is_upcoming_display(self, obj):
         """Show if event is upcoming with icon"""

@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 from events.models import Event
 
@@ -131,6 +132,7 @@ def toggle_attendance(request: HttpRequest, event_id: int):
 
 @login_required
 @require_POST
+@ensure_csrf_cookie
 def set_attendance(request: HttpRequest, event_id: int):
     """AJAX endpoint to set specific attendance status"""
     import json

@@ -8,6 +8,27 @@
     {% endif %}
 {% endblock %}
 
+{% block extra_css %}
+<!-- Flatpickr CSS for datepicker -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/bootstrap.css">
+<style>
+.input-group .input-group-text {
+    background-color: var(--bs-light);
+    border-left: 0;
+    color: var(--bs-secondary);
+    transition: color 0.15s ease-in-out;
+}
+.input-group .input-group-text:hover {
+    color: var(--bs-primary);
+}
+.flatpickr-calendar {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--bs-border-color);
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="text-center mb-5">
     <h1 class="display-5 fw-bold text-dark mb-3">
@@ -89,7 +110,12 @@
                                     <span class="text-danger">*</span>
                                 {% endif %}
                             </label>
-                            {{ form.date }}
+                            <div class="input-group">
+                                {{ form.date }}
+                                <span class="input-group-text">
+                                    <i data-feather="calendar" style="width: 1rem; height: 1rem;"></i>
+                                </span>
+                            </div>
                             {% if form.date.help_text %}
                                 <div class="form-text">{{ form.date.help_text }}</div>
                             {% endif %}
@@ -165,6 +191,67 @@
                                 </div>
                             {% endif %}
                         </div>
+                        
+                        <!-- Recurring Event Section -->
+                        {% if not event %}
+                        <div class="col-12">
+                            <hr class="my-4">
+                            <h5 class="mb-3">
+                                <i data-feather="repeat" style="width: 1.25rem; height: 1.25rem; margin-right: 0.5rem;"></i>
+                                Herhalend evenement
+                            </h5>
+                        </div>
+                        
+                        <!-- Recurrence Type -->
+                        <div class="col-md-6">
+                            <label for="{{ form.recurrence_type.id_for_label }}" class="form-label fw-medium">
+                                {{ form.recurrence_type.label }}
+                            </label>
+                            {{ form.recurrence_type }}
+                            {% if form.recurrence_type.help_text %}
+                                <div class="form-text">{{ form.recurrence_type.help_text }}</div>
+                            {% endif %}
+                            {% if form.recurrence_type.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.recurrence_type.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Recurrence End Date -->
+                        <div class="col-md-6" id="recurrence-end-date-field" style="display: none;">
+                            <label for="{{ form.recurrence_end_date.id_for_label }}" class="form-label fw-medium">
+                                {{ form.recurrence_end_date.label }}
+                                <span class="text-danger">*</span>
+                            </label>
+                            {{ form.recurrence_end_date }}
+                            {% if form.recurrence_end_date.help_text %}
+                                <div class="form-text">{{ form.recurrence_end_date.help_text }}</div>
+                            {% endif %}
+                            {% if form.recurrence_end_date.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.recurrence_end_date.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        {% elif event.is_recurring %}
+                        <!-- Show recurring info for existing events -->
+                        <div class="col-12">
+                            <hr class="my-4">
+                            <div class="alert alert-info">
+                                <div class="d-flex align-items-start">
+                                    <i data-feather="repeat" class="me-2 mt-1" style="width: 1.25rem; height: 1.25rem;"></i>
+                                    <div>
+                                        <strong>Herhalend evenement:</strong> {{ event.get_recurrence_display }}
+                                        <br>
+                                        <small class="text-muted">
+                                            Dit evenement is onderdeel van een reeks van {{ recurring_events_count }} evenementen.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
                     
                     {% if event %}
@@ -184,31 +271,92 @@
                                 </div>
                             </div>
                         </div>
+                        
+                        <!-- Recurring Event Update Options -->
+                        {% if is_recurring_event %}
+                        <div class="alert alert-warning mt-3" id="recurring-update-options">
+                            <div class="d-flex align-items-start">
+                                <i data-feather="alert-triangle" class="me-2 mt-1" style="width: 1.25rem; height: 1.25rem;"></i>
+                                <div class="w-100">
+                                    <strong>Herhalend evenement bewerken</strong>
+                                    <p class="mb-3 mt-2">
+                                        Dit evenement is onderdeel van een reeks van {{ recurring_events_count }} evenementen. 
+                                        {% if future_recurring_events_count %}
+                                            Er zijn nog {{ future_recurring_events_count }} toekomstige evenementen in deze reeks.
+                                        {% endif %}
+                                    </p>
+                                    <p class="mb-3"><strong>Hoe wilt u de wijzigingen toepassen?</strong></p>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="radio" name="update_series" value="false" id="update_single" checked>
+                                        <label class="form-check-label fw-medium" for="update_single">
+                                            <i data-feather="edit-3" style="width: 1rem; height: 1rem; margin-right: 0.5rem;"></i>
+                                            Alleen dit evenement bijwerken
+                                        </label>
+                                        <div class="form-text">
+                                            Het evenement wordt losgemaakt van de reeks en individueel bijgewerkt. 
+                                            De andere evenementen in de reeks blijven ongewijzigd.
+                                        </div>
+                                    </div>
+                                    
+                                    {% if future_recurring_events_count > 0 %}
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="update_series" value="true" id="update_all">
+                                        <label class="form-check-label fw-medium" for="update_all">
+                                            <i data-feather="copy" style="width: 1rem; height: 1rem; margin-right: 0.5rem;"></i>
+                                            Alle toekomstige evenementen in de reeks bijwerken ({{ future_recurring_events_count }} evenementen)
+                                        </label>
+                                        <div class="form-text">
+                                            Alle toekomstige evenementen in deze reeks krijgen dezelfde wijzigingen. 
+                                            De tijd wordt aangepast, maar de herhalingspatroon blijft behouden.
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <div class="alert alert-info mb-0 mt-2">
+                                        <small>
+                                            <i data-feather="info" style="width: 0.875rem; height: 0.875rem; margin-right: 0.25rem;"></i>
+                                            Er zijn geen toekomstige evenementen meer in deze reeks om bij te werken.
+                                        </small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
                     {% endif %}
                     
                     <hr class="my-4">
                     
                     <!-- Form Actions -->
-                    <div class="d-flex gap-2 flex-wrap">
-                        <button type="submit" class="btn btn-primary">
-                            {% if event %}
-                                <i data-feather="save"></i>
-                                Wijzigingen opslaan
-                            {% else %}
-                                <i data-feather="plus"></i>
-                                Evenement aanmaken
-                            {% endif %}
-                        </button>
-                        <a href="{% url 'events:list' %}" class="btn btn-outline-secondary">
-                            <i data-feather="x"></i>
-                            Annuleren
-                        </a>
+                                        <!-- Form Actions -->
+                    <div class="d-flex justify-content-start align-items-start gap-1">
+                        <div class="">
+                            <button type="submit" class="btn btn-primary w-100">
+                                {% if event %}
+                                    <i data-feather="save"></i>
+                                    Wijzigingen opslaan
+                                {% else %}
+                                    <i data-feather="plus"></i>
+                                    Evenement aanmaken
+                                {% endif %}
+                            </button>
+                        </div>
+                        
                         {% if event %}
-                            <a href="{% url 'events:admin_attendance' event.pk %}" class="btn btn-outline-info ms-auto">
-                                <i data-feather="users"></i>
-                                Aanwezigheid beheren
-                            </a>
+                            <div class="ms-auto">
+                                <a href="{% url 'events:delete' event.pk %}" class="btn btn-danger w-100">
+                                    <i data-feather="trash-2"></i>
+                                    Verwijderen
+                                </a>
+                            </div>
                         {% endif %}
+                        
+                        <div class="">
+                            <a href="{% url 'events:list' %}" class="btn btn-secondary w-100">
+                                <i data-feather="x"></i>
+                                Annuleren
+                            </a>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -216,17 +364,70 @@
     </div>
 </div>
 
+{% block extra_js %}
+<!-- Flatpickr JavaScript for datepicker -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/nl.js"></script>
+{% endblock %}
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize date field with proper formatting
+    // Initialize Feather icons after dynamic content loads
+    feather.replace();
+    
+    // Handle recurrence type selection
+    const recurrenceTypeField = document.getElementById('{{ form.recurrence_type.id_for_label }}');
+    const recurrenceEndDateField = document.getElementById('recurrence-end-date-field');
+    
+    if (recurrenceTypeField && recurrenceEndDateField) {
+        function toggleRecurrenceEndDate() {
+            const selectedValue = recurrenceTypeField.value;
+            if (selectedValue && selectedValue !== 'none') {
+                recurrenceEndDateField.style.display = 'block';
+                document.getElementById('{{ form.recurrence_end_date.id_for_label }}').required = true;
+            } else {
+                recurrenceEndDateField.style.display = 'none';
+                document.getElementById('{{ form.recurrence_end_date.id_for_label }}').required = false;
+            }
+        }
+        
+        // Initial state
+        toggleRecurrenceEndDate();
+        
+        // Listen for changes
+        recurrenceTypeField.addEventListener('change', toggleRecurrenceEndDate);
+    }
+    
+    // Initialize the datetime picker for event date field
     const dateField = document.getElementById('{{ form.date.id_for_label }}');
     if (dateField) {
-        // Add pattern validation for dd/mm/yyyy hh:mm format
-        dateField.setAttribute('pattern', '\\d{2}/\\d{2}/\\d{4} \\d{2}:\\d{2}');
+        flatpickr(dateField, {
+            enableTime: true,
+            dateFormat: "d/m/Y H:i",
+            time_24hr: true,
+            locale: "nl",
+            allowInput: true,
+            minDate: "today",
+            defaultDate: dateField.value || null,
+            onChange: function(selectedDates, dateStr, instance) {
+                // Update the input value
+                dateField.value = dateStr;
+            },
+            onReady: function(selectedDates, dateStr, instance) {
+                // Add calendar icon click handler
+                const calendarIcon = dateField.parentElement.querySelector('.input-group-text');
+                if (calendarIcon) {
+                    calendarIcon.addEventListener('click', function() {
+                        instance.open();
+                    });
+                    calendarIcon.style.cursor = 'pointer';
+                }
+            }
+        });
         
-        // Add input event listener for formatting assistance
+        // Add input validation for manual entry
         dateField.addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+            let value = e.target.value.replace(/[^\d]/g, ''); // Remove non-digits
             let formatted = '';
             
             if (value.length >= 2) {
@@ -259,10 +460,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 formatted += value.substr(10);
             }
             
+            // Limit to dd/mm/yyyy hh:mm format
+            if (formatted.length > 16) {
+                formatted = formatted.substring(0, 16);
+            }
+            
+            // Only update if the formatted value is different
             if (formatted !== e.target.value) {
+                const cursorPos = e.target.selectionStart;
                 e.target.value = formatted;
+                
+                // Restore cursor position
+                let newPos = cursorPos;
+                if (formatted.length > e.target.value.length) {
+                    newPos++;
+                }
+                e.target.setSelectionRange(newPos, newPos);
             }
         });
+        
+        // Add pattern validation
+        dateField.setAttribute('pattern', '\\d{2}/\\d{2}/\\d{4} \\d{2}:\\d{2}');
+        dateField.setAttribute('title', 'Voer een geldige datum en tijd in (dd/mm/jjjj hh:mm)');
     }
     
     // Auto-resize textarea
@@ -276,6 +495,54 @@ document.addEventListener('DOMContentLoaded', function() {
         // Trigger initial resize
         descriptionField.style.height = 'auto';
         descriptionField.style.height = descriptionField.scrollHeight + 'px';
+    }
+    
+    // Handle recurring event update options
+    const updateSingleRadio = document.getElementById('update_single');
+    const updateAllRadio = document.getElementById('update_all');
+    const recurringOptions = document.getElementById('recurring-update-options');
+    
+    if (updateSingleRadio && updateAllRadio && recurringOptions) {
+        function handleRecurringOptionChange() {
+            // Add visual feedback for the selected option
+            const singleCheckDiv = updateSingleRadio.closest('.form-check');
+            const allCheckDiv = updateAllRadio.closest('.form-check');
+            
+            if (updateSingleRadio.checked) {
+                singleCheckDiv.classList.add('border', 'border-warning', 'rounded', 'p-2', 'bg-light');
+                allCheckDiv.classList.remove('border', 'border-primary', 'rounded', 'p-2', 'bg-light');
+            } else if (updateAllRadio.checked) {
+                allCheckDiv.classList.add('border', 'border-primary', 'rounded', 'p-2', 'bg-light');
+                singleCheckDiv.classList.remove('border', 'border-warning', 'rounded', 'p-2', 'bg-light');
+            }
+        }
+        
+        // Initial state
+        handleRecurringOptionChange();
+        
+        // Listen for changes
+        updateSingleRadio.addEventListener('change', handleRecurringOptionChange);
+        updateAllRadio.addEventListener('change', handleRecurringOptionChange);
+        
+        // Add confirmation before submitting if updating all events
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                if (updateAllRadio.checked) {
+                    const futureEventsCount = {{ future_recurring_events_count|default:0 }};
+                    if (futureEventsCount > 0) {
+                        const confirmed = confirm(
+                            `Weet u zeker dat u alle ${futureEventsCount} toekomstige evenementen in deze reeks wilt bijwerken? ` +
+                            'Deze actie kan niet ongedaan worden gemaakt.'
+                        );
+                        if (!confirmed) {
+                            e.preventDefault();
+                            return false;
+                        }
+                    }
+                }
+            });
+        }
     }
 });
 </script>
