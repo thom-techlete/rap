@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # Production deployment script for RAP Web Application
-# Usage: ./deploy.sh [--setup|--update|--backup]
+# Usage: ./deploy.sh [domain_name] [--setup|--update|--backup]
 
 set -e
 
 # Configuration
-DOMAIN_NAME="rap8.nl"
-ACTION=${1:-"--setup"}
+DOMAIN_NAME=${1:-"your-domain.com"}
+ACTION=${2:-"--setup"}
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 DOCKER_DIR="$PROJECT_DIR/docker"
@@ -120,7 +120,7 @@ setup_ssl() {
         --standalone \
         --non-interactive \
         --agree-tos \
-        --email "admin@$DOMAIN_NAME" \
+        --email "thom@techletes.ai" \
         -d "$DOMAIN_NAME"
     
     # Copy certificates
