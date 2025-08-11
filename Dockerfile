@@ -28,7 +28,7 @@ COPY docker/entrypoint.sh /entrypoint.sh
 COPY web/ .
 
 # Create static files directory and logs
-RUN mkdir -p /app/static /app/media /app/logs
+RUN mkdir -p /app/staticfiles /app/media /app/logs
 
 # Create a non-root user
 RUN groupadd -r django && useradd -r -g django django

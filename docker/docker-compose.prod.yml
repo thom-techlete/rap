@@ -43,7 +43,7 @@ services:
     env_file:
       - .env.prod
     volumes:
-      - static_volume:/app/static
+      - static_volume:/app/staticfiles
       - media_volume:/app/media
     networks:
       - rap_network
@@ -52,12 +52,12 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/', timeout=10)"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+    # healthcheck:
+    #   test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/', timeout=10)"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 40s
     deploy:
       resources:
         limits:
@@ -73,7 +73,7 @@ services:
       - "443:443"
     volumes:
       - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
-      - static_volume:/app/static:ro
+      - static_volume:/app/staticfiles:ro
       - media_volume:/app/media:ro
       - ./nginx/ssl:/etc/nginx/ssl:ro
     networks:

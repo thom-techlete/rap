@@ -174,8 +174,8 @@ main() {
 # Handle different commands
 case "$1" in
     "gunicorn")
-        # Production server
-        main gunicorn --bind 0.0.0.0:8000 --workers 3 --worker-class gevent --worker-connections 1000 --max-requests 1000 --max-requests-jitter 50 --timeout 120 --keep-alive 2 --preload --access-logfile - --error-logfile - rap_web.wsgi:application
+        # Production server - using sync workers for Django compatibility
+        main gunicorn --bind 0.0.0.0:8000 --workers 2 --worker-class sync --max-requests 1000 --max-requests-jitter 50 --timeout 120 --keep-alive 2 --preload --access-logfile - --error-logfile - rap_web.wsgi:application
         ;;
     "runserver")
         # Development server
