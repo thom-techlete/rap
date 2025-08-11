@@ -48,6 +48,7 @@ dependencies = [
   "django-cors-headers",
   "django-extensions",
   "django-axes",
+  "setuptools",
 ]
 
 [project.optional-dependencies]

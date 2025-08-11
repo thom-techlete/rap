@@ -59,7 +59,8 @@ if [ "$INSTALL_PROD" = true ]; then
   echo -e "${YELLOW}🧮 Compiling production lockfile from '${PYPROJECT}'...${RESET}"
   pip-compile "${PYPROJECT}" \
       --output-file="${PROD_LOCK}" \
-      --generate-hashes
+      --generate-hashes \
+      --allow-unsafe
 
   echo -e "${YELLOW}📥 Installing production dependencies...${RESET}"
   pip install --require-hashes -r "${PROD_LOCK}"
