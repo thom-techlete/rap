@@ -109,7 +109,8 @@ services:
       - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
       - static_volume:/app/staticfiles:ro
       - media_volume:/app/media:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - /etc/letsencrypt/live/rap8.nl:/etc/nginx/ssl:ro
+      - /etc/letsencrypt/archive/rap8.nl:/etc/nginx/ssl/archive:ro
     networks:
       - rap_network
     depends_on:
