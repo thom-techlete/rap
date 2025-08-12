@@ -60,3 +60,38 @@ def attendance_status_class(status: bool | None):
         return "danger"
     else:
         return "secondary"
+
+
+@register.filter
+def sub(value, arg):
+    """
+    Template filter to subtract arg from value.
+    """
+    try:
+        return value - arg
+    except (ValueError, TypeError):
+        return value
+
+
+@register.filter
+def mul(value, arg):
+    """
+    Template filter to multiply value by arg.
+    """
+    try:
+        return value * arg
+    except (ValueError, TypeError):
+        return value
+
+
+@register.filter
+def div(value, arg):
+    """
+    Template filter to divide value by arg.
+    """
+    try:
+        if arg == 0:
+            return 0
+        return value / arg
+    except (ValueError, TypeError):
+        return value

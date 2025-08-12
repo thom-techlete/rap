@@ -95,6 +95,52 @@ def event_list(request: HttpRequest):
     return render(request, "events/event_list.html", context)
 
 
+def event_detail(request: HttpRequest, pk: int):
+    """Show detailed view of a specific event"""
+    event = get_object_or_404(Event, pk=pk)
+    
+    # Get all active players for attendance table
+    players = User.objects.filter(is_active=True).order_by("last_name", "first_name")
+    
+    # Get existing attendance records
+    attendances = {
+        att.user_id: att
+        for att in Attendance.objects.filter(event=event).select_related("user")
+    }
+    
+    # Create player attendance data for the table
+    player_attendance = []
+    for player in players:
+        attendance = attendances.get(player.id)
+        player_attendance.append(
+            {
+                "player": player,
+                "attendance": attendance,
+                "present": attendance.present if attendance else None,
+            }
+        )
+    
+    # Get user's attendance status if authenticated
+    user_attendance_status = None
+    if request.user.is_authenticated:
+        user_attendance_status = event.get_user_attendance_status(request.user)
+    
+    context = {
+        "event": event,
+        "player_attendance": player_attendance,
+        "user_attendance_status": user_attendance_status,
+        "is_upcoming": event.is_upcoming,
+        "total_players": len(player_attendance),
+        "present_count": sum(1 for pa in player_attendance if pa["present"] is True),
+        "absent_count": sum(1 for pa in player_attendance if pa["present"] is False),
+        "no_response_count": sum(
+            1 for pa in player_attendance if pa["present"] is None
+        ),
+    }
+    
+    return render(request, "events/event_detail.html", context)
+
+
 def event_create(request: HttpRequest):
     if not request.user.is_staff:
         return redirect("events:list")

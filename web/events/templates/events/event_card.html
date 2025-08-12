@@ -1,9 +1,9 @@
 {% load event_extras %}
 
-<div class="card border-0 shadow-sm" data-event-id="{{ event.id }}" style="background: white; transition: all 0.2s ease;">
+<div class="card border-0 shadow-sm event-card" data-event-id="{{ event.id }}" style="background: white; transition: all 0.2s ease; cursor: pointer;">
   <div class="card-body">
     <div class="event-card-content d-flex flex-column flex-md-row align-items-stretch justify-content-between mb-4 gap-4">
-      <div class="flex-grow-1 w-100">
+      <div class="flex-grow-1 w-100" onclick="window.location.href='{% url 'events:detail' event.id %}'">
         <div class="d-flex flex-column flex-sm-row align-items-start gap-3 mb-2">
           <div class="rounded-2 p-2 flex-shrink-0" style="background: var(--gradient-primary); color: white;">
             {% if 'training' in event.name.lower %}
@@ -41,7 +41,7 @@
         <!-- Attendance buttons - always visible for authenticated users -->
         {% if user.is_authenticated and is_upcoming %}
           {% with user_status=event|user_attendance_status:user %}
-            <div class="attendance-buttons-wrap d-flex gap-2 flex-column align-items-stretch">
+            <div class="attendance-buttons-wrap d-flex gap-2 flex-column align-items-stretch" onclick="event.stopPropagation();">
               <!-- Present button -->
               <button class="btn attendance-btn{% if user_status == True %} btn-success{% else %} btn-ghost{% endif %} flex-fill attendance-present-btn"
                 id="present-btn-{{ event.id }}"
@@ -67,7 +67,7 @@
 
         <!-- Admin actions dropdown -->
         {% if user.is_staff %}
-          <div class="dropdown ms-2 position-absolute top-0 end-0 p-2">
+          <div class="dropdown ms-2 position-absolute top-0 end-0 p-2" onclick="event.stopPropagation();">
             <button class="btn btn-ghost btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="padding: 0.375rem;">
               <i data-feather="more-vertical" style="width: 1rem; height: 1rem;"></i>
             </button>
@@ -120,7 +120,7 @@
     </div>
 
     <!-- Event status and attendance info -->
-    <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between pt-4 gap-3" style="border-top: 1px solid #e5e7eb;">
+    <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between pt-4 gap-3" style="border-top: 1px solid #e5e7eb;" onclick="window.location.href='{% url 'events:detail' event.id %}'">
       <div class="d-flex flex-wrap align-items-center gap-4">
         <div class="d-flex align-items-center gap-2">
           <div class="rounded-circle"
