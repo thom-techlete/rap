@@ -109,7 +109,6 @@ class Player(AbstractUser):
     )  # Keep for backward compatibility
     foto = models.ImageField(
         upload_to="profile_pics/",
-        default="media/sv-rap.png",
         null=True,
         blank=True,
         verbose_name="Profielfoto",

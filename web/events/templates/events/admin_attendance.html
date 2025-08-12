@@ -150,7 +150,11 @@
                                             <img src="{{ pa.player.foto.url }}" alt="{{ pa.player.get_full_name }}">
                                         {% else %}
                                             <div class="avatar-fallback">
-                                                {{ pa.player.first_name|first|upper }}{{ pa.player.last_name|first|upper }}
+                                                {% if pa.player.first_name %}
+                                                    {{ pa.player.first_name|first|upper }}{{ pa.player.last_name|first|upper }}
+                                                {% else %}
+                                                    {{ pa.player.username|first|upper }}
+                                                {% endif %}
                                             </div>
                                         {% endif %}
                                     </div>

@@ -73,7 +73,13 @@
                   {% if user.foto %}
                     <img src="{{ user.foto.url }}" alt="{{ user.get_full_name }}" />
                   {% else %}
-                    <div class="avatar-fallback">{{ user.first_name|first|upper }}{{ user.last_name|first|upper }}</div>
+                    <div class="avatar-fallback">
+                      {% if user.firstname %}
+                      {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                      {% else %}
+                      {{ user.username|first|upper }}
+                      {% endif %}
+                    </div>
                   {% endif %}
                 </div>
                 <span class="user-name">{{ user.get_full_name|default:user.username }}</span>
