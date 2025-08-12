@@ -63,7 +63,7 @@ services:
     build: ..
     restart: always
     env_file:
-      - .env.prod
+      - .env.prod.http
     networks:
       - rap_network
     depends_on:
@@ -83,7 +83,7 @@ services:
     build: ..
     restart: always
     env_file:
-      - .env.prod
+      - .env.prod.http
     networks:
       - rap_network
     depends_on:
