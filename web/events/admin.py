@@ -1,7 +1,68 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.utils.html import format_html
 
 from .models import Event
+
+
+def send_event_notification_action(modeladmin, request, queryset):
+    """Admin action to send new event notifications for selected events"""
+    from notifications.utils import send_new_event_notification
+
+    success_count = 0
+    error_count = 0
+
+    for event in queryset:
+        try:
+            send_new_event_notification(event)
+            success_count += 1
+        except Exception as e:
+            error_count += 1
+            messages.error(
+                request, f"Fout bij verzenden notificatie voor '{event.name}': {str(e)}"
+            )
+
+    if success_count > 0:
+        messages.success(
+            request,
+            f"Nieuwe evenement notificaties verzonden voor {success_count} evenement(en)",
+        )
+
+    if error_count > 0:
+        messages.warning(request, f"{error_count} notificatie(s) zijn mislukt")
+
+
+send_event_notification_action.short_description = (
+    "Verzend nieuwe evenement notificaties"
+)
+
+
+def send_event_reminder_action(modeladmin, request, queryset):
+    """Admin action to send event reminders for selected events"""
+    from notifications.utils import send_event_reminder_notification
+
+    success_count = 0
+    error_count = 0
+
+    for event in queryset:
+        try:
+            send_event_reminder_notification(event)
+            success_count += 1
+        except Exception as e:
+            error_count += 1
+            messages.error(
+                request, f"Fout bij verzenden herinnering voor '{event.name}': {str(e)}"
+            )
+
+    if success_count > 0:
+        messages.success(
+            request, f"Herinneringen verzonden voor {success_count} evenement(en)"
+        )
+
+    if error_count > 0:
+        messages.warning(request, f"{error_count} herinnering(en) zijn mislukt")
+
+
+send_event_reminder_action.short_description = "Verzend evenement herinneringen"
 
 
 @admin.register(Event)
@@ -26,6 +87,7 @@ class EventAdmin(admin.ModelAdmin):
     search_fields = ["name", "description", "location"]
     date_hierarchy = "date"
     ordering = ["-date"]
+    actions = [send_event_notification_action, send_event_reminder_action]
 
     fieldsets = (
         ("Basis informatie", {"fields": ("name", "description", "event_type")}),

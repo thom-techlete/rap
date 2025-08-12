@@ -1,0 +1,35 @@
+Herinnering: {{ event.name }}
+
+Hallo,
+
+Dit is een herinnering voor het aankomende evenement waar je nog geen aanwezigheid voor hebt doorgegeven.
+
+Evenement Details:
+- Naam: {{ event.name }}
+- Type: {{ event_type_display }}
+- Datum en tijd: {{ event_date_formatted }}
+{% if event.location %}
+- Locatie: {{ event.location }}
+{% endif %}
+- Verplichte aanwezigheid: {{ is_mandatory_text }}
+{% if event.description %}
+
+Beschrijving:
+{{ event.description }}
+{% endif %}
+
+{% if event.is_mandatory %}
+Dit is een verplicht evenement voor alle spelers.
+{% endif %}
+
+{% if event.max_participants %}
+Let op: Dit evenement heeft een maximum van {{ event.max_participants }} deelnemers.
+{% endif %}
+
+Geef zo spoedig mogelijk je aanwezigheid door zodat de organisatie weet op hoeveel spelers er gerekend kan worden.
+
+Bekijk het evenement en geef je aanwezigheid door:
+{{ events_url }}
+
+Met sportgroeten,
+Het SV Rap 8 team

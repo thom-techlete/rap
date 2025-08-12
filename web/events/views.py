@@ -9,6 +9,7 @@ from django.http import HttpRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
+from notifications.utils import send_bulk_notifications, send_new_event_notification
 
 from .forms import EventForm
 from .models import Event
@@ -121,14 +122,47 @@ def event_create(request: HttpRequest):
                     base_event_data, recurrence_type, recurrence_end_date
                 )
                 event_count = len(events)
-                messages.success(
-                    request,
-                    f"Herhalend evenement succesvol aangemaakt. {event_count} evenementen toegevoegd.",
-                )
+
+                # Send notification for all created events
+                try:
+                    success_count, error_count = send_bulk_notifications(
+                        events, "new_event"
+                    )
+                    if error_count > 0:
+                        messages.warning(
+                            request,
+                            f"Herhalend evenement succesvol aangemaakt ({event_count} evenementen), "
+                            f"maar er is een probleem opgetreden bij het verzenden van de notificatie.",
+                        )
+                    else:
+                        messages.success(
+                            request,
+                            f"Herhalend evenement succesvol aangemaakt. {event_count} evenementen toegevoegd "
+                            f"en één samengevatte notificatie verzonden naar alle actieve spelers.",
+                        )
+                except Exception as e:
+                    messages.warning(
+                        request,
+                        f"Herhalend evenement succesvol aangemaakt ({event_count} evenementen), "
+                        f"maar er is een probleem opgetreden bij het verzenden van de notificatie: {str(e)}",
+                    )
             else:
                 # Create single event
-                form.save()
-                messages.success(request, "Evenement succesvol aangemaakt.")
+                event = form.save()
+
+                # Send notification for the new event
+                try:
+                    send_new_event_notification(event)
+                    messages.success(
+                        request,
+                        "Evenement succesvol aangemaakt en notificaties verzonden naar alle actieve spelers.",
+                    )
+                except Exception as e:
+                    messages.warning(
+                        request,
+                        f"Evenement succesvol aangemaakt, maar er is een probleem opgetreden "
+                        f"bij het verzenden van notificaties: {str(e)}",
+                    )
 
             return redirect("events:list")
     else:

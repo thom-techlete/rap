@@ -20,14 +20,17 @@ This roadmap outlines the step-by-step development plan for the SV Rap 8 event p
 - ✅ Store timestamps for attendance submissions/changes
 - ✅ Display attendance history for admins and users
 
-## 4. Recurring Events
-- Allow admins to create events that repeat (e.g., weekly training)
-- Track attendance for each occurrence
+## ✅ 4. Recurring Events - COMPLETED
+- ✅ Allow admins to create events that repeat (e.g., weekly training)
+- ✅ Track attendance for each occurrence
 
-## 5. Notifications
-- Set up Celery and Redis for background tasks
-- Add email and push notifications for event reminders and attendance changes
-- Make notification settings configurable per user
+## ✅ 5. Notifications - COMPLETED
+- ✅ Set up email notification system for new events
+- ✅ Implement consolidated notifications for recurring events
+- ✅ Add event reminder functionality
+- ✅ HTML and plain text email templates in Dutch
+- ✅ Integration with Brevo SMTP service
+- ✅ Automatic notifications on event creation
 
 ## ✅ 6. UI/UX Improvements - COMPLETED
 - ✅ Apply modern, sleek SaaS design with sports theme

@@ -78,6 +78,34 @@
                   Bewerk evenement
                 </a>
               </li>
+              <li>
+                <a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'events:admin_attendance' event.id %}">
+                  <i data-feather="users" style="width: 1rem; height: 1rem;"></i>
+                  Beheer aanwezigheid
+                </a>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <!-- Notification Actions -->
+              {% comment %} <li>
+                <form method="post" action="{% url 'notifications:send_event_notification' event.id %}" style="margin: 0;">
+                  {% csrf_token %}
+                  <button type="submit" class="dropdown-item d-flex align-items-center gap-2 text-primary" 
+                          onclick="return confirm('Weet je zeker dat je een nieuwe evenement notificatie wilt verzenden naar alle actieve spelers?')">
+                    <i data-feather="mail" style="width: 1rem; height: 1rem;"></i>
+                    Verzend evenement notificatie
+                  </button>
+                </form>
+              </li> {% endcomment %}
+              <li>
+                <form method="post" action="{% url 'notifications:send_event_reminder' event.id %}" style="margin: 0;">
+                  {% csrf_token %}
+                  <button type="submit" class="dropdown-item d-flex align-items-center gap-2 text-warning" 
+                          onclick="return confirm('Weet je zeker dat je een herinnering wilt verzenden naar spelers die nog niet hebben gereageerd?')">
+                    <i data-feather="bell" style="width: 1rem; height: 1rem;"></i>
+                    Verzend herinnering
+                  </button>
+                </form>
+              </li>
               <li><hr class="dropdown-divider"></li>
               <li>
                 <a class="dropdown-item d-flex align-items-center gap-2 text-error" href="{% url 'events:delete' event.id %}">

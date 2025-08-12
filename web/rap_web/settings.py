@@ -14,44 +14,24 @@ import os
 from pathlib import Path
 from typing import Any
 
-# Import security configurations
-try:
-    from decouple import config as decouple_config
+from decouple import config as decouple_config
 
-    def bool_config(key, default=False):
-        return decouple_config(key, default=default, cast=bool)
 
-    def list_config(key, default="", separator=","):
-        value = decouple_config(key, default=default)
-        if isinstance(value, str):
-            return [s.strip() for s in value.split(separator) if s.strip()]
-        return []
+# Helper function to get boolean configuration values
+def bool_config(key, default=False):
+    return decouple_config(key, default=default, cast=bool)
 
-except ImportError:
-    # Fallback for when decouple is not available
-    def bool_config(key, default=False):
-        value = os.environ.get(key, str(default))
-        return (
-            value.lower() in ("true", "1", "yes", "on")
-            if isinstance(value, str)
-            else bool(value)
-        )
 
-    def list_config(key, default="", separator=","):
-        value = os.environ.get(key, default)
-        if isinstance(value, str):
-            return [s.strip() for s in value.split(separator) if s.strip()]
-        return []
+def list_config(key, default="", separator=","):
+    value = decouple_config(key, default=default)
+    if isinstance(value, str):
+        return [s.strip() for s in value.split(separator) if s.strip()]
+    return []
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get(
     "DJANGO_SECRET_KEY", "changeme-generate-secure-key-for-production"
 )
@@ -105,10 +85,14 @@ INSTALLED_APPS = [
     "axes",  # Account lockout protection
     "corsheaders",  # CORS handling
     "csp",  # Content Security Policy
+    # Celery apps
+    "django_celery_beat",
+    "django_celery_results",
     # Project apps
     "users",
     "events",
     "attendance",
+    "notifications",
 ]
 
 MIDDLEWARE = [
@@ -128,9 +112,9 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # Will be enabled when packages are installed:
-    # "axes.middleware.AxesMiddleware",  # Account lockout
-    # "corsheaders.middleware.CorsMiddleware",  # CORS
-    # "csp.middleware.CSPMiddleware",  # Content Security Policy
+    "axes.middleware.AxesMiddleware",  # Account lockout
+    "corsheaders.middleware.CorsMiddleware",  # CORS
+    "csp.middleware.CSPMiddleware",  # Content Security Policy
 ]
 
 ROOT_URLCONF = "rap_web.urls"
@@ -170,28 +154,6 @@ DATABASES = {
 
 # Enhanced password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
-
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-        "OPTIONS": {
-            "user_attributes": ("username", "email", "first_name", "last_name"),
-            "max_similarity": 0.7,
-        },
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-        "OPTIONS": {
-            "min_length": 12,  # Increased from default 8
-        },
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
-]
 
 AUTH_USER_MODEL = "users.Player"
 
@@ -259,41 +221,6 @@ LOGOUT_REDIRECT_URL = "/users/login/"
 # =============================================================================
 # SECURITY SETTINGS
 # =============================================================================
-
-# Security headers
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
-X_FRAME_OPTIONS = "DENY"
-
-# HTTPS settings (for production)
-SECURE_SSL_REDIRECT = bool_config("SECURE_SSL_REDIRECT", default=False)
-SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", "31536000"))  # 1 year
-SECURE_HSTS_INCLUDE_SUBDOMAINS = bool_config(
-    "SECURE_HSTS_INCLUDE_SUBDOMAINS", default=True
-)
-SECURE_HSTS_PRELOAD = bool_config("SECURE_HSTS_PRELOAD", default=True)
-
-# Enhanced session security
-SESSION_COOKIE_SECURE = bool_config("SESSION_COOKIE_SECURE", default=False)
-SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = "Lax"
-SESSION_COOKIE_NAME = "rap_sessionid"
-SESSION_COOKIE_AGE = 3600  # 1 hour
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-SESSION_SAVE_EVERY_REQUEST = True
-
-# Enhanced CSRF protection
-CSRF_COOKIE_SECURE = bool_config("CSRF_COOKIE_SECURE", default=False)
-CSRF_COOKIE_HTTPONLY = True
-CSRF_COOKIE_SAMESITE = "Lax"
-CSRF_COOKIE_NAME = "rap_csrftoken"
-CSRF_HEADER_NAME = "HTTP_X_CSRFTOKEN"  # Default, but being explicit
-
-# File upload security
-FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # 5MB
-DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # 5MB
-FILE_UPLOAD_PERMISSIONS = 0o644
 
 # Admin URL customization
 ADMIN_URL = os.environ.get("ADMIN_URL", "admin/")
@@ -396,6 +323,7 @@ CSRF_COOKIE_SECURE = bool_config("CSRF_COOKIE_SECURE", default=not DEBUG)
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_NAME = "rap_csrftoken"
+CSRF_HEADER_NAME = "HTTP_X_CSRFTOKEN"  # Default, but being explicit
 
 # File upload restrictions
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # 5MB
@@ -404,7 +332,6 @@ FILE_UPLOAD_PERMISSIONS = 0o644
 
 # Session security
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
-SESSION_SAVE_EVERY_REQUEST = True
 
 # Enhanced password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -432,4 +359,51 @@ AUTH_PASSWORD_VALIDATORS = [
 # Enable basic rate limiting as fallback
 ENABLE_BASIC_RATE_LIMITING = True
 
-AUTH_USER_MODEL = "users.Player"
+
+# Email configuration
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp-relay.brevo.com")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "true").lower() == "true"
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")  # your Brevo SMTP login email
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")  # your Brevo SMTP key
+DEFAULT_FROM_EMAIL = os.getenv(
+    "DEFAULT_FROM_EMAIL"
+)  # [email protected] on a verified domain
+SERVER_EMAIL = os.getenv("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
+EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", 30))
+
+# Site URL for email links
+SITE_URL = os.getenv("SITE_URL", "http://localhost:8000")
+
+# =============================================================================
+# CELERY CONFIGURATION
+# =============================================================================
+
+# Redis configuration for Celery
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+
+# Celery Configuration Options
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
+
+# Celery accept content types
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+
+# Celery timezone configuration
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_ENABLE_UTC = True
+
+# Celery task configuration
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes
+CELERY_TASK_SOFT_TIME_LIMIT = 25 * 60  # 25 minutes
+
+# Use django-celery-beat scheduler (tasks managed through Django admin)
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+
+# Optional: Set default schedule (will be created in admin if not exists)
+CELERY_BEAT_SCHEDULE = {}

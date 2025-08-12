@@ -1,0 +1,34 @@
+Hallo,
+
+Er is een herhalend evenement aangemaakt op {{ site_name }}!
+
+Evenement Details:
+- Naam: {{ event.name }}
+- Type: {{ event_type_display }}
+- Eerste datum: {{ first_event_date_formatted }}
+- Locatie: {{ event.location|default:"Niet opgegeven" }}
+- Verplichte aanwezigheid: {{ is_mandatory_text }}
+
+Herhaling:
+- {{ recurrence_display }}
+- Totaal aantal evenementen: {{ total_events }}
+{% if last_event_date_formatted %}
+- Laatste evenement: {{ last_event_date_formatted }}
+{% endif %}
+
+{% if event.description %}
+Beschrijving:
+{{ event.description }}
+{% endif %}
+
+{% if event.max_participants %}
+Let op: Elk evenement heeft een maximum van {{ event.max_participants }} deelnemers.
+{% endif %}
+
+Alle evenementen in deze reeks zijn automatisch aangemaakt. Je kunt voor elk afzonderlijk evenement je aanwezigheid doorgeven via de website.
+
+Bekijk alle evenementen en geef je aanwezigheid door:
+{{ events_url }}
+
+Met sportgroeten,
+Het SV Rap 8 team

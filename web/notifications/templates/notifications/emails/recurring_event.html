@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Herhalend evenement: {{ event.name }}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #e7f3ff; /* updated to blue-tinted background */
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,123,255,0.08); /* blue shadow */
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #007bff;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #007bff;
+            margin: 0;
+            font-size: 28px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .logo {
+            width: 50px;
+            height: 50px;
+            vertical-align: middle;
+            margin-right: 10px;
+        }
+        .recurring-badge {
+            background-color: #007bff;
+            border: 1px solid #0056b3;
+            color: #fff;
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            font-weight: bold;
+            margin-bottom: 20px;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+        .event-info {
+            background-color: #f0f6ff; /* lighter blue background */
+            border-left: 4px solid #007bff;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .event-info h2 {
+            color: #007bff;
+            margin-top: 0;
+            font-size: 20px;
+        }
+        .detail-row {
+            display: flex;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .detail-label {
+            font-weight: bold;
+            min-width: 180px;
+            color: #0056b3;
+        }
+        .detail-value {
+            color: #212529;
+            flex: 1;
+        }
+        .recurrence-info {
+            background-color: #e7f3ff;
+            border: 1px solid #007bff;
+            border-radius: 4px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .recurrence-info h3 {
+            color: #007bff;
+            margin-top: 0;
+            font-size: 18px;
+        }
+        .description {
+            background-color: #f0f6ff;
+            border: 1px solid #007bff;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+            font-style: italic;
+        }
+        .alert {
+            padding: 12px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        .alert-warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        .alert-info {
+            background-color: #e7f3ff;
+            border: 1px solid #007bff;
+            color: #0056b3;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #007bff;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        .cta {
+            text-align: center;
+            margin: 25px 0;
+        }
+        .cta-text {
+            font-size: 16px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #007bff;
+            color: white !important;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            margin: 10px;
+            border: none;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white !important;
+        }
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .container {
+                padding: 20px;
+            }
+            .detail-row {
+                flex-direction: column;
+            }
+            .detail-label {
+                margin-bottom: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚽ SV Rap 8</h1>
+            <div class="recurring-badge">🔄 Herhalend evenement</div>
+        </div>
+
+        <p>Hi!</p>
+        
+        <p>Er is een herhalend evenement aangemaakt! Dit betekent dat er automatisch meerdere evenementen zijn toegevoegd aan de agenda.</p>
+
+        <div class="event-info">
+            <h2>{{ event.name }}</h2>
+            
+            <div class="detail-row">
+                <span class="detail-label">Type:</span>
+                <span class="detail-value">{{ event_type_display }}</span>
+            </div>
+            
+            <div class="detail-row">
+                <span class="detail-label">Eerste datum:</span>
+                <span class="detail-value">{{ first_event_date_formatted }}</span>
+            </div>
+            
+            <div class="detail-row">
+                <span class="detail-label">Locatie:</span>
+                <span class="detail-value">{{ event.location|default:"Niet opgegeven" }}</span>
+            </div>
+            
+            <div class="detail-row">
+                <span class="detail-label">Verplichte aanwezigheid:</span>
+                <span class="detail-value">{{ is_mandatory_text }}</span>
+            </div>
+            
+            {% if event.max_participants %}
+            <div class="detail-row">
+                <span class="detail-label">Max. deelnemers:</span>
+                <span class="detail-value">{{ event.max_participants }} per evenement</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="recurrence-info">
+            <h3>📅 Herhalingsdetails</h3>
+            
+            <div class="detail-row">
+                <span class="detail-label">Herhaling:</span>
+                <span class="detail-value">{{ recurrence_display }}</span>
+            </div>
+            
+            <div class="detail-row">
+                <span class="detail-label">Totaal evenementen:</span>
+                <span class="detail-value">{{ total_events }}</span>
+            </div>
+            
+            {% if last_event_date_formatted %}
+            <div class="detail-row">
+                <span class="detail-label">Laatste evenement:</span>
+                <span class="detail-value">{{ last_event_date_formatted }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if event.description %}
+        <div class="description">
+            <strong>Beschrijving:</strong><br>
+            {{ event.description|linebreaks }}
+        </div>
+        {% endif %}
+
+        {% if event.is_mandatory %}
+        <div class="alert alert-warning">
+            <strong>⚠️ Let op:</strong> Dit zijn verplichte evenementen voor alle spelers.
+        </div>
+        {% endif %}
+
+        {% if event.max_participants %}
+        <div class="alert alert-info">
+            <strong>ℹ️ Beperkte plaatsen:</strong> Elk evenement heeft een maximum van {{ event.max_participants }} deelnemers.
+        </div>
+        {% endif %}
+
+        <div class="alert alert-info">
+            <strong>ℹ️ Belangrijk:</strong> Je kunt voor elk afzonderlijk evenement je aanwezigheid doorgeven via de website. Alle evenementen zijn automatisch toegevoegd aan de agenda.
+        </div>
+
+        <div class="cta">
+            <p class="cta-text">Bekijk alle evenementen en geef je aanwezigheid door:</p>
+            <a href="{{ events_url }}" class="btn">Bekijk Evenementen</a>
+        </div>
+
+        <div class="footer">
+            <p>Met sportgroeten,<br>
+            <strong>Het {{ site_name }} team</strong></p>
+        </div>
+    </div>
+</body>
+</html>

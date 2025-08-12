@@ -1,131 +1,82 @@
+# Development docker-compose file with Celery services
 services:
+
   db:
     image: postgres:17
     restart: always
     env_file:
       - .env.prod
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - rap_network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
       interval: 10s
       timeout: 5s
       retries: 5
-    deploy:
-      resources:
-        limits:
-          memory: 1g
-        reservations:
-          memory: 512m
 
   redis:
     image: redis:7
     restart: always
-    networks:
-      - rap_network
+    ports:
+      - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
-    deploy:
-      resources:
-        limits:
-          memory: 128m
-        reservations:
-          memory: 64m
 
   web:
     build: ..
     restart: always
     env_file:
       - .env.prod
+    ports:
+      - "8000:8000"
     volumes:
+      - ../web:/app/web
       - static_volume:/app/staticfiles
       - media_volume:/app/media
-    networks:
-      - rap_network
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
-    deploy:
-      resources:
-        limits:
-          memory: 1g
-        reservations:
-          memory: 512m
+    command: python manage.py runserver 0.0.0.0:8000
+    working_dir: /app/web
 
   celery_worker:
     build: ..
     restart: always
     env_file:
       - .env.prod
-    networks:
-      - rap_network
+    volumes:
+      - ../web:/app/web
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
     command: celery -A rap_web worker --loglevel=info --concurrency=2
-    deploy:
-      resources:
-        limits:
-          memory: 512m
-        reservations:
-          memory: 256m
+    working_dir: /app/web
 
   celery_beat:
     build: ..
     restart: always
     env_file:
       - .env.prod
-    networks:
-      - rap_network
+    volumes:
+      - ../web:/app/web
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
     command: celery -A rap_web beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
-    deploy:
-      resources:
-        limits:
-          memory: 256m
-        reservations:
-          memory: 128m
-
-  nginx:
-    image: nginx:stable
-    restart: always
-    ports:
-      - "80:80"
-    #  - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.prod.conf:ro
-      - static_volume:/app/staticfiles:ro
-      - media_volume:/app/media:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
-    networks:
-      - rap_network
-    depends_on:
-      - web
-    deploy:
-      resources:
-        limits:
-          memory: 512m
-        reservations:
-          memory: 128m
+    working_dir: /app/web
 
 volumes:
   postgres_data:
   static_volume:
   media_volume:
-
-networks:
-  rap_network:
-    driver: bridge
