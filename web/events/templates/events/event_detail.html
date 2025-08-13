@@ -217,7 +217,7 @@
                         {% with response_rate=total_players|add:no_response_count|sub:no_response_count %}
                         {% if total_players > 0 %}
                         <div class="progress-bar" 
-                             style="background: var(--gradient-primary); width: {{ response_rate|mul:100|div:total_players }}%;">
+                             style="background: var(--gradient-primary); width: {{ response_rate|div:total_players|mul:100|floatformat:0 }}%;">
                         </div>
                         {% endif %}
                         {% endwith %}
