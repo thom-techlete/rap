@@ -11,8 +11,8 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 from notifications.utils import send_bulk_notifications, send_new_event_notification
 
-from .forms import EventForm
-from .models import Event
+from .forms import EventForm, MatchStatisticForm
+from .models import Event, MatchStatistic
 
 User = get_user_model()
 
@@ -125,6 +125,27 @@ def event_detail(request: HttpRequest, pk: int):
     if request.user.is_authenticated:
         user_attendance_status = event.get_user_attendance_status(request.user)
     
+    # Handle statistics for match events
+    statistics = []
+    statistic_form = None
+    if event.is_match:
+        # Get existing statistics for this match
+        statistics = MatchStatistic.objects.filter(event=event).select_related("player").order_by("minute", "statistic_type")
+        
+        # Handle statistics form submission (staff only)
+        if request.user.is_staff:
+            if request.method == "POST" and "add_statistic" in request.POST:
+                statistic_form = MatchStatisticForm(request.POST, event=event)
+                if statistic_form.is_valid():
+                    statistic = statistic_form.save(commit=False)
+                    statistic.event = event
+                    statistic.created_by = request.user
+                    statistic.save()
+                    messages.success(request, f"Statistiek toegevoegd voor {statistic.player}.")
+                    return redirect("events:detail", pk=event.pk)
+            else:
+                statistic_form = MatchStatisticForm(event=event)
+    
     context = {
         "event": event,
         "player_attendance": player_attendance,
@@ -136,6 +157,9 @@ def event_detail(request: HttpRequest, pk: int):
         "no_response_count": sum(
             1 for pa in player_attendance if pa["present"] is None
         ),
+        # Statistics context
+        "statistics": statistics,
+        "statistic_form": statistic_form,
     }
     
     return render(request, "events/event_detail.html", context)
@@ -517,3 +541,19 @@ def admin_bulk_attendance(request: HttpRequest, pk: int):
         return JsonResponse({"success": False, "error": "Ongeldige JSON data"})
     except Exception as e:
         return JsonResponse({"success": False, "error": str(e)})
+
+
+@user_passes_test(is_staff)
+@require_POST
+def delete_statistic(request: HttpRequest, pk: int, stat_id: int):
+    """Delete a match statistic"""
+    event = get_object_or_404(Event, pk=pk)
+    statistic = get_object_or_404(MatchStatistic, pk=stat_id, event=event)
+    
+    player_name = statistic.player.get_full_name() or statistic.player.username
+    stat_type = statistic.get_statistic_type_display()
+    
+    statistic.delete()
+    messages.success(request, f"Statistiek '{stat_type}' voor {player_name} verwijderd.")
+    
+    return redirect("events:detail", pk=event.pk)

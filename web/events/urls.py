@@ -16,4 +16,9 @@ urlpatterns = [
         views.admin_bulk_attendance,
         name="admin_bulk_attendance",
     ),
+    path(
+        "<int:pk>/statistiek/<int:stat_id>/verwijderen/",
+        views.delete_statistic,
+        name="delete_statistic",
+    ),
 ]
