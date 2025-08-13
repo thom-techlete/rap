@@ -38,7 +38,7 @@ services:
           memory: 64m
 
   web:
-    build: ..
+    image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
     restart: always
     env_file:
       - .env.prod
@@ -60,7 +60,7 @@ services:
           memory: 512m
 
   celery_worker:
-    build: ..
+    image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
     restart: always
     env_file:
       - .env.prod
@@ -80,7 +80,7 @@ services:
           memory: 256m
 
   celery_beat:
-    build: ..
+    image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
     restart: always
     env_file:
       - .env.prod
