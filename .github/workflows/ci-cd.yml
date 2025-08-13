@@ -217,7 +217,7 @@ jobs:
             docker compose -f docker-compose.prod.yml pull
             
             # Start services
-            docker compose -f docker/docker-compose.prod.yml up -d --remove-orphans
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
             
             # Clean up old Docker images
             docker system prune -f
