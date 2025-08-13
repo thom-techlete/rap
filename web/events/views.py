@@ -3,7 +3,7 @@ import json
 from attendance.models import Attendance
 from django.contrib import messages
 from django.contrib.auth import get_user_model
-from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Prefetch
 from django.http import HttpRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -17,6 +17,7 @@ from .models import Event
 User = get_user_model()
 
 
+@login_required
 def event_list(request: HttpRequest):
     now = timezone.now()
 
@@ -95,19 +96,20 @@ def event_list(request: HttpRequest):
     return render(request, "events/event_list.html", context)
 
 
+@login_required
 def event_detail(request: HttpRequest, pk: int):
     """Show detailed view of a specific event"""
     event = get_object_or_404(Event, pk=pk)
-    
+
     # Get all active players for attendance table
     players = User.objects.filter(is_active=True).order_by("last_name", "first_name")
-    
+
     # Get existing attendance records
     attendances = {
         att.user_id: att
         for att in Attendance.objects.filter(event=event).select_related("user")
     }
-    
+
     # Create player attendance data for the table
     player_attendance = []
     for player in players:
@@ -119,12 +121,12 @@ def event_detail(request: HttpRequest, pk: int):
                 "present": attendance.present if attendance else None,
             }
         )
-    
+
     # Get user's attendance status if authenticated
     user_attendance_status = None
     if request.user.is_authenticated:
         user_attendance_status = event.get_user_attendance_status(request.user)
-    
+
     context = {
         "event": event,
         "player_attendance": player_attendance,
@@ -137,10 +139,11 @@ def event_detail(request: HttpRequest, pk: int):
             1 for pa in player_attendance if pa["present"] is None
         ),
     }
-    
+
     return render(request, "events/event_detail.html", context)
 
 
+@login_required
 def event_create(request: HttpRequest):
     if not request.user.is_staff:
         return redirect("events:list")
@@ -216,6 +219,7 @@ def event_create(request: HttpRequest):
     return render(request, "events/event_form.html", {"form": form})
 
 
+@login_required
 def event_edit(request: HttpRequest, pk: int):
     if not request.user.is_staff:
         return redirect("events:list")
@@ -320,6 +324,7 @@ def event_edit(request: HttpRequest, pk: int):
     return render(request, "events/event_form.html", context)
 
 
+@login_required
 def event_delete(request: HttpRequest, pk: int):
     if not request.user.is_staff:
         return redirect("events:list")
