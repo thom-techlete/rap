@@ -4,6 +4,19 @@ on:
   pull_request:
     types: [closed]
     branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - '**.sh'
+      - '.gitignore'
+      - '.github/**'
+      - 'scripts/**'
+      - 'htmlcov/**'
+      - '*.egg-info/**'
+      - 'coverage.xml'
+      - 'pyproject.toml'
+      - 'CODE_OF_CONDUCT.md'
+      - 'CONTRIBUTING.md'
   workflow_dispatch:
 
 permissions:
@@ -215,9 +228,10 @@ jobs:
             # Pull latest Docker images
             cd /home/rap/docker
             docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml down --remove-orphans
             
             # Start services
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            docker compose -f docker-compose.prod.yml up -d
             
             # Clean up old Docker images
             docker system prune -f
