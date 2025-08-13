@@ -35,7 +35,7 @@ def health_check(request):
                 health_status["components"]["database"] = "healthy"
                 health_status["details"]["database"] = {
                     "engine": settings.DATABASES["default"]["ENGINE"],
-                    "name": settings.DATABASES["default"]["NAME"],
+                    "name": str(settings.DATABASES["default"]["NAME"]),
                 }
             else:
                 health_status["components"]["database"] = "unhealthy: unexpected result"
@@ -51,7 +51,7 @@ def health_check(request):
         if cache.get(cache_key) == "ok":
             health_status["components"]["cache"] = "healthy"
             health_status["details"]["cache"] = {
-                "backend": settings.CACHES["default"]["BACKEND"]
+                "backend": str(settings.CACHES["default"]["BACKEND"])
             }
             cache.delete(cache_key)  # Clean up
         else:
@@ -110,8 +110,8 @@ def health_check(request):
         connection_test.close()
         health_status["components"]["email"] = "healthy"
         health_status["details"]["email"] = {
-            "backend": settings.EMAIL_BACKEND,
-            "host": getattr(settings, "EMAIL_HOST", "not configured"),
+            "backend": str(settings.EMAIL_BACKEND),
+            "host": str(getattr(settings, "EMAIL_HOST", "not configured")),
         }
     except Exception as e:
         health_status["components"]["email"] = f"unhealthy: {str(e)}"

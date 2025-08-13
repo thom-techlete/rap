@@ -187,6 +187,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -218,21 +223,22 @@ jobs:
             
             echo "✅ Deployment completed successfully!"
 
-      # - name: Verify deployment
-      #   run: |
-      #     echo "🔍 Verifying deployment..."
-      #     sleep 30
+      - name: Verify deployment
+        run: |
+          echo "🔍 Verifying deployment..."
+          sleep 30
           
-      #     # Check if the health endpoint responds
-      #     HEALTH_URL="${{ secrets.PRODUCTION_URL }}/health/"
-      #     response=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL" || echo "000")
-          
-      #     if [ "$response" = "200" ]; then
-      #       echo "✅ Health check passed! Application is running correctly."
-      #     else
-      #       echo "❌ Health check failed with HTTP $response"
-      #       exit 1
-      #     fi
+          # Check if the health endpoint responds and parse JSON status
+          HEALTH_URL="${{ secrets.PRODUCTION_URL }}/health/"
+          response=$(curl -s "$HEALTH_URL" || echo "")
+          status=$(echo "$response" | python3 -c "import sys, json; print(json.load(sys.stdin).get('status', 'unhealthy'))" 2>/dev/null)
+
+          if [ "$status" = "healthy" ]; then
+            echo "✅ Health check passed! Application is running correctly."
+          else
+            echo "❌ Health check failed: status is '$status'"
+            exit 1
+          fi
 
       # - name: Rollback on failure
       #   if: failure()

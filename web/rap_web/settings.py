@@ -136,20 +136,16 @@ TEMPLATES: list[dict[str, Any]] = [
 
 WSGI_APPLICATION = "rap_web.wsgi.application"
 
-
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ.get("POSTGRES_DB", "rapdb"),
+        "USER": os.environ.get("POSTGRES_USER", "rapuser"),
+        "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "secret"),
+        "HOST": os.environ.get("POSTGRES_HOST", "db"),
+        "PORT": os.environ.get("POSTGRES_PORT", "5432"),
     }
 }
-
-
-# Enhanced password validation
-# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
 AUTH_USER_MODEL = "users.Player"
 

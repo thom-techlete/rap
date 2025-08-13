@@ -38,6 +38,10 @@ except ImportError:
 @csrf_protect
 @never_cache
 def register(request: HttpRequest):
+    # Redirect already authenticated users to home
+    if request.user.is_authenticated:
+        return redirect("home")
+
     if request.method == "POST":
         form = InvitationCodeRegistrationForm(request.POST)
         if form.is_valid():
@@ -61,6 +65,10 @@ def register(request: HttpRequest):
 @csrf_protect
 @never_cache
 def login_view(request: HttpRequest):
+    # Redirect already authenticated users to home
+    if request.user.is_authenticated:
+        return redirect("home")
+
     if request.method == "POST":
         form = CustomAuthenticationForm(request, data=request.POST)
         if form.is_valid():

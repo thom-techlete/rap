@@ -16,6 +16,7 @@ class LoginRequiredMiddleware(MiddlewareMixin):
 
     Publicly accessible:
     - Users auth routes: login, register, logout
+    - Health check endpoint for monitoring
     - Static files under STATIC_URL
     """
 
@@ -24,6 +25,7 @@ class LoginRequiredMiddleware(MiddlewareMixin):
         "users:login",
         "users:register",
         "users:logout",
+        "health_check",  # Health endpoint for monitoring
     }
 
     # Path prefixes that should be publicly accessible
