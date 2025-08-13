@@ -7,6 +7,22 @@ A modern, production-ready Python project template for TECHLETES, a data & AI co
 
 ## 🚀 Quick Start
 
+### GitHub Copilot Development Setup (Recommended)
+
+For GitHub Copilot users, use the dedicated setup script for instant development environment:
+
+```bash
+./scripts/copilot-setup.sh
+```
+
+This will set up:
+- PostgreSQL and Redis services via Docker
+- Python environment with all dependencies
+- Django with migrations and superuser
+- Celery worker and beat in background
+- Ready-to-develop environment
+
+📖 **Complete guide**: [docs/COPILOT_SETUP.md](docs/COPILOT_SETUP.md)
 
 ### Prerequisites
 
