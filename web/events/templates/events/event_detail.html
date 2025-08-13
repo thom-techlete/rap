@@ -325,6 +325,166 @@
     </div>
 </div>
 
+<!-- Match Statistics Section (only for matches) -->
+{% if event.is_match %}
+<div class="card border-0 shadow-sm mt-4">
+    <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <h5 class="fw-semibold mb-0" style="color: #374151;">
+                <i data-feather="bar-chart-2" style="width: 1.25rem; height: 1.25rem; margin-right: 0.5rem;"></i>
+                Wedstrijd Statistieken
+            </h5>
+            {% if user.is_staff %}
+            <button class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#statisticForm" aria-expanded="false">
+                <i data-feather="plus" style="width: 1rem; height: 1rem;"></i>
+                Statistiek toevoegen
+            </button>
+            {% endif %}
+        </div>
+        
+        <!-- Add Statistic Form (Staff Only) -->
+        {% if user.is_staff and statistic_form %}
+        <div class="collapse mb-4" id="statisticForm">
+            <div class="card card-body" style="background-color: #f8fafc; border: 1px solid #e5e7eb;">
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="add_statistic" value="1">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label for="{{ statistic_form.player.id_for_label }}" class="form-label fw-medium">{{ statistic_form.player.label }}</label>
+                            {{ statistic_form.player }}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ statistic_form.statistic_type.id_for_label }}" class="form-label fw-medium">{{ statistic_form.statistic_type.label }}</label>
+                            {{ statistic_form.statistic_type }}
+                        </div>
+                        <div class="col-md-2">
+                            <label for="{{ statistic_form.value.id_for_label }}" class="form-label fw-medium">{{ statistic_form.value.label }}</label>
+                            {{ statistic_form.value }}
+                        </div>
+                        <div class="col-md-2">
+                            <label for="{{ statistic_form.minute.id_for_label }}" class="form-label fw-medium">{{ statistic_form.minute.label }}</label>
+                            {{ statistic_form.minute }}
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-success w-100">
+                                <i data-feather="plus" style="width: 1rem; height: 1rem;"></i>
+                                Toevoegen
+                            </button>
+                        </div>
+                    </div>
+                    {% if statistic_form.notes %}
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <label for="{{ statistic_form.notes.id_for_label }}" class="form-label fw-medium">{{ statistic_form.notes.label }}</label>
+                            {{ statistic_form.notes }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Statistics Display -->
+        {% if statistics %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr style="background-color: #f8fafc; border-bottom: 2px solid #e5e7eb;">
+                        <th scope="col" class="fw-semibold" style="color: #374151; padding: 1rem 0.75rem; border: none;">Speler</th>
+                        <th scope="col" class="fw-semibold" style="color: #374151; padding: 1rem 0.75rem; border: none;">Statistiek</th>
+                        <th scope="col" class="fw-semibold text-center" style="color: #374151; padding: 1rem 0.75rem; border: none;">Aantal</th>
+                        <th scope="col" class="fw-semibold text-center" style="color: #374151; padding: 1rem 0.75rem; border: none;">Minuut</th>
+                        {% if user.is_staff %}
+                        <th scope="col" class="fw-semibold text-center" style="color: #374151; padding: 1rem 0.75rem; border: none;">Acties</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stat in statistics %}
+                    <tr style="border-bottom: 1px solid #f1f5f9; transition: background-color 0.2s ease;">
+                        <td style="padding: 1rem 0.75rem; border: none; vertical-align: middle;">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                                     style="width: 2rem; height: 2rem; background: var(--gradient-primary); color: white; font-weight: 600; font-size: 0.75rem;">
+                                    {% if stat.player.first_name and stat.player.last_name %}
+                                        {{ stat.player.first_name|first }}{{ stat.player.last_name|first }}
+                                    {% else %}
+                                        {{ stat.player.username|first|upper }}
+                                    {% endif %}
+                                </div>
+                                <div class="fw-medium" style="color: #374151;">
+                                    {% if stat.player.first_name and stat.player.last_name %}
+                                        {{ stat.player.first_name }} {{ stat.player.last_name }}
+                                    {% else %}
+                                        {{ stat.player.username }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td style="padding: 1rem 0.75rem; border: none; vertical-align: middle;">
+                            <span class="badge d-inline-flex align-items-center gap-1" 
+                                  style="background-color: {% if stat.statistic_type == 'goal' %}#dcfce7; color: #166534;
+                                                           {% elif stat.statistic_type == 'assist' %}#dbeafe; color: #1e40af;
+                                                           {% elif stat.statistic_type == 'yellow_card' %}#fef3c7; color: #92400e;
+                                                           {% elif stat.statistic_type == 'red_card' %}#fee2e2; color: #dc2626;
+                                                           {% else %}#f1f5f9; color: #374151;{% endif %}
+                                         padding: 0.375rem 0.75rem; border-radius: 0.5rem;">
+                                {% if stat.statistic_type == 'goal' %}
+                                    <i data-feather="target" style="width: 0.875rem; height: 0.875rem;"></i>
+                                {% elif stat.statistic_type == 'assist' %}
+                                    <i data-feather="arrow-right" style="width: 0.875rem; height: 0.875rem;"></i>
+                                {% elif stat.statistic_type == 'yellow_card' or stat.statistic_type == 'red_card' %}
+                                    <i data-feather="alert-triangle" style="width: 0.875rem; height: 0.875rem;"></i>
+                                {% else %}
+                                    <i data-feather="activity" style="width: 0.875rem; height: 0.875rem;"></i>
+                                {% endif %}
+                                {{ stat.get_statistic_type_display }}
+                            </span>
+                        </td>
+                        <td class="text-center fw-bold" style="padding: 1rem 0.75rem; border: none; vertical-align: middle; color: #374151;">
+                            {{ stat.value }}
+                        </td>
+                        <td class="text-center" style="padding: 1rem 0.75rem; border: none; vertical-align: middle;">
+                            {% if stat.minute %}
+                                <span class="small fw-medium" style="color: #6b7280;">{{ stat.minute }}'</span>
+                            {% else %}
+                                <span class="small text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        {% if user.is_staff %}
+                        <td class="text-center" style="padding: 1rem 0.75rem; border: none; vertical-align: middle;">
+                            <form method="post" action="{% url 'events:delete_statistic' event.pk stat.pk %}" style="display: inline;"
+                                  onsubmit="return confirm('Weet je zeker dat je deze statistiek wilt verwijderen?')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i data-feather="trash-2" style="width: 0.875rem; height: 0.875rem;"></i>
+                                </button>
+                            </form>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i data-feather="bar-chart-2" style="width: 3rem; height: 3rem; color: #cbd5e1;"></i>
+            <p class="mt-3 mb-0 text-muted">Nog geen statistieken toegevoegd voor deze wedstrijd.</p>
+            {% if user.is_staff %}
+            <button class="btn btn-primary btn-sm mt-2" data-bs-toggle="collapse" data-bs-target="#statisticForm" aria-expanded="false">
+                <i data-feather="plus" style="width: 1rem; height: 1rem;"></i>
+                Eerste statistiek toevoegen
+            </button>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
 {% endblock %}
 
 {% block extra_js %}

@@ -3,12 +3,12 @@ from datetime import timedelta
 from attendance.models import Attendance
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Sum
 from django.http import HttpRequest
 from django.shortcuts import render
 from django.utils import timezone
 
-from .models import Event
+from .models import Event, MatchStatistic
 
 User = get_user_model()
 
@@ -99,6 +99,9 @@ def dashboard(request: HttpRequest):
         present_count=Count("attendance", filter=Q(attendance__present=True)),
     )
 
+    # Match statistics (only include completed matches)
+    match_stats = calculate_match_statistics()
+
     context = {
         "stats": stats,
         "recent_past_events": recent_past_events,
@@ -109,6 +112,7 @@ def dashboard(request: HttpRequest):
         "recent_attendance": recent_attendance,
         "event_type_stats": event_type_stats,
         "recent_events_with_attendance": recent_events_with_attendance,
+        "match_stats": match_stats,
         "now": now,
     }
 
@@ -177,3 +181,89 @@ def calculate_player_rankings():
         ranking["position"] = i
 
     return rankings
+
+
+def calculate_match_statistics():
+    """Calculate comprehensive match statistics for dashboard"""
+    now = timezone.now()
+    
+    # Get all completed matches (past events that are matches)
+    completed_matches = Event.objects.filter(
+        date__lt=now, 
+        event_type="wedstrijd"
+    )
+    
+    if not completed_matches.exists():
+        return {
+            "total_matches": 0,
+            "total_goals": 0,
+            "total_assists": 0,
+            "total_cards": 0,
+            "top_goalscorers": [],
+            "top_assisters": [],
+            "most_carded": [],
+            "recent_statistics": [],
+        }
+    
+    # Total statistics
+    total_matches = completed_matches.count()
+    total_goals = MatchStatistic.objects.filter(
+        event__in=completed_matches,
+        statistic_type='goal'
+    ).aggregate(total=Sum('value'))['total'] or 0
+    
+    total_assists = MatchStatistic.objects.filter(
+        event__in=completed_matches,
+        statistic_type='assist'
+    ).aggregate(total=Sum('value'))['total'] or 0
+    
+    total_cards = MatchStatistic.objects.filter(
+        event__in=completed_matches,
+        statistic_type__in=['yellow_card', 'red_card']
+    ).aggregate(total=Sum('value'))['total'] or 0
+    
+    # Top goalscorers
+    top_goalscorers = (
+        MatchStatistic.objects
+        .filter(event__in=completed_matches, statistic_type='goal')
+        .values('player__first_name', 'player__last_name', 'player__username')
+        .annotate(total_goals=Sum('value'))
+        .order_by('-total_goals')[:5]
+    )
+    
+    # Top assisters
+    top_assisters = (
+        MatchStatistic.objects
+        .filter(event__in=completed_matches, statistic_type='assist')
+        .values('player__first_name', 'player__last_name', 'player__username')
+        .annotate(total_assists=Sum('value'))
+        .order_by('-total_assists')[:5]
+    )
+    
+    # Most carded players
+    most_carded = (
+        MatchStatistic.objects
+        .filter(event__in=completed_matches, statistic_type__in=['yellow_card', 'red_card'])
+        .values('player__first_name', 'player__last_name', 'player__username')
+        .annotate(total_cards=Sum('value'))
+        .order_by('-total_cards')[:5]
+    )
+    
+    # Recent statistics (last 10 statistics added)
+    recent_statistics = (
+        MatchStatistic.objects
+        .filter(event__in=completed_matches)
+        .select_related('player', 'event')
+        .order_by('-created_at')[:10]
+    )
+    
+    return {
+        "total_matches": total_matches,
+        "total_goals": total_goals,
+        "total_assists": total_assists,
+        "total_cards": total_cards,
+        "top_goalscorers": top_goalscorers,
+        "top_assisters": top_assisters,
+        "most_carded": most_carded,
+        "recent_statistics": recent_statistics,
+    }

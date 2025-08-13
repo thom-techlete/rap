@@ -1,7 +1,7 @@
 from django.contrib import admin, messages
 from django.utils.html import format_html
 
-from .models import Event
+from .models import Event, MatchStatistic
 
 
 def send_event_notification_action(modeladmin, request, queryset):
@@ -177,3 +177,58 @@ class EventAdmin(admin.ModelAdmin):
     class Media:
         css = {"all": ("admin/css/custom_admin.css",)}
         js = ("admin/js/custom_admin.js",)
+
+
+@admin.register(MatchStatistic)
+class MatchStatisticAdmin(admin.ModelAdmin):
+    list_display = [
+        "event", 
+        "player", 
+        "statistic_type", 
+        "value", 
+        "minute", 
+        "created_at", 
+        "created_by"
+    ]
+    list_filter = [
+        "statistic_type", 
+        "event__event_type", 
+        "event__date", 
+        "created_at"
+    ]
+    search_fields = [
+        "event__name", 
+        "player__username", 
+        "player__first_name", 
+        "player__last_name"
+    ]
+    date_hierarchy = "created_at"
+    ordering = ["-created_at"]
+    
+    fieldsets = (
+        ("Statistiek informatie", {
+            "fields": ("event", "player", "statistic_type", "value", "minute")
+        }),
+        ("Extra informatie", {
+            "fields": ("notes", "created_by"),
+            "classes": ("collapse",)
+        }),
+        ("Metadata", {
+            "fields": ("created_at", "updated_at"),
+            "classes": ("collapse",),
+            "description": "Automatisch bijgehouden informatie",
+        }),
+    )
+    
+    readonly_fields = ("created_at", "updated_at")
+    
+    def get_queryset(self, request):
+        """Optimize queries by prefetching related data"""
+        qs = super().get_queryset(request)
+        return qs.select_related("event", "player", "created_by")
+    
+    def save_model(self, request, obj, form, change):
+        """Set created_by to current user if not set"""
+        if not change and not obj.created_by:
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)

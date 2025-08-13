@@ -303,6 +303,116 @@
         </div>
       {% endif %}
 
+      <!-- Match Statistics -->
+      {% if match_stats.total_matches > 0 %}
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent border-0 pb-0">
+          <h5 class="mb-0" style="color: #1e293b;">
+            <i data-feather="bar-chart-2" class="me-2" style="width: 1.25rem; height: 1.25rem;"></i>
+            Wedstrijd Statistieken
+          </h5>
+        </div>
+        <div class="card-body">
+          <!-- Overall Stats -->
+          <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3">
+              <div class="text-center">
+                <div class="fw-bold h4 mb-1" style="color: #3b82f6;">{{ match_stats.total_matches }}</div>
+                <div class="small text-muted">Wedstrijden</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="text-center">
+                <div class="fw-bold h4 mb-1" style="color: #22c55e;">{{ match_stats.total_goals }}</div>
+                <div class="small text-muted">Doelpunten</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="text-center">
+                <div class="fw-bold h4 mb-1" style="color: #8b5cf6;">{{ match_stats.total_assists }}</div>
+                <div class="small text-muted">Assists</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="text-center">
+                <div class="fw-bold h4 mb-1" style="color: #f59e0b;">{{ match_stats.total_cards }}</div>
+                <div class="small text-muted">Kaarten</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top Performers Tabs -->
+          <div class="row">
+            <!-- Top Goalscorers -->
+            {% if match_stats.top_goalscorers %}
+            <div class="col-lg-4 mb-3">
+              <h6 class="fw-semibold mb-2" style="color: #374151;">
+                <i data-feather="target" style="width: 1rem; height: 1rem;"></i>
+                Top Doelpuntenmakers
+              </h6>
+              {% for scorer in match_stats.top_goalscorers %}
+              <div class="d-flex justify-content-between align-items-center py-1">
+                <span class="small" style="color: #6b7280;">
+                  {% if scorer.player__first_name and scorer.player__last_name %}
+                    {{ scorer.player__first_name }} {{ scorer.player__last_name }}
+                  {% else %}
+                    {{ scorer.player__username }}
+                  {% endif %}
+                </span>
+                <span class="badge" style="background-color: #dcfce7; color: #166534;">{{ scorer.total_goals }}</span>
+              </div>
+              {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Top Assisters -->
+            {% if match_stats.top_assisters %}
+            <div class="col-lg-4 mb-3">
+              <h6 class="fw-semibold mb-2" style="color: #374151;">
+                <i data-feather="arrow-right" style="width: 1rem; height: 1rem;"></i>
+                Top Assists
+              </h6>
+              {% for assister in match_stats.top_assisters %}
+              <div class="d-flex justify-content-between align-items-center py-1">
+                <span class="small" style="color: #6b7280;">
+                  {% if assister.player__first_name and assister.player__last_name %}
+                    {{ assister.player__first_name }} {{ assister.player__last_name }}
+                  {% else %}
+                    {{ assister.player__username }}
+                  {% endif %}
+                </span>
+                <span class="badge" style="background-color: #dbeafe; color: #1e40af;">{{ assister.total_assists }}</span>
+              </div>
+              {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Most Cards -->
+            {% if match_stats.most_carded %}
+            <div class="col-lg-4 mb-3">
+              <h6 class="fw-semibold mb-2" style="color: #374151;">
+                <i data-feather="alert-triangle" style="width: 1rem; height: 1rem;"></i>
+                Meeste Kaarten
+              </h6>
+              {% for carded in match_stats.most_carded %}
+              <div class="d-flex justify-content-between align-items-center py-1">
+                <span class="small" style="color: #6b7280;">
+                  {% if carded.player__first_name and carded.player__last_name %}
+                    {{ carded.player__first_name }} {{ carded.player__last_name }}
+                  {% else %}
+                    {{ carded.player__username }}
+                  {% endif %}
+                </span>
+                <span class="badge" style="background-color: #fef3c7; color: #92400e;">{{ carded.total_cards }}</span>
+              </div>
+              {% endfor %}
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
       <!-- Player Rankings -->
       <div class="card border-0 shadow-sm mb-4">
         <div class="card-header bg-transparent border-0 pb-0">

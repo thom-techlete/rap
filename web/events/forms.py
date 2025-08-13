@@ -1,9 +1,12 @@
 from datetime import date, timedelta
 
 from django import forms
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 
-from .models import Event
+from .models import Event, MatchStatistic
+
+User = get_user_model()
 
 
 class EventForm(forms.ModelForm):
@@ -118,4 +121,57 @@ class EventForm(forms.ModelForm):
                     "Einddatum moet na de eerste evenementdatum liggen."
                 )
 
+        return cleaned_data
+
+
+class MatchStatisticForm(forms.ModelForm):
+    """Form for adding/editing match statistics"""
+    
+    class Meta:
+        model = MatchStatistic
+        fields = ['player', 'statistic_type', 'value', 'minute', 'notes']
+        widgets = {
+            'player': forms.Select(attrs={'class': 'form-select'}),
+            'statistic_type': forms.Select(attrs={'class': 'form-select'}),
+            'value': forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'value': '1'}),
+            'minute': forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'max': '120'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+        }
+        labels = {
+            'player': 'Speler',
+            'statistic_type': 'Type statistiek',
+            'value': 'Aantal',
+            'minute': 'Minuut',
+            'notes': 'Opmerkingen',
+        }
+        help_texts = {
+            'value': 'Aantal voor deze statistiek (standaard: 1)',
+            'minute': 'In welke minuut van de wedstrijd (optioneel)',
+            'notes': 'Extra informatie (optioneel)',
+        }
+
+    def __init__(self, *args, **kwargs):
+        # Extract event from kwargs to filter players
+        self.event = kwargs.pop('event', None)
+        super().__init__(*args, **kwargs)
+        
+        # Filter players to only active users
+        self.fields['player'].queryset = User.objects.filter(is_active=True).order_by('last_name', 'first_name')
+        
+        # Update player display to show full name when available
+        self.fields['player'].label_from_instance = lambda obj: (
+            f"{obj.first_name} {obj.last_name}" if obj.first_name and obj.last_name else obj.username
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if hasattr(self, 'instance') and self.instance and hasattr(self.instance, 'event') and self.instance.event:
+            # Validate that this is a match event
+            if not self.instance.event.is_match:
+                raise forms.ValidationError("Statistieken kunnen alleen worden toegevoegd aan wedstrijden.")
+        elif self.event:
+            # Validate that this is a match event
+            if not self.event.is_match:
+                raise forms.ValidationError("Statistieken kunnen alleen worden toegevoegd aan wedstrijden.")
+        
         return cleaned_data

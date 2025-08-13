@@ -2,9 +2,12 @@ import uuid
 from datetime import timedelta
 
 from dateutil.relativedelta import relativedelta
+from django.contrib.auth import get_user_model
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
+
+User = get_user_model()
 
 
 class Event(models.Model):
@@ -104,6 +107,11 @@ class Event(models.Model):
         """Check if this event is part of a recurring series"""
         return self.recurring_event_link_id is not None
 
+    @property
+    def is_match(self):
+        """Check if this event is a match (wedstrijd)"""
+        return self.event_type == "wedstrijd"
+
     def get_attendance_count(self) -> int:
         """Get number of attendees marked as present"""
         from attendance.models import Attendance  # Lazy import
@@ -193,3 +201,82 @@ class Event(models.Model):
                 current_date += relativedelta(years=1)
 
         return events
+
+
+class MatchStatistic(models.Model):
+    """Model for storing match statistics like goals, assists, cards, etc."""
+    
+    STATISTIC_TYPES = [
+        ("goal", "Doelpunt"),
+        ("assist", "Assist"),
+        ("yellow_card", "Gele kaart"),
+        ("red_card", "Rode kaart"),
+        ("substitution_in", "Wissel in"),
+        ("substitution_out", "Wissel uit"),
+        ("penalty_scored", "Penalty gescoord"),
+        ("penalty_missed", "Penalty gemist"),
+        ("own_goal", "Eigen doelpunt"),
+        ("clean_sheet", "Clean sheet"), # For goalkeepers
+        ("saves", "Reddingen"), # For goalkeepers
+        ("man_of_the_match", "Man van de wedstrijd"),
+    ]
+    
+    event = models.ForeignKey(
+        Event, 
+        on_delete=models.CASCADE, 
+        verbose_name="Evenement",
+        help_text="Het evenement waaraan deze statistiek is gekoppeld"
+    )
+    player = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        verbose_name="Speler",
+        help_text="De speler aan wie deze statistiek toebehoort"
+    )
+    statistic_type = models.CharField(
+        max_length=20,
+        choices=STATISTIC_TYPES,
+        verbose_name="Type statistiek"
+    )
+    value = models.IntegerField(
+        default=1,
+        verbose_name="Waarde",
+        help_text="Aantal voor deze statistiek (bijv. aantal doelpunten, aantal kaarten)"
+    )
+    minute = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name="Minuut",
+        help_text="In welke minuut van de wedstrijd (optioneel)"
+    )
+    notes = models.TextField(
+        blank=True,
+        verbose_name="Opmerkingen",
+        help_text="Extra informatie over deze statistiek"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="created_statistics",
+        verbose_name="Toegevoegd door"
+    )
+
+    class Meta:
+        verbose_name = "Wedstrijd Statistiek"
+        verbose_name_plural = "Wedstrijd Statistieken"
+        ordering = ["event", "minute", "statistic_type"]
+        # Prevent duplicate statistics for same player/event/type/minute
+        unique_together = [["event", "player", "statistic_type", "minute"]]
+
+    def __str__(self):
+        minute_info = f" ({self.minute}')" if self.minute else ""
+        return f"{self.player} - {self.get_statistic_type_display()}{minute_info} - {self.event.name}"
+
+    def clean(self):
+        """Validate that statistics are only added to match events"""
+        from django.core.exceptions import ValidationError
+        if hasattr(self, 'event') and self.event and not self.event.is_match:
+            raise ValidationError("Statistieken kunnen alleen worden toegevoegd aan wedstrijden.")
