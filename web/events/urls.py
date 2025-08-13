@@ -21,4 +21,5 @@ urlpatterns = [
         views.delete_statistic,
         name="delete_statistic",
     ),
+    path("export/calendar.ics", views.export_ics, name="export_ics"),
 ]

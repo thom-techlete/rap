@@ -1,0 +1,109 @@
+{% load event_extras %}
+{% load static %}
+
+<!-- Grid Event Card Template -->
+<div class="card-body p-4 d-flex flex-column h-100">
+    <!-- Event Type Badge -->
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <span class="badge event-type-badge" 
+              style="background: {% if event.event_type == 'wedstrijd' %}linear-gradient(135deg, #dc2626 0%, #b91c1c 100%){% elif event.event_type == 'training' %}linear-gradient(135deg, #059669 0%, #047857 100%){% elif event.event_type == 'uitje' %}linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%){% elif event.event_type == 'vergadering' %}linear-gradient(135deg, #ea580c 0%, #c2410c 100%){% else %}linear-gradient(135deg, #6b7280 0%, #4b5563 100%){% endif %}; color: white; font-weight: 500; font-size: 0.75rem; padding: 0.375rem 0.75rem; border-radius: 1rem;">
+            {{ event.get_event_type_display }}
+        </span>
+        {% if event.is_mandatory %}
+            <span class="badge bg-warning text-dark" style="font-size: 0.75rem; font-weight: 500;">
+                Verplicht
+            </span>
+        {% endif %}
+    </div>
+    
+    <!-- Event Title -->
+    <h5 class="card-title mb-3 flex-grow-1" style="color: #1f2937; font-weight: 600; line-height: 1.3;">
+        {{ event.name }}
+    </h5>
+    
+    <!-- Event Details -->
+    <div class="mb-3">
+        <!-- Date and Time -->
+        <div class="d-flex align-items-center gap-2 mb-2 small" style="color: #6b7280;">
+            <i data-feather="clock" style="width: 1rem; height: 1rem; flex-shrink: 0;"></i>
+            <span>{{ event.date|date:'D j M Y, H:i' }}</span>
+        </div>
+        
+        <!-- Location -->
+        {% if event.location %}
+        <div class="d-flex align-items-center gap-2 mb-2 small" style="color: #6b7280;">
+            <i data-feather="map-pin" style="width: 1rem; height: 1rem; flex-shrink: 0;"></i>
+            <span class="text-truncate">{{ event.location }}</span>
+        </div>
+        {% endif %}
+        
+        <!-- Description (truncated) -->
+        {% if event.description %}
+        <p class="small mb-0" style="color: #6b7280; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+            {{ event.description }}
+        </p>
+        {% endif %}
+    </div>
+    
+    <!-- Event Status and Actions -->
+    <div class="mt-auto">
+        <div class="d-flex justify-content-between align-items-center" style="border-top: 1px solid #e5e7eb; padding-top: 1rem;">
+            <!-- Attendance Info -->
+            <div class="d-flex align-items-center gap-3">
+                <div class="d-flex align-items-center gap-1 small" style="color: #6b7280;">
+                    <i data-feather="users" style="width: 0.875rem; height: 0.875rem;"></i>
+                    <span id="attendance-count-{{ event.id }}">{{ event|attendance_count }}</span>
+                </div>
+                
+                {% if event.is_recurring %}
+                <div class="d-flex align-items-center gap-1 small" style="color: #7c3aed;">
+                    <i data-feather="repeat" style="width: 0.875rem; height: 0.875rem;"></i>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Time Until Event -->
+            <div class="text-end">
+                {% if is_upcoming %}
+                    <div class="small" style="color: #6b7280;">
+                        {% if event.date.date == now.date %}
+                            Vandaag
+                        {% else %}
+                            {{ event.date|timeuntil }}
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="small" style="color: #6b7280;">
+                        {{ event.date|timesince }} geleden
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Attendance Buttons (for upcoming events) -->
+        {% if user.is_authenticated and is_upcoming %}
+        <div class="mt-3" onclick="event.stopPropagation();">
+            {% with user_status=event|user_attendance_status:user %}
+            <div class="d-flex gap-2">
+                <button type="button" 
+                        class="btn btn-sm attendance-present-btn flex-grow-1 {% if user_status == True %}btn-success{% else %}btn-outline-success{% endif %}"
+                        data-event-id="{{ event.id }}" 
+                        data-attendance="true"
+                        style="border-radius: 0.5rem; font-weight: 500; transition: all 0.2s ease;">
+                    <i data-feather="check" style="width: 0.875rem; height: 0.875rem; margin-right: 0.25rem;"></i>
+                    Aanwezig
+                </button>
+                <button type="button" 
+                        class="btn btn-sm attendance-absent-btn flex-grow-1 {% if user_status == False %}btn-danger{% else %}btn-outline-danger{% endif %}"
+                        data-event-id="{{ event.id }}" 
+                        data-attendance="false"
+                        style="border-radius: 0.5rem; font-weight: 500; transition: all 0.2s ease;">
+                    <i data-feather="x" style="width: 0.875rem; height: 0.875rem; margin-right: 0.25rem;"></i>
+                    Afwezig
+                </button>
+            </div>
+            {% endwith %}
+        </div>
+        {% endif %}
+    </div>
+</div>

@@ -1,11 +1,12 @@
 import json
+from datetime import datetime, timezone as dt_timezone
 
 from attendance.models import Attendance
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Prefetch
-from django.http import HttpRequest, JsonResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -563,3 +564,57 @@ def delete_statistic(request: HttpRequest, pk: int, stat_id: int):
     messages.success(request, f"Statistiek '{stat_type}' voor {player_name} verwijderd.")
     
     return redirect("events:detail", pk=event.pk)
+
+
+@login_required
+def export_ics(request: HttpRequest):
+    """Export future events as ICS calendar file"""
+    now = timezone.now()
+    future_events = Event.objects.filter(date__gt=now).order_by("date")
+    
+    # Create ICS content
+    ics_lines = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0", 
+        "PRODID:-//SV Rap 8//Event Calendar//NL",
+        "CALSCALE:GREGORIAN",
+        "METHOD:PUBLISH",
+        "X-WR-CALNAME:SV Rap 8 Evenementen",
+        "X-WR-TIMEZONE:Europe/Amsterdam",
+    ]
+    
+    for event in future_events:
+        # Format dates for ICS (UTC format)
+        utc_start = event.date.astimezone(dt_timezone.utc)
+        utc_end = (event.date + timezone.timedelta(hours=2)).astimezone(dt_timezone.utc)  # Default 2 hour duration
+        
+        start_str = utc_start.strftime("%Y%m%dT%H%M%SZ")
+        end_str = utc_end.strftime("%Y%m%dT%H%M%SZ")
+        created_str = datetime.now(dt_timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        
+        # Clean description for ICS format
+        description = event.description.replace('\n', '\\n').replace('\r', '') if event.description else ""
+        location = event.location if event.location else ""
+        
+        # Create event entry
+        ics_lines.extend([
+            "BEGIN:VEVENT",
+            f"UID:{event.id}@svrap8.nl",
+            f"DTSTART:{start_str}",
+            f"DTEND:{end_str}",
+            f"DTSTAMP:{created_str}",
+            f"SUMMARY:{event.name}",
+            f"DESCRIPTION:{description}",
+            f"LOCATION:{location}",
+            f"CATEGORIES:{event.get_event_type_display()}",
+            f"STATUS:CONFIRMED",
+            f"TRANSP:OPAQUE",
+            "END:VEVENT",
+        ])
+    
+    ics_lines.append("END:VCALENDAR")
+    
+    # Create response
+    response = HttpResponse('\r\n'.join(ics_lines), content_type='text/calendar; charset=utf-8')
+    response['Content-Disposition'] = 'attachment; filename="sv_rap_8_evenementen.ics"'
+    return response

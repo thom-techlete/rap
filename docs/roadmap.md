@@ -50,7 +50,14 @@ This roadmap outlines the step-by-step development plan for the SV Rap 8 event p
 - ✅ Health check verification and automatic rollback
 - ✅ Comprehensive deployment documentation
 
-## 9. Future Extensions & Finalization
+## ✅ 9. Calendar Features & Export - COMPLETED
+- ✅ Add grid view for events (responsive card layout)
+- ✅ Add calendar view with month navigation
+- ✅ Implement ICS calendar export for all future events
+- ✅ Calendar-compatible event information (type, name, date, location, description)
+- ✅ Export dropdown with calendar application compatibility info
+
+## 10. Future Extensions & Finalization
 - Refactor for multi-team support
 - Document APIs and architecture
 - Ensure easy deployment and maintenance
