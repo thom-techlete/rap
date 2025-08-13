@@ -1,0 +1,24 @@
+# .github/workflows/ghcr-cleanup.yml
+name: GHCR image cleanup
+
+on:
+  schedule:
+    - cron: '0 3 * * *'   # every night at 3 AM UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  prune-ghcr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clean up old GHCR images
+        uses: actions/delete-package-versions@v5
+        with:
+          owner: ${{ github.repository_owner }} 
+          package-name: ${{ github.event.repository.name }}
+          package-type: container
+          min-versions-to-keep: 5
+          token: ${{ secrets.GHCR_PAT }}     
