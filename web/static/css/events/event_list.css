@@ -154,3 +154,194 @@
 .timeline-container > .timeline-month-separator + .timeline-item {
     margin-top: -1rem;
 }
+
+/* ============================================ */
+/* VIEW MODE STYLES */
+/* ============================================ */
+
+/* View Mode Button Styles */
+.view-mode-btn {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    transition: all 0.2s ease;
+}
+
+.view-mode-btn:hover {
+    background-color: #e2e8f0;
+    color: #475569;
+}
+
+.view-mode-btn.active {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+    color: white;
+}
+
+/* ============================================ */
+/* GRID VIEW STYLES */
+/* ============================================ */
+
+/* Grid View Styles */
+.event-grid-card {
+    transition: all 0.3s ease;
+    border: 1px solid #e5e7eb;
+}
+
+.event-grid-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    border-color: #3b82f6;
+}
+
+/* Event Card Grid Responsive Columns */
+.events-grid {
+    --bs-gutter-x: 1.5rem;
+    --bs-gutter-y: 1.5rem;
+}
+
+@media (min-width: 576px) {
+    .events-grid .col-12 {
+        flex: 0 0 auto;
+        width: 100%;
+    }
+}
+
+@media (min-width: 768px) {
+    .events-grid .col-md-6 {
+        flex: 0 0 auto;
+        width: 50%;
+    }
+}
+
+@media (min-width: 992px) {
+    .events-grid .col-lg-4 {
+        flex: 0 0 auto;
+        width: 33.333333%;
+    }
+}
+
+@media (min-width: 1200px) {
+    .events-grid .col-xl-3 {
+        flex: 0 0 auto;
+        width: 25%;
+    }
+}
+
+/* ============================================ */
+/* CALENDAR STYLES */
+/* ============================================ */
+
+/* Calendar Styles */
+.calendar-container {
+    background: white;
+}
+
+.calendar-container table {
+    width: 100%;
+}
+
+.calendar-container th,
+.calendar-container td {
+    width: 14.28%;
+}
+
+.calendar-day {
+    transition: all 0.2s ease;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    cursor: pointer;
+}
+
+.calendar-day:hover {
+    background-color: #f3f4f6 !important;
+    border-color: #d1d5db;
+}
+
+.calendar-event {
+    transition: all 0.2s ease;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border-radius: 0.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.calendar-event:hover {
+    transform: scale(1.02);
+    opacity: 0.9;
+}
+
+/* ============================================ */
+/* EVENT TYPE COLORS */
+/* ============================================ */
+
+.event-type-badge.training {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+.event-type-badge.wedstrijd {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
+
+.event-type-badge.uitje {
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+}
+
+.event-type-badge.vergadering {
+    background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+}
+
+.event-type-badge.overig {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+}
+
+/* ============================================ */
+/* RESPONSIVE ADJUSTMENTS */
+/* ============================================ */
+
+/* Responsive Grid and Calendar Adjustments */
+@media (max-width: 768px) {
+    .events-grid .col-12 {
+        margin-bottom: 1rem;
+    }
+    
+    .calendar-day {
+        min-height: 80px !important;
+    }
+    
+    .calendar-event {
+        font-size: 0.7rem !important;
+        padding: 0.125rem 0.25rem !important;
+    }
+    
+    .view-mode-btn {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.875rem;
+    }
+}
+
+/* Mobile view mode adjustments */
+@media (max-width: 576px) {
+    .view-mode-btn span {
+        display: none !important;
+    }
+    
+    .dropdown .btn {
+        padding: 0.375rem 0.5rem;
+    }
+    
+    .dropdown .btn span {
+        display: none !important;
+    }
+    
+    /* Stack calendar navigation on mobile */
+    .calendar-container .d-flex {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .calendar-container .d-flex > div {
+        justify-content: center !important;
+    }
+}
