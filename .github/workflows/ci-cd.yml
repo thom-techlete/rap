@@ -213,10 +213,11 @@ jobs:
             git pull --ff-only
             
             # Pull latest Docker images
-            docker compose -f docker/docker-compose.prod.yml pull
+            cd /home/rap/docker
+            docker compose -f docker-compose.prod.yml pull
             
             # Start services
-            docker compose -f docker/docker-compose.prod.yml up -d
+            docker compose -f docker/docker-compose.prod.yml up -d --remove-orphans
             
             # Clean up old Docker images
             docker system prune -f
