@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from attendance.models import Attendance
 from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q, Sum
 from django.http import HttpRequest
 from django.shortcuts import render
@@ -12,6 +13,7 @@ from .models import Event, MatchStatistic
 User = get_user_model()
 
 
+@login_required
 def dashboard(request: HttpRequest):
     """Main dashboard view showing overview of everything"""
     now = timezone.now()

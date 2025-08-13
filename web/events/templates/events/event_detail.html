@@ -206,23 +206,25 @@
                 
                 <!-- Attendance Rate -->
                 {% if total_players > 0 %}
+                {% with response_rate=total_players|sub:no_response_count %}
                 <div class="mb-3">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <span class="small text-muted">Respons percentage</span>
                         <span class="small fw-medium" style="color: #374151;">
-                            {{ total_players|add:no_response_count|sub:no_response_count }}/{{ total_players }}
+                            {{ response_rate|div:total_players|mul:100|floatformat:0 }}%
                         </span>
                     </div>
                     <div class="progress" style="height: 8px; background-color: #f1f5f9;">
-                        {% with response_rate=total_players|add:no_response_count|sub:no_response_count %}
+                        
                         {% if total_players > 0 %}
                         <div class="progress-bar" 
-                             style="background: var(--gradient-primary); width: {{ response_rate|mul:100|div:total_players }}%;">
+                             style="background: var(--gradient-primary); width: {{ response_rate|div:total_players|mul:100|floatformat:0 }}%;">
                         </div>
                         {% endif %}
-                        {% endwith %}
+                        
                     </div>
                 </div>
+                {% endwith %}
                 {% endif %}
             </div>
         </div>
