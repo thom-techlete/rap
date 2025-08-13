@@ -49,6 +49,17 @@
     position: relative;
 }
 
+/* Event Card Styles */
+.event-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
+}
+
+.event-card:hover .timeline-dot {
+    transform: scale(1.2);
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.5);
+}
+
 .timeline-month-label {
     transition: all 0.3s ease;
 }

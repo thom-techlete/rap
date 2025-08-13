@@ -131,7 +131,7 @@ class Event(models.Model):
             return None
 
     def get_absolute_url(self):
-        return reverse("events:edit", kwargs={"pk": self.pk})
+        return reverse("events:detail", kwargs={"pk": self.pk})
 
     def get_recurring_events(self):
         """Get all events in the same recurring series"""
