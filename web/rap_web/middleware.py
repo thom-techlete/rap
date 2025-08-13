@@ -29,7 +29,7 @@ class LoginRequiredMiddleware(MiddlewareMixin):
     }
 
     # Path prefixes that should be publicly accessible
-    EXEMPT_PATH_PREFIXES: tuple[str, ...] = (settings.STATIC_URL,)
+    EXEMPT_PATH_PREFIXES: tuple[str, ...] = settings.STATIC_URL
 
     def process_view(
         self,
