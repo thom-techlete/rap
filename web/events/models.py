@@ -1,5 +1,7 @@
 import uuid
+from datetime import timedelta
 
+from dateutil.relativedelta import relativedelta
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
@@ -104,11 +106,15 @@ class Event(models.Model):
 
     def get_attendance_count(self) -> int:
         """Get number of attendees marked as present"""
-        return self.attendance_set.filter(present=True).count()
+        from attendance.models import Attendance  # Lazy import
+
+        return Attendance.objects.filter(event=self, present=True).count()
 
     def get_total_responses(self):
         """Get total number of attendance responses"""
-        return self.attendance_set.count()
+        from attendance.models import Attendance  # Lazy import
+
+        return Attendance.objects.filter(event=self).count()
 
     def get_attendance_rate(self):
         """Calculate attendance rate percentage"""
@@ -122,10 +128,10 @@ class Event(models.Model):
         """Get the attendance status for a specific user"""
         if not user.is_authenticated:
             return None
-        try:
-            from attendance.models import Attendance
+        from attendance.models import Attendance  # Lazy import
 
-            attendance = self.attendance_set.get(user=user)
+        try:
+            attendance = Attendance.objects.get(event=self, user=user)
             return attendance.present
         except Attendance.DoesNotExist:
             return None
@@ -154,9 +160,6 @@ class Event(models.Model):
     @classmethod
     def create_recurring_events(cls, base_event_data, recurrence_type, end_date):
         """Create a series of recurring events"""
-        from datetime import timedelta
-
-        from dateutil.relativedelta import relativedelta
 
         if recurrence_type == "none":
             # Just create a single event

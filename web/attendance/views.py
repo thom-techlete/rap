@@ -1,3 +1,5 @@
+import json
+
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
@@ -135,11 +137,9 @@ def toggle_attendance(request: HttpRequest, event_id: int):
 @ensure_csrf_cookie
 def set_attendance(request: HttpRequest, event_id: int):
     """AJAX endpoint to set specific attendance status"""
-    import json
 
     event = get_object_or_404(Event, id=event_id)
     data = json.loads(request.body)
-    print(data)
     present = data.get("present")
 
     if present is None:

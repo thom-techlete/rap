@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
+from django_ratelimit.decorators import ratelimit
 from events.models import Event
 
 from .forms import (
@@ -19,17 +20,6 @@ from .forms import (
     PlayerProfileForm,
 )
 from .models import InvitationCode, Player
-
-# Rate limiting decorator (will be enabled when django-ratelimit is installed)
-try:
-    from django_ratelimit.decorators import ratelimit
-except ImportError:
-    # Fallback decorator when django-ratelimit is not available
-    def ratelimit(group=None, key=None, rate=None, method=None, block=True):
-        def decorator(func):
-            return func
-
-        return decorator
 
 
 @never_cache
@@ -202,8 +192,8 @@ def admin_dashboard(request: HttpRequest):
     # Calculate average attendance rate
     attendance_stats = []
     for event in recent_events:
-        total_responses = event.attendance_set.count()
-        present_count = event.attendance_set.filter(present=True).count()
+        total_responses = Attendance.objects.filter(event=event).count()
+        present_count = Attendance.objects.filter(event=event, present=True).count()
         rate = (present_count / total_responses * 100) if total_responses > 0 else 0
         attendance_stats.append(
             {
@@ -301,8 +291,8 @@ def admin_events(request: HttpRequest):
     # Add attendance stats for each event
     events_with_stats = []
     for event in events:
-        total_responses = event.attendance_set.count()
-        present_count = event.attendance_set.filter(present=True).count()
+        total_responses = Attendance.objects.filter(event=event).count()
+        present_count = Attendance.objects.filter(event=event, present=True).count()
         attendance_rate = (
             (present_count / total_responses * 100) if total_responses > 0 else 0
         )
