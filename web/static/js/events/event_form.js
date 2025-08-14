@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', function() {
             time_24hr: true,
             locale: "nl",
             allowInput: true,
-            minDate: "today",
+            // minDate: "today",
             defaultDate: dateField.value || null,
             onChange: function(selectedDates, dateStr, instance) {
                 // Update the input value

@@ -173,8 +173,8 @@
 }
 
 .view-mode-btn.active {
-    background-color: #3b82f6;
-    border-color: #3b82f6;
+    background: var(--gradient-primary);
+    border-color: var(--gradient-primary);
     color: white;
 }
 
