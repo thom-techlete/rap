@@ -25,6 +25,11 @@ class LoginRequiredMiddleware(MiddlewareMixin):
         "users:login",
         "users:register",
         "users:logout",
+        # Password reset flow should be accessible without being logged in
+        "users:password_reset",
+        "users:password_reset_done",
+        "users:password_reset_confirm",
+        "users:password_reset_complete",
         "health_check",  # Health endpoint for monitoring
     }
 
