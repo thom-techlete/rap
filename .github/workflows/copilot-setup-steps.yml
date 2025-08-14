@@ -74,6 +74,17 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Cache pip and venv
+        id: cache-pip-venv
+        uses: actions/cache@v4
+        with:
+          path: |
+            venv
+            ~/.cache/pip
+          key: ${{ runner.os }}-venv-${{ hashFiles('requirements.txt', 'requirements-dev.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-venv-
+
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -87,6 +98,7 @@ jobs:
             gettext
 
       - name: Set up Python virtual environment
+        if: steps.cache-pip-venv.outputs.cache-hit != 'true'
         run: |
           python3 -m venv venv
           source venv/bin/activate
@@ -94,49 +106,161 @@ jobs:
           echo "Virtual environment activated"
 
       - name: Install Python dependencies
+        if: steps.cache-pip-venv.outputs.cache-hit != 'true'
         run: |
           source venv/bin/activate
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
 
+      - name: Verify database connectivity
+        run: |
+          echo "=== Testing database connectivity ==="
+          PGPASSWORD=postgres psql -h localhost -U postgres -d rap_web -c "SELECT version();"
+          echo "=== Database connection successful ==="
+
+      - name: Verify environment variables
+        working-directory: ./web
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/rap_web
+          POSTGRES_HOST: localhost
+          POSTGRES_DB: rap_web
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_PORT: 5432
+          REDIS_URL: redis://localhost:6379/0
+          DJANGO_SECRET_KEY: copilot-development-secret-key
+          DJANGO_DEBUG: True
+          DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+        run: |
+          source ../venv/bin/activate
+          echo "=== Environment Variables ==="
+          echo "POSTGRES_HOST: $POSTGRES_HOST"
+          echo "POSTGRES_DB: $POSTGRES_DB"
+          echo "POSTGRES_USER: $POSTGRES_USER"
+          echo "DATABASE_URL: $DATABASE_URL"
+          echo "=== Django Database Config Check ==="
+          python -c "
+          import os
+          import django
+          os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'rap_web.settings')
+          django.setup()
+          from django.conf import settings
+          db_config = settings.DATABASES['default']
+          print(f'Django DB Host: {db_config[\"HOST\"]}')
+          print(f'Django DB Name: {db_config[\"NAME\"]}')
+          print(f'Django DB User: {db_config[\"USER\"]}')
+          "
+
       - name: Django system check
         working-directory: ./web
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/rap_web
+          POSTGRES_HOST: localhost
+          POSTGRES_DB: rap_web
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_PORT: 5432
+          REDIS_URL: redis://localhost:6379/0
+          DJANGO_SECRET_KEY: copilot-development-secret-key
+          DJANGO_DEBUG: True
+          DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
         run: |
           source ../venv/bin/activate
           python manage.py check
 
       - name: Run Django migrations
         working-directory: ./web
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/rap_web
+          POSTGRES_HOST: localhost
+          POSTGRES_DB: rap_web
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_PORT: 5432
+          REDIS_URL: redis://localhost:6379/0
+          DJANGO_SECRET_KEY: copilot-development-secret-key
+          DJANGO_DEBUG: True
+          DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
         run: |
           source ../venv/bin/activate
           python manage.py migrate
 
       - name: Collect static files
         working-directory: ./web
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/rap_web
+          POSTGRES_HOST: localhost
+          POSTGRES_DB: rap_web
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_PORT: 5432
+          REDIS_URL: redis://localhost:6379/0
+          DJANGO_SECRET_KEY: copilot-development-secret-key
+          DJANGO_DEBUG: True
+          DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
         run: |
           source ../venv/bin/activate
           python manage.py collectstatic --noinput
 
       - name: Create superuser for development
         working-directory: ./web
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/rap_web
+          POSTGRES_HOST: localhost
+          POSTGRES_DB: rap_web
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_PORT: 5432
+          REDIS_URL: redis://localhost:6379/0
+          DJANGO_SECRET_KEY: copilot-development-secret-key
+          DJANGO_DEBUG: True
+          DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
         run: |
           source ../venv/bin/activate
           echo "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.filter(username='admin').exists() or User.objects.create_superuser('admin', 'admin@rap8.nl', 'admin123')" | python manage.py shell
 
       - name: Load sample data
         working-directory: ./web
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/rap_web
+          POSTGRES_HOST: localhost
+          POSTGRES_DB: rap_web
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_PORT: 5432
+          REDIS_URL: redis://localhost:6379/0
+          DJANGO_SECRET_KEY: copilot-development-secret-key
+          DJANGO_DEBUG: True
+          DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
         run: |
           source ../venv/bin/activate
           python manage.py populate_events || echo "Sample data command not available or failed"
 
       - name: Verify Django development server can start
         working-directory: ./web
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/rap_web
+          POSTGRES_HOST: localhost
+          POSTGRES_DB: rap_web
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_PORT: 5432
+          REDIS_URL: redis://localhost:6379/0
+          DJANGO_SECRET_KEY: copilot-development-secret-key
+          DJANGO_DEBUG: True
+          DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
         run: |
           source ../venv/bin/activate
           timeout 10s python manage.py runserver 0.0.0.0:8000 || echo "Django server startup verified"
 
       - name: Test Celery worker configuration
         working-directory: ./web
+        env:
+          REDIS_URL: redis://localhost:6379/0
+          CELERY_BROKER_URL: redis://localhost:6379/0
+          CELERY_RESULT_BACKEND: redis://localhost:6379/0
+          DJANGO_SECRET_KEY: copilot-development-secret-key
+          DJANGO_DEBUG: True
         run: |
           source ../venv/bin/activate
           timeout 5s celery -A rap_web worker --loglevel=info --dry-run || echo "Celery worker configuration verified"

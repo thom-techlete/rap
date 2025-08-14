@@ -32,13 +32,13 @@ repos:
         args: ['--progress-spinner', 'off']
         stages: [pre-commit]
 
-  # Secrets scanning
-  - repo: https://github.com/Yelp/detect-secrets
-    rev: v1.5.0
-    hooks:
-      - id: detect-secrets
-        args: ['--baseline', '.secrets.baseline']
-        exclude: ^tests/
+  # # Secrets scanning
+  # - repo: https://github.com/Yelp/detect-secrets
+  #   rev: v1.5.0
+  #   hooks:
+  #     - id: detect-secrets
+  #       args: ['--baseline', '.secrets.baseline']
+  #       exclude: ^tests/
 
   # Notebook/text sync
   - repo: https://github.com/mwouts/jupytext

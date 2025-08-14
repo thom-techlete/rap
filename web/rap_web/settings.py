@@ -374,6 +374,16 @@ EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", 30))
 SITE_URL = os.getenv("SITE_URL", "http://localhost:8000")
 
 # =============================================================================
+# AUTHENTICATION CONFIGURATION
+# =============================================================================
+
+# Authentication backends (required for django-axes)
+AUTHENTICATION_BACKENDS = [
+    "axes.backends.AxesStandaloneBackend",  # AxesStandaloneBackend should be first
+    "django.contrib.auth.backends.ModelBackend",  # Default Django backend
+]
+
+# =============================================================================
 # CELERY CONFIGURATION
 # =============================================================================
 
