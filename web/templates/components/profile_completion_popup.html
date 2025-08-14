@@ -1,0 +1,43 @@
+<!-- Profile Completion Popup -->
+{% if user.is_authenticated and not user.is_profile_complete %}
+    <div id="profile-completion-popup" class="profile-popup-overlay" style="display: none;">
+        <div class="profile-popup-container">
+            <div class="profile-popup-content">
+                <div class="profile-popup-header">
+                    <h3 class="profile-popup-title">
+                        <i data-feather="user-check" class="me-2"></i>
+                        Profiel aanvullen
+                    </h3>
+                    <button type="button" class="profile-popup-close" id="profile-popup-close">
+                        <i data-feather="x"></i>
+                    </button>
+                </div>
+                
+                <div class="profile-popup-body">
+                    <p class="mb-3">
+                        Je profiel is nog niet compleet. Het invullen van je gegevens helpt teamgenoten en coaches je beter te herkennen.
+                    </p>
+                    
+                    <div class="missing-fields">
+                        <h4>Ontbrekende gegevens:</h4>
+                        <ul class="missing-fields-list">
+                            {% for field in user.get_missing_profile_fields %}
+                                <li>{{ field }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="profile-popup-footer">
+                    <button type="button" class="btn btn-secondary me-2" id="profile-popup-dismiss">
+                        Later
+                    </button>
+                    <a href="{% url 'users:edit_profile' %}" class="btn btn-primary">
+                        <i data-feather="edit-2" class="me-1"></i>
+                        Profiel bewerken
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}

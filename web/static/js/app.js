@@ -6,6 +6,7 @@ let mobileMenuOpen = false;
 document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
     handleEventHighlighting();
+    initializeProfileCompletionPopup();
 });
 
 // Initialize application
@@ -15,7 +16,11 @@ function initializeApp() {
     initializeAnimations();
     initializeFormValidation();
     initializeTooltips();
-    feather.replace(); // Initialize Feather icons
+    
+    // Initialize Feather icons if available
+    if (typeof feather !== 'undefined') {
+        feather.replace();
+    }
 }
 
 // Handle event highlighting from dashboard links
@@ -497,17 +502,26 @@ function showNotification(message, type) {
     toastElement.innerHTML = toastHtml;
     toastContainer.appendChild(toastElement.firstElementChild);
     
-    // Initialize and show toast
-    const toast = new bootstrap.Toast(toastContainer.lastElementChild, {
-        autohide: true,
-        delay: 3000
-    });
-    toast.show();
-    
-    // Remove toast element after it's hidden
-    toastContainer.lastElementChild.addEventListener('hidden.bs.toast', function() {
-        this.remove();
-    });
+    // Initialize and show toast (with fallback for missing Bootstrap)
+    if (typeof bootstrap !== 'undefined' && bootstrap.Toast) {
+        const toast = new bootstrap.Toast(toastContainer.lastElementChild, {
+            autohide: true,
+            delay: 3000
+        });
+        toast.show();
+        
+        // Remove toast element after it's hidden
+        toastContainer.lastElementChild.addEventListener('hidden.bs.toast', function() {
+            this.remove();
+        });
+    } else {
+        // Fallback if Bootstrap is not available
+        const toastEl = toastContainer.lastElementChild;
+        toastEl.style.display = 'block';
+        setTimeout(() => {
+            toastEl.remove();
+        }, 3000);
+    }
 }
 
 
@@ -517,3 +531,111 @@ window.toggleMobileMenu = toggleMobileMenu;
 window.showNotification = showNotification;
 window.makeRequest = makeRequest;
 window.highlightEvent = highlightEvent;
+
+// =======================
+// Profile Completion Popup
+// =======================
+function initializeProfileCompletionPopup() {
+    const popup = document.getElementById('profile-completion-popup');
+    if (!popup) return;
+    
+    // Check if popup was dismissed recently (7 days)
+    const dismissedTimestamp = getCookie('profile_completion_dismissed');
+    if (dismissedTimestamp) {
+        const dismissedDate = new Date(parseInt(dismissedTimestamp));
+        const now = new Date();
+        const daysDiff = (now - dismissedDate) / (1000 * 60 * 60 * 24);
+        
+        if (daysDiff < 7) {
+            // Still within dismissal period, don't show popup
+            return;
+        }
+    }
+    
+    // Show popup after a short delay
+    setTimeout(() => {
+        showProfileCompletionPopup();
+    }, 1000);
+    
+    // Setup event listeners
+    setupProfilePopupEventListeners();
+}
+
+function showProfileCompletionPopup() {
+    const popup = document.getElementById('profile-completion-popup');
+    if (!popup) return;
+    
+    // Show popup
+    popup.style.display = 'block';
+    document.body.classList.add('popup-open');
+    
+    // Trigger show animation
+    setTimeout(() => {
+        popup.classList.add('show');
+    }, 10);
+    
+    // Replace feather icons if available
+    if (typeof feather !== 'undefined') {
+        feather.replace();
+    }
+}
+
+function hideProfileCompletionPopup() {
+    const popup = document.getElementById('profile-completion-popup');
+    if (!popup) return;
+    
+    // Hide popup with animation
+    popup.classList.remove('show');
+    document.body.classList.remove('popup-open');
+    
+    // Actually hide after animation
+    setTimeout(() => {
+        popup.style.display = 'none';
+    }, 300);
+}
+
+function dismissProfileCompletionPopup() {
+    // Set cookie to remember dismissal for 7 days
+    const dismissDate = new Date();
+    const expiryDate = new Date(dismissDate.getTime() + (7 * 24 * 60 * 60 * 1000)); // 7 days
+    
+    document.cookie = `profile_completion_dismissed=${dismissDate.getTime()}; expires=${expiryDate.toUTCString()}; path=/; SameSite=Lax`;
+    
+    hideProfileCompletionPopup();
+}
+
+function setupProfilePopupEventListeners() {
+    const closeBtn = document.getElementById('profile-popup-close');
+    const dismissBtn = document.getElementById('profile-popup-dismiss');
+    const overlay = document.getElementById('profile-completion-popup');
+    
+    // Close button
+    if (closeBtn) {
+        closeBtn.addEventListener('click', hideProfileCompletionPopup);
+    }
+    
+    // Dismiss button (sets cookie)
+    if (dismissBtn) {
+        dismissBtn.addEventListener('click', dismissProfileCompletionPopup);
+    }
+    
+    // Close on overlay click (not popup content)
+    if (overlay) {
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) {
+                hideProfileCompletionPopup();
+            }
+        });
+    }
+    
+    // Close on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && overlay && overlay.classList.contains('show')) {
+            hideProfileCompletionPopup();
+        }
+    });
+}
+
+// Export profile completion functions
+window.showProfileCompletionPopup = showProfileCompletionPopup;
+window.hideProfileCompletionPopup = hideProfileCompletionPopup;

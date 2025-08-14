@@ -135,3 +135,32 @@ class Player(AbstractUser):
             parts.append(self.plaats)
 
         return ", ".join(parts) if parts else ""
+
+    def get_missing_profile_fields(self):
+        """
+        Check which required profile fields are missing.
+        Excludes positie (position) and rugnummer (jersey number) as specified.
+        Returns a list of missing field labels.
+        """
+        missing_fields = []
+        
+        # Check required basic fields
+        if not self.first_name:
+            missing_fields.append("Voornaam")
+        if not self.last_name:
+            missing_fields.append("Achternaam")
+        if not self.email:
+            missing_fields.append("E-mailadres")
+        if not self.telefoonnummer:
+            missing_fields.append("Telefoonnummer")
+        if not self.geboortedatum:
+            missing_fields.append("Geboortedatum")
+        if not self.foto:
+            missing_fields.append("Profielfoto")
+            
+        return missing_fields
+    
+    @property
+    def is_profile_complete(self):
+        """Check if the user's profile is complete"""
+        return len(self.get_missing_profile_fields()) == 0
