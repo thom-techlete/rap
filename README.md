@@ -1,315 +1,428 @@
 
+![Django](https://img.shields.io/badge/Django-5.2.5-092E20?style=flat&logo=django&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-316192?style=flat&logo=postgresql&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=flat&logo=redis&logoColor=white)
+![Celery](https://img.shields.io/badge/Celery-5.5.3-37B24D?style=flat&logo=celery&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![Test Coverage](./coverage.svg)
 
-# Python Basic Template (TECHLETES)
+# ⚽ SV Rap 8 - Event Presence Management Webapp
 
-A modern, production-ready Python project template for TECHLETES, a data & AI consultancy. Includes hybrid dependency management, secure secret management, and comprehensive development tooling for internal use by TECHLETES employees.
+Een moderne web-applicatie voor het beheren van aanwezigheid bij evenementen van voetbalteam SV Rap 8. De app stelt teamleden in staat om aanwezigheid te markeren voor trainingen en wedstrijden, terwijl beheerders evenementen kunnen beheren en statistieken kunnen bekijken.
+
+> **Taal**: Alle gebruikersinterfaces en notificaties zijn in het Nederlands
+
+## ✨ Belangrijkste Functies
+
+🔐 **Gebruikersbeheer** - Veilige authenticatie met rollen (spelers, coaches, invaller)  
+📅 **Evenementenbeheer** - Maak en beheer trainingen, wedstrijden en toernooien  
+✅ **Aanwezigheidsregistratie** - Markeer aanwezigheid met volledige geschiedenis  
+🔄 **Terugkerende Evenementen** - Ondersteuning voor wekelijkse trainingen  
+📧 **Email Notificaties** - Automatische herinneringen en updates (Brevo SMTP)  
+📊 **Statistieken & Analytics** - Uitgebreide aanwezigheidsstatistieken  
+📱 **Mobiel Responsive** - Modern ontwerp geoptimaliseerd voor alle apparaten  
+📅 **Kalender Export** - ICS export voor kalender-apps  
+🚀 **CI/CD Pipeline** - Geautomatiseerde tests en deployment  
 
 ## 🚀 Quick Start
 
-### GitHub Copilot Development Setup (Recommended)
+### GitHub Copilot Development Setup (Aanbevolen)
 
-For GitHub Copilot users, use the dedicated setup script for instant development environment:
+Voor gebruikers met GitHub Copilot, gebruik het speciale setup script voor directe ontwikkelomgeving:
 
 ```bash
 ./scripts/copilot-setup.sh
 ```
 
-This will set up:
-- PostgreSQL and Redis services via Docker
-- Python environment with all dependencies
-- Django with migrations and superuser
-- Celery worker and beat in background
-- Ready-to-develop environment
+Dit zet automatisch op:
+- PostgreSQL en Redis services via Docker
+- Python omgeving met alle dependencies
+- Django met migraties en superuser
+- Celery worker en beat op de achtergrond
+- Ready-to-develop omgeving
 
-📖 **Complete guide**: [docs/COPILOT_SETUP.md](docs/COPILOT_SETUP.md)
+📖 **Complete gids**: [.github/COPILOT_SETUP.md](.github/COPILOT_SETUP.md)
 
-### Prerequisites
+### Vereisten
 
-- Python 3.12 or later
-- git
-- curl
-- sudo access (for system package installation)
-- 1Password CLI (see [docs/0_setup.md](docs/0_setup.md) for setup instructions)
+- Python 3.12 of hoger
+- Docker & Docker Compose
+- Git
+- Moderne webbrowser
 
-### One-Command Setup
+### Eenvoudige Setup
 
 ```bash
-git clone https://github.com/thom-techlete/python_basic_template.git
-cd python_basic_template
+git clone https://github.com/thom-techlete/rap.git
+cd rap
 ./scripts/setup.sh
 ```
 
-This will set up everything you need for development!
+Dit zet alles op wat je nodig hebt voor ontwikkeling!
 
-## 📋 Features
+## 🏗️ Technische Stack
 
-### 🔧 **Modern Dependency Management**
-- **Hybrid approach**: Production dependencies via `pip-tools`, development tools via `pyproject.toml`
-- **Reproducible builds** with pinned versions
-- **Clean separation** between production and development dependencies
+### Backend
+- **Django 5.2.5** - Krachtig web framework met ingebouwde beveiliging
+- **PostgreSQL 17** - Relationele database voor gebruikers, evenementen en aanwezigheid
+- **Celery 5.5.3** - Asynchrone taakverwerking voor email notificaties
+- **Redis 7** - Message broker en caching systeem
+- **Django REST Framework** - API endpoints voor toekomstige uitbreidingen
 
-### 🔐 **Secret Management**
-- **1Password CLI integration** for secure secret handling
-- **detect-secrets** for preventing secrets in git
-- **Environment variable management** with direnv
+### Frontend & Styling
+- **Django Templates** - Server-side rendering met moderne HTML5
+- **Bootstrap-stijl CSS** - Responsieve grid en componenten
+- **Mobiel-first ontwerp** - Geoptimaliseerd voor alle schermformaten
+- **Nederlandse UI** - Alle labels, formulieren en berichten in het Nederlands
 
+### DevOps & Deployment
+- **Docker & Docker Compose** - Containerisatie voor consistente deployment
+- **Nginx** - Reverse proxy en statische bestanden
+- **GitHub Actions** - CI/CD pipeline met geautomatiseerde tests
+- **Health Checks** - Monitoring en automatische rollback
+- **Brevo SMTP** - Professionele email service integratie
 
-### 🛠️ **Development Tools**
-- **Code formatting**: Black
-- **Linting & import sorting**: Ruff (replaces flake8, isort, pyupgrade)
-- **Type checking**: mypy & beartype
-- **Testing**: pytest with coverage
-- **Pre-commit hooks** for code quality
-- **Jupyter notebook support** with nbstripout
+## � Project Structuur
 
-### 📦 **Project Structure**
 ```
-python_basic_template/
-├── .github/
-│   └── workflows/                  # GitHub Actions workflows
-├── docs/                           # Documentation (setup, secrets, dependencies, quality, progress)
-│   ├── 0_setup.md
-│   ├── 1_secret_management.md
-│   ├── 2_dependency_management.md
-│   ├── 3_pre_commit_hooks.md
-│   ├── 4_code_quality.md
-│   └── progress.md
-├── example/                        # Example code and notebooks
-│   ├── __init__.py
-│   ├── using_secrets.py
-│   └── using_secrets.ipynb
-├── scripts/                        # Setup and utility scripts
-│   ├── setup.sh
-│   ├── dependency.sh
-│   ├── new-branch.sh
-│   └── hooks/
-│       ├── black-autoformat.sh
-│       ├── check-requirements.sh
-│       └── nbstripout-autoadd.sh
-├── utils/                          # Utility modules
-│   ├── __init__.py
-│   ├── secrets.py
-│   └── utils.py
-├── tests/                          # (Empty) Test directory scaffold
-├── pyproject.toml                  # Project configuration & dev dependencies
-├── requirements.txt                # Compiled production dependencies
-├── requirements-dev.txt            # Compiled dev dependencies
-├── .pre-commit-config.yaml         # Pre-commit hooks config
-├── .envrc                          # direnv environment config
-├── .secrets.baseline               # Secret detection baseline
-├── CODE_OF_CONDUCT.md              # Contributor code of conduct
-├── CONTRIBUTING.md                 # Contribution guidelines
-├── setup.py                        # (Optional) Legacy setup script
-└── README.md                       # Project overview (this file)
+rap/
+├── web/                            # Django hoofdproject
+│   ├── manage.py                   # Django management script
+│   ├── rap_web/                    # Project instellingen
+│   │   ├── settings.py             # Django configuratie
+│   │   ├── urls.py                 # URL routing
+│   │   └── celery.py               # Celery configuratie
+│   ├── users/                      # Gebruikersbeheer
+│   │   ├── models.py               # CustomUser, Player modellen
+│   │   ├── forms.py                # Registratie en login formulieren
+│   │   └── views.py                # Authenticatie views
+│   ├── events/                     # Evenementenbeheer
+│   │   ├── models.py               # Event, EventType modellen
+│   │   ├── views.py                # Dashboard en CRUD views
+│   │   ├── forms.py                # Evenement formulieren
+│   │   └── dashboard_views.py      # Admin dashboard
+│   ├── attendance/                 # Aanwezigheidsregistratie
+│   │   ├── models.py               # Attendance met geschiedenis
+│   │   ├── views.py                # Aanwezigheids views
+│   │   └── urls.py                 # URL routing
+│   ├── notifications/              # Email notificaties
+│   │   ├── tasks.py                # Celery email taken
+│   │   ├── utils.py                # Email utilities
+│   │   └── templates/              # Email templates (NL)
+│   ├── templates/                  # HTML templates
+│   │   ├── base.html               # Basis template
+│   │   ├── dashboard/              # Dashboard templates
+│   │   └── registration/           # Auth templates
+│   └── static/                     # CSS, JS, afbeeldingen
+├── docker/                         # Docker configuraties
+│   ├── docker-compose.dev.yml     # Ontwikkeling
+│   ├── docker-compose.prod.yml    # Productie
+│   └── nginx/                      # Nginx configuratie
+├── docs/                           # Documentatie
+│   ├── project_description.md      # Project overzicht
+│   ├── roadmap.md                  # Ontwikkelings roadmap
+│   └── DEPLOYMENT.md               # Deployment gids
+├── scripts/                        # Deployment scripts
+│   ├── setup.sh                    # Lokale setup
+│   ├── deploy.sh                   # Productie deployment
+│   └── copilot-setup.sh            # GitHub Copilot setup
+└── .github/                        # GitHub configuratie
+    ├── workflows/                  # CI/CD pipelines
+    ├── copilot-instructions.md     # Copilot context
+    └── COPILOT_SETUP.md            # Copilot documentatie
 ```
 
-## 🏗️ Dependency Management
+## 🎯 Kernfunctionaliteiten
 
-This project uses a **hybrid dependency management approach**:
+### 👥 Gebruikersrollen
 
+**Spelers**
+- Bekijk komende evenementen en trainingen
+- Markeer aanwezigheid (aanwezig/afwezig/misschien)
+- Bekijk aanwezigheid van teamgenoten
+- Persoonlijke statistieken en geschiedenis
+- Profiel met positie en rugnummer
 
-### Production dependencies
-- Declared under `dependencies` in `pyproject.toml` 
-- Locked to `requirements.txt` via pip-tools
+**Beheerders**
+- Maak, bewerk en verwijder evenementen
+- Beheer terugkerende trainingen
+- Bekijk en bewerk alle aanwezigheidsregistraties
+- Toegang tot uitgebreide statistieken
+- Gebruikersbeheer en rolletoewijzing
 
-### Development dependencies
-- Declared under `[project.optional-dependencies].dev` in `pyproject.toml` 
-- Locked to `requirements-dev.txt` via pip-tools
+### 📅 Evenementenbeheer
 
-This setup ensures:
+- **Evenement Types**: Training, Wedstrijd, Toernooi, Teambuilding
+- **Terugkerende Events**: Wekelijkse trainingen met automatische generatie
+- **Deelnemerslimieten**: Maximaal aantal deelnemers per evenement
+- **Verplichte Aanwezigheid**: Markeer belangrijke evenementen
+- **Kalender Export**: ICS bestanden voor externe kalenders
 
-- Clear separation of runtime vs. tooling packages
-- Fully pinned, reproducible installs using lockfiles
-- One declarative manifest (`pyproject.toml`) for all dependencies
+### 📊 Statistieken & Analytics
 
-### Installation Options
+- **Aanwezigheidspercentages**: Per speler en per evenement type
+- **Trending Data**: Maandelijkse en seizoensstatistieken
+- **Team Overzicht**: Wie komt het meest/minst naar trainingen
+- **Admin Dashboard**: Visuele rapportage en inzichten
 
-| Command | What it installs |
-|---------|------------------|
-| `./scripts/dependency.sh --prod` | Production setup only |
-| `./scripts/dependency.sh --dev` |  Development setup only |
-| `./scripts/dependency.sh` | Both production + development (Default) |
+## 🔧 Ontwikkeling
 
-**📖 Detailed guide**: [docs/2_dependency_management.md](docs/2_dependency_management.md)
-
-## 🔐 Secret Management
-
-Secure secret handling with 1Password CLI integration:
-
-- **Environment variables** loaded via direnv
-- **1Password CLI** for secure secret retrieval
-- **detect-secrets** prevents accidental commits
-- **Example usage** in [example/using_secrets.py](example/using_secrets.py)
-
-**📖 Detailed guide**: [docs/1_secret_management.md](docs/1_secret_management.md)
-
-## 🛠️ Development Workflow
-
-### Setup Development Environment
+### Lokale Development Environment
 
 ```bash
-# Complete setup (recommended for new developers)
-./scripts/setup.sh
+# Start PostgreSQL en Redis
+cd docker && docker-compose -f docker-compose.dev.yml up -d
+
+# Activeer Python omgeving
+source venv/bin/activate
+
+# Start Django development server
+cd web && python manage.py runserver
+
+# Start Celery worker (nieuwe terminal)
+cd web && celery -A rap_web worker --loglevel=info
+
+# Start Celery beat scheduler (nieuwe terminal)
+cd web && celery -A rap_web beat --loglevel=info
 ```
 
-**For manual set-up see**: [docs/0_setup.md](docs/0_setup.md)
-
-### Code Quality
+### Belangrijke Commando's
 
 ```bash
-# Typing check
-mypy .
+# Database migraties
+cd web && python manage.py makemigrations
+cd web && python manage.py migrate
 
-# Format code
+# Superuser aanmaken
+cd web && python manage.py createsuperuser
+
+# Tests draaien
+cd web && python manage.py test
+
+# Code formatting
 black .
-
-# Lint and fix code
 ruff check . --fix
-mypy .
 
-# Run tests
-pytest
-
-# Run all pre-commit checks
-pre-commit run --all-files
+# Sample data laden
+cd web && python manage.py populate_events
 ```
 
-## 🧪 Testing
-
-Run tests with pytest:
+### Environment Variabelen
 
 ```bash
-# Run all tests
-pytest
+# Database
+DATABASE_URL=postgres://postgres:password@localhost:5432/rap_web
+POSTGRES_DB=rap_web
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=password
 
-# Run with coverage
-pytest --cov
+# Redis & Celery
+REDIS_URL=redis://localhost:6379/0
+CELERY_BROKER_URL=redis://localhost:6379/0
 
-# Run specific test
-pytest tests/test_specific.py
+# Django
+DJANGO_SECRET_KEY=your-secret-key
+DJANGO_DEBUG=True
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
+
+# Email (Brevo)
+EMAIL_BACKEND=anymail.backends.brevo.EmailBackend
+ANYMAIL_BREVO_API_KEY=your-api-key
+DEFAULT_FROM_EMAIL=noreply@rap8.nl
 ```
 
-## 📝 Configuration
+## 🚀 Productie Deployment
 
-### Key Configuration Files
+### Eenvoudige VPS Deployment
 
-| File | Purpose |
-|------|---------|
-| `pyproject.toml` | Project metadata, (dev) dependencies, tool config |
-| `requirements.txt` | Compiled production dependencies (auto-generated) |
-| `requirements-dev.txt` | Compiled development dependencies (auto-generated) |
-| `.pre-commit-config.yaml` | Pre-commit hooks configuration |
-| `.envrc` | Environment variables (direnv) |
-| `.secrets.baseline` | Secret detection baseline |
-
-### Tool Configuration
-
-All development tools are configured in `pyproject.toml`:
-- **Black**: Code formatting (88 char line length)
-- **ruff**: Sorting, linting, formatting (replaces flake8, isort, pyupgrade)
-- **pytest**: Test configuration with coverage
-- **mypy**: Type checking
-- **beartype**: Type checking at runtime (more extensive then mypy)
-
-## 🚀 Using This Template
-
-### For New Projects
-
-1. **Use this template** on GitHub or clone it
-2. **Update project metadata** in `pyproject.toml`:
-   - Change `name`, `description`, `authors`
-   - Update repository URLs
-3. **Run setup**: `./scripts/setup.sh`
-4. **Start coding**!
-
-### Customization
-
-- **Add your production dependencies** to `pyproject.toml`
-- **Modify tool configurations** in `pyproject.toml`
-- **Update documentation** in `docs/`
-- **Add your modules** alongside `utils/`
-
-## 📚 Documentation
-
-0. **[Setup](docs/0_setup.md)** - Guide to setup the development environment 
-1. **[Secret Management](docs/1_secret_management.md)** - Secure secret handling guide
-2. **[Dependency Management](docs/2_dependency_management.md)** - Detailed dependency workflow
-3. **[Pre Commit Hooks](docs/3_pre_commit_hooks.md)** - Pre commit hooks to ensure safety and quality
-4. **[Code Quality](docs/4_code_quality.md)** - Rules and guidelines on code quality and how it is enforced
-
-## 🌐 Production Deployment
-
-### Quick VPS Deployment
-
-Deploy to a production server in one command:
+Deploy naar een productieserver met één commando:
 
 ```bash
-# On your VPS server (Ubuntu 20.04+):
-curl -fsSL https://raw.githubusercontent.com/your-username/rap/main/scripts/vps-setup.sh | bash
+# Op je VPS server (Ubuntu 20.04+):
+curl -fsSL https://raw.githubusercontent.com/thom-techlete/rap/main/scripts/vps-setup.sh | bash
 ```
 
-### Manual Production Setup
+### Handmatige Productie Setup
 
 ```bash
 # Clone repository
-git clone https://github.com/your-username/rap.git /opt/rap
+git clone https://github.com/thom-techlete/rap.git /opt/rap
 cd /opt/rap
 
-# Generate production secrets
+# Genereer productie secrets
 ./scripts/generate_secrets.sh your-domain.com
 
-# Deploy with SSL and security features
+# Deploy met SSL en security features
 ./scripts/deploy.sh your-domain.com --setup
 ```
 
-### Production Features
-- 🔒 **SSL/TLS encryption** with Let's Encrypt
+### Productie Features
+- 🔒 **SSL/TLS versleuteling** met Let's Encrypt
 - 🛡️ **Security hardening** (firewall, rate limiting, secure headers)
-- 🐳 **Docker containerization** with health checks
-- 📊 **Monitoring** with health endpoints
-- 🔄 **Automated backups** and updates
-- ⚡ **High performance** with Nginx reverse proxy
+- 🐳 **Docker containerisatie** met health checks
+- 📊 **Monitoring** met health endpoints
+- 🔄 **Geautomatiseerde backups** en updates
+- ⚡ **High performance** met Nginx reverse proxy
 
-See **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** for detailed production setup guide.
+Zie **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** voor gedetailleerde productie setup gids.
 
-## 🤝 Contributing
+## 🧪 Testing & Code Kwaliteit
 
-This template is for use by TECHLETES employees. See [CONTRIBUTING.md](CONTRIBUTING.md) for internal contribution guidelines, required 1Password CLI setup, and branch workflow.
+### Tests Draaien
 
-## 📄 License
+```bash
+# Alle tests
+cd web && python manage.py test
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+# Specifieke app tests
+cd web && python manage.py test events
+
+# Met coverage
+cd web && coverage run --source='.' manage.py test
+cd web && coverage report
+cd web && coverage html  # HTML rapport in htmlcov/
+```
+
+### Code Kwaliteit Tools
+
+```bash
+# Code formatting
+black .
+
+# Linting en import sorting
+ruff check . --fix
+
+# Pre-commit hooks
+pre-commit run --all-files
+
+# Security audit
+pip-audit
+
+# Dependency check
+cd web && python manage.py check --deploy
+```
+
+## 📱 Gebruikerservaring
+
+### Mobiele App Features
+- **Responsive Design**: Optimaal voor telefoons en tablets
+- **Touch-friendly**: Grote knoppen en eenvoudige navigatie
+- **Offline Indicaties**: Duidelijke feedback bij netwerkproblemen
+- **Snelle Toegang**: Directe links naar meest gebruikte functies
+
+### Desktop Features
+- **Dashboard Overzicht**: Uitgebreid overzicht voor beheerders
+- **Bulk Acties**: Beheer meerdere evenementen tegelijk
+- **Statistieken**: Gedetailleerde grafieken en rapporten
+- **Kalender Integratie**: Export naar Outlook, Google Calendar, etc.
+
+## 🔐 Beveiliging & Privacy
+
+- **CSRF Bescherming**: Tegen cross-site request forgery
+- **Rate Limiting**: Bescherming tegen brute force aanvallen
+- **Secure Headers**: CSP, HSTS, X-Frame-Options
+- **Input Validatie**: Bescherming tegen XSS en SQL injection
+- **Privacy**: Alle data privé en alleen toegankelijk na login
+- **Wachtwoord Beleid**: Sterke wachtwoorden vereist
+
+## 📚 Documentatie
+
+| Document | Beschrijving |
+|----------|-------------|
+| **[Project Beschrijving](docs/project_description.md)** | Volledige project overzicht en requirements |
+| **[Roadmap](docs/roadmap.md)** | Ontwikkelingsstatus en toekomstige features |
+| **[Deployment](docs/DEPLOYMENT.md)** | Productie deployment gids |
+| **[CI/CD Setup](docs/CI_CD_SETUP.md)** | GitHub Actions configuratie |
+| **[Email Notificaties](docs/email_notifications.md)** | Email systeem documentatie |
+| **[Beveiliging](docs/security.md)** | Security best practices |
+| **[Copilot Setup](.github/COPILOT_SETUP.md)** | GitHub Copilot ontwikkelomgeving |
+
+## 🎯 Huidige Status
+
+✅ **Voltooid**
+- Gebruikersauthenticatie en rolbeheer
+- Evenementenbeheer met terugkerende events
+- Aanwezigheidsregistratie en geschiedenis
+- Email notificaties en herinneringen
+- Moderne responsive UI in het Nederlands
+- Statistieken en analytics dashboard
+- CI/CD pipeline en productie deployment
+- Kalender features en ICS export
+
+🔄 **In Ontwikkeling**
+- Advanced analytics uitbreidingen
+- Multi-team ondersteuning voorbereiding
+- API documentatie
+
+Zie **[docs/roadmap.md](docs/roadmap.md)** voor gedetailleerde status updates.
+
+## 🤝 Bijdragen
+
+Dit project is ontwikkeld voor SV Rap 8. Voor vragen over bijdragen of aanpassingen, neem contact op met het ontwikkelteam.
+
+### Development Workflow
+
+```bash
+# Nieuwe feature branch
+./scripts/new-branch.sh feature/nieuwe-functie
+
+# Code wijzigingen maken
+# ...
+
+# Tests en kwaliteitscontroles
+cd web && python manage.py test
+black .
+ruff check . --fix
+
+# Commit en push
+git add .
+git commit -m "Voeg nieuwe functie toe"
+git push origin feature/nieuwe-functie
+```
 
 ## 🛟 Troubleshooting
 
-### Common Issues
+### Veelvoorkomende Problemen
 
-**Virtual environment issues:**
+**Database connectie problemen:**
 ```bash
-rm -rf venv
-python3 -m venv venv
-source venv/bin/activate
-./scripts/dependency.sh
+# Check of PostgreSQL draait
+docker-compose -f docker/docker-compose.dev.yml ps
+
+# Herstart database
+docker-compose -f docker/docker-compose.dev.yml restart postgres
 ```
 
-**Pre-commit hook failures:**
+**Celery email problemen:**
 ```bash
-pre-commit run --all-files
-# Fix any issues and re-commit
+# Check Celery worker status
+cd web && celery -A rap_web inspect active
+
+# Herstart Celery
+cd web && pkill -f celery
+cd web && celery -A rap_web worker --loglevel=info &
 ```
 
-**1Password CLI not working:**
-- Ensure 1Password CLI is installed on Windows
-- Enable CLI integration in 1Password settings
-- Link to WSL if using Windows Subsystem for Linux
-
-**Dependency conflicts:**
+**Static files niet geladen:**
 ```bash
-pip check  # Identify conflicts
-# Review and resolve in requirements.in or pyproject.toml
+cd web && python manage.py collectstatic
 ```
+
+**Environment variabelen:**
+```bash
+# Check .env bestand
+cat .env
+
+# Herlaad direnv
+direnv reload
+```
+
+## 📄 Licentie
+
+Dit project is gelicenseerd onder de MIT License - zie het LICENSE bestand voor details.
 
 ---
 
-**🎯 Ready to start your Python project with modern tooling and best practices!**
+**⚽ Klaar om te voetballen met moderne technologie!** 
+
+Voor meer informatie of ondersteuning, neem contact op met het SV Rap 8 ontwikkelteam.

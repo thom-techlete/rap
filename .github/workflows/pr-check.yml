@@ -124,7 +124,6 @@ jobs:
   build_check:
     name: Validate Docker build
     runs-on: ubuntu-latest
-    needs: test
 
     steps:
       - name: Checkout PR head
