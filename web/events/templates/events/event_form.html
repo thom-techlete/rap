@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load static_versioning %}
 
 {% block title %}
   {% if event %}
@@ -7,13 +8,6 @@
   {% else %}
     Nieuw evenement aanmaken - SV Rap 8
   {% endif %}
-{% endblock %}
-
-{% block extra_css %}
-  <!-- Flatpickr CSS for datepicker -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/bootstrap.css" />
-  <link rel="stylesheet" href="{% static 'css/events/event_form.css' %}" />
 {% endblock %}
 
 {% block content %}
@@ -314,6 +308,13 @@
   </div>
 {% endblock %}
 
+{% block extra_css %}
+  <!-- Flatpickr CSS for datepicker -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/bootstrap.css" />
+  {% static_v_css 'css/events/event_form.css' %}
+{% endblock %}
+
 {% block extra_js %}
   <!-- Flatpickr JavaScript for datepicker -->
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -326,5 +327,5 @@
     window.descriptionFieldId = '{{ form.description.id_for_label }}';
     window.futureRecurringEventsCount = {{ future_recurring_events_count|default:0 }};
   </script>
-  <script src="{% static 'js/events/event_form.js' %}"></script>
+  {% static_v_js 'js/events/event_form.js' %}
 {% endblock %}
