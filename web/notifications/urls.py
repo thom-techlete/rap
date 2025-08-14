@@ -16,4 +16,8 @@ urlpatterns = [
         name="send_event_reminder",
     ),
     path("status/", views.notification_status, name="status"),
+    
+    # Admin scheduling URLs
+    path("admin/schedule/", views.schedule_admin_dashboard, name="schedule_admin_dashboard"),
+    path("admin/schedule/sync/", views.sync_tasks_manual, name="sync_tasks_manual"),
 ]
