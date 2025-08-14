@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load static_versioning %}
 
 {% block extra_css %}
   {% static_v_css 'css/admin/schedule_admin.css' %}
@@ -275,13 +276,4 @@
       </div>
     </div>
   </div>
-{% endblock %}
-
-{% block extra_js %}
-  <script>
-    // Initialize Feather icons
-    if (typeof feather !== 'undefined') {
-      feather.replace();
-    }
-  </script>
 {% endblock %}
