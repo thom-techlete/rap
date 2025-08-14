@@ -203,7 +203,7 @@
             {% for attendance in recent_attendance %}
               <div class="d-flex align-items-center border-bottom pb-3 mb-3">
                 <div class="flex-shrink-0 me-3">
-                  <div class="user-avatar user-avatar-sm">
+                  <div class="user-avatar user-avatar-sm{% if not attendance.user.foto %} default{% endif %}">
                     {% if attendance.user.foto %}
                       <img src="{{ attendance.user.foto.url }}" alt="{{ attendance.user.get_full_name }}" />
                     {% else %}
@@ -431,25 +431,14 @@
                 <div class="flex-shrink-0 me-3">
                   <div class="position-relative">
                     <!-- Ranking position badge -->
-                    <div class="position-absolute top-0 start-0 translate-middle rounded-circle d-flex align-items-center justify-content-center"
-                      style="width: 1.5rem; height: 1.5rem; 
-                                            background: {% if ranking.position == 1 %}
-                        #fbbf24
-                      {% elif ranking.position == 2 %}
-                        #9ca3af
-                      {% elif ranking.position == 3 %}
-                        #cd7c2f
-                      {% else %}
-                        #e5e7eb
-                      {% endif %}; 
-                                            color: {% if ranking.position <= 3 %}
-                        white
-                      {% else %}
-                        #6b7280
-                      {% endif %}; 
-                                            font-size: 0.75rem; font-weight: 600; z-index: 10;">{{ ranking.position }}</div>
+                    <div 
+                      class="position-absolute top-0 start-0 translate-middle rounded-circle d-flex align-items-center justify-content-center"
+                      style="width: 1.5rem; height: 1.5rem; background: {% if ranking.position == 1 %}#fbbf24{% elif ranking.position == 2 %}#9ca3af{% elif ranking.position == 3 %}#cd7c2f{% else %}#e5e7eb{% endif %}; color: {% if ranking.position <= 3 %}white{% else %}#6b7280{% endif %}; font-size: 0.75rem; font-weight: 600; z-index: 10;"
+                    >
+                    {{ ranking.position }}
+                  </div>
                     <!-- User avatar -->
-                    <div class="user-avatar user-avatar-sm">
+                    <div class="user-avatar user-avatar-sm{% if not ranking.player.foto %} default{% endif %}">
                       {% if ranking.player.foto %}
                         <img src="{{ ranking.player.foto.url }}" alt="{{ ranking.player.get_full_name }}" />
                       {% else %}
