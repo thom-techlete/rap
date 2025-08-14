@@ -230,7 +230,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeViewModes() {
     const viewModeButtons = document.querySelectorAll('.view-mode-btn');
     const savedViewMode = localStorage.getItem('eventViewMode') || 'list';
-    
+    console.log('Saved view mode:', savedViewMode);
     // Set initial view mode
     switchViewMode(savedViewMode);
     
@@ -566,4 +566,4 @@ function getEventColor(eventType) {
         'overig': '#6b7280'
     };
     return colors[eventType] || colors['overig'];
-});
+};

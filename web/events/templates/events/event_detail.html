@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load static_versioning %}
 {% load event_extras %}
 
 {% block title %}{{ event.name }} - SV Rap 8{% endblock %}
@@ -184,7 +185,8 @@
                 {% if user.is_authenticated and is_upcoming %}
                 <div class="mb-4">
                     <h6 class="fw-semibold mb-3" style="color: #374151;">Jouw aanwezigheid</h6>
-                    <div class="d-flex gap-2">
+                    <div class="d-flex gap-2 attendance-buttons-row">
+                        {% with user_attendance_status=event|user_attendance_status:user %}
                         <button class="btn attendance-btn{% if user_attendance_status == True %} btn-success{% else %} btn-ghost{% endif %} flex-fill attendance-present-btn"
                             id="present-btn-{{ event.id }}"
                             data-event-id="{{ event.id }}"
@@ -193,13 +195,14 @@
                             <span>Aanwezig</span>
                         </button>
                         
-                        <button class="btn attendance-btn {% if user_attendance_status == False %} btn-error{% else %} btn-ghost{% endif %} flex-fill attendance-absent-btn"
+                        <button class="btn attendance-btn{% if user_attendance_status == False %} btn-error{% else %} btn-ghost{% endif %} flex-fill attendance-absent-btn"
                             id="absent-btn-{{ event.id }}"
                             data-event-id="{{ event.id }}"
                             data-attendance="false">
                             <i data-feather="x" style="width: 0.875rem; height: 0.875rem;"></i>
                             <span>Afwezig</span>
                         </button>
+                        {% endwith %}
                     </div>
                 </div>
                 {% endif %}
@@ -484,89 +487,8 @@
     </div>
 </div>
 {% endif %}
-
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/events/event_list.js' %}"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Feather icons
-    if (typeof feather !== 'undefined') {
-        feather.replace();
-    }
-});
-</script>
-{% endblock %}
-
-{% block extra_css %}
-<style>
-.table tbody tr:hover {
-    background-color: #f8fafc !important;
-}
-
-.attendance-btn {
-    transition: all 0.2s ease;
-    border: 1px solid #e5e7eb;
-    font-weight: 500;
-    padding: 0.5rem 1rem;
-    border-radius: 0.5rem;
-}
-
-.btn-ghost {
-    background: white;
-    border: 1px solid #e5e7eb;
-    color: #6b7280;
-}
-
-.btn-ghost:hover {
-    background: #f9fafb;
-    border-color: #d1d5db;
-    color: #374151;
-}
-
-.btn-success {
-    background: #dcfce7;
-    border: 1px solid #22c55e;
-    color: #166534;
-}
-
-.btn-success:hover {
-    background: #bbf7d0;
-    border-color: #16a34a;
-    color: #14532d;
-}
-
-.btn-error {
-    background: #fee2e2;
-    border: 1px solid #ef4444;
-    color: #dc2626;
-}
-
-.btn-error:hover {
-    background: #fecaca;
-    border-color: #dc2626;
-    color: #b91c1c;
-}
-
-.text-error {
-    color: #dc2626 !important;
-}
-
-/* Custom badge styles */
-.badge {
-    font-weight: 500;
-    font-size: 0.75rem;
-}
-
-/* Progress bar custom styles */
-.progress {
-    border-radius: 0.5rem;
-    overflow: hidden;
-}
-
-.progress-bar {
-    border-radius: 0.5rem;
-}
-</style>
+{% static_v_js 'js/events/event_list.js' %}
 {% endblock %}

@@ -196,6 +196,10 @@ STATIC_ROOT = BASE_DIR / "staticfiles"  # For production collectstatic
 # WhiteNoise configuration for static files serving
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
+# Static file versioning for cache busting
+# Enable static file versioning (adds version parameters to static URLs)
+STATIC_VERSIONING_ENABLED = bool_config("STATIC_VERSIONING_ENABLED", default=not DEBUG)
+
 # Media files
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"

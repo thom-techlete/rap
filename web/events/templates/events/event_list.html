@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load static_versioning %}
 
 {% block title %}Evenementen - SV Rap 8{% endblock %}
 
@@ -170,22 +171,22 @@
 
 <!-- View Mode Toggles -->
 <div class="mb-4">
-    <div class="card border-0 shadow-sm">
+    <div class="card border-0 shadow-sm" style="overflow: visible; z-index: 9;">
         <div class="card-body p-2">
             <div class="d-flex justify-content-between align-items-center">
-                <div class="small text-muted fw-medium">Weergave:</div>
+                <div class="text-muted fw-medium">Weergave:</div>
                 <div class="btn-group" role="group" aria-label="View modes">
-                    <button type="button" class="btn btn-sm view-mode-btn active" data-view="list" 
+                    <button type="button" class="btn view-mode-btn active" data-view="list" 
                             style="border-radius: 0.375rem 0 0 0.375rem; font-weight: 500;">
                         <i data-feather="list" style="width: 0.875rem; height: 0.875rem; margin-right: 0.25rem;"></i>
                         <span class="d-none d-sm-inline">Lijst</span>
                     </button>
-                    <button type="button" class="btn btn-sm view-mode-btn" data-view="grid"
+                    <button type="button" class="btn view-mode-btn" data-view="grid"
                             style="border-radius: 0; font-weight: 500;">
                         <i data-feather="grid" style="width: 0.875rem; height: 0.875rem; margin-right: 0.25rem;"></i>
                         <span class="d-none d-sm-inline">Raster</span>
                     </button>
-                    <button type="button" class="btn btn-sm view-mode-btn" data-view="calendar"
+                    <button type="button" class="btn view-mode-btn" data-view="calendar"
                             style="border-radius: 0 0.375rem 0.375rem 0; font-weight: 500;">
                         <i data-feather="calendar" style="width: 0.875rem; height: 0.875rem; margin-right: 0.25rem;"></i>
                         <span class="d-none d-sm-inline">Kalender</span>
@@ -458,11 +459,12 @@
         </div>
     {% endif %}
 </div>
-
 {% endblock %}
+
 {% block extra_js %}
-<script src="{% static 'js/events/event_list.js' %}"></script>
+    {% static_v_js 'js/events/event_list.js' %}
 {% endblock%}
+
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/events/event_list.css' %}">
+    {% static_v_css 'css/events/event_list.css' %}
 {% endblock %}

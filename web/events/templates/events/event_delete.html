@@ -1,18 +1,9 @@
 {% extends 'base.html' %}
+{% load static_versioning %}
+{% block extra_meta %}
 
 {% block title %}
     Evenement verwijderen - SV Rap 8
-{% endblock %}
-
-{% block extra_css %}
-<style>
-.alert-danger {
-    border-left: 4px solid #dc3545;
-}
-.alert-warning {
-    border-left: 4px solid #ffc107;
-}
-</style>
 {% endblock %}
 
 {% block content %}
@@ -180,6 +171,19 @@
     </div>
 </div>
 
-{% load static %}
-<script src="{% static 'js/events/event_delete.js' %}"></script>
+{% endblock %}
+
+{% block extra_js %}
+{% static_v_js 'js/events/event_delete.js' %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.alert-danger {
+    border-left: 4px solid #dc3545;
+}
+.alert-warning {
+    border-left: 4px solid #ffc107;
+}
+</style>
 {% endblock %}
