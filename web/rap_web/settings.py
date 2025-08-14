@@ -403,3 +403,9 @@ CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
 # Optional: Set default schedule (will be created in admin if not exists)
 CELERY_BEAT_SCHEDULE = {}
+
+# Import local settings for development if available
+try:
+    from .local_settings import *
+except ImportError:
+    pass
