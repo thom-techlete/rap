@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load static_versioning %}
 
 {% block title %}Evenementen - SV Rap 8{% endblock %}
 
@@ -458,11 +459,12 @@
         </div>
     {% endif %}
 </div>
-
 {% endblock %}
+
 {% block extra_js %}
-<script src="{% static 'js/events/event_list.js' %}"></script>
+    {% static_v_js 'js/events/event_list.js' %}
 {% endblock%}
+
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/events/event_list.css' %}">
+    {% static_v_css 'css/events/event_list.css' %}
 {% endblock %}
