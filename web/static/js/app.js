@@ -563,7 +563,7 @@ function initializeProfileCompletionPopup() {
 
 function showProfileCompletionPopup() {
     const popup = document.getElementById('profile-completion-popup');
-    if (!popup) return;
+    if (!popup || window.location.pathname.startsWith('/users/profile/edit')) return;
     
     // Show popup
     popup.style.display = 'block';
@@ -597,7 +597,7 @@ function hideProfileCompletionPopup() {
 function dismissProfileCompletionPopup() {
     // Set cookie to remember dismissal for 7 days
     const dismissDate = new Date();
-    const expiryDate = new Date(dismissDate.getTime() + (7 * 24 * 60 * 60 * 1000)); // 7 days
+    const expiryDate = new Date(dismissDate.getTime() + (2 * 24 * 60 * 60 * 1000)); // 7 days
     
     document.cookie = `profile_completion_dismissed=${dismissDate.getTime()}; expires=${expiryDate.toUTCString()}; path=/; SameSite=Lax`;
     
