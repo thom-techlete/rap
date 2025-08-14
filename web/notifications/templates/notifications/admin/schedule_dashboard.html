@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+  {% static_v_css 'css/admin/schedule_admin.css' %}
+{% endblock %}
+
+{% block title %}Taak planning configuratie - {{ block.super }}{% endblock %}
+
+{% block content %}
+  <div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h1 class="h3 mb-1">
+              <i data-feather="clock" class="me-2"></i>
+              Taak planning configuratie
+            </h1>
+            <p class="text-muted mb-0">Beheer automatische taken en schema's</p>
+          </div>
+          <div>
+            <a href="{% url 'admin:notifications_scheduleconfiguration_add' %}" class="btn btn-primary me-2">
+              <i data-feather="plus" class="me-1"></i>
+              Nieuwe configuratie
+            </a>
+            <form method="post" action="{% url 'notifications:sync_tasks_manual' %}" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-outline-secondary">
+                <i data-feather="refresh-cw" class="me-1"></i>
+                Synchroniseer taken
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+      <div class="col-md-3">
+        <div class="card bg-primary text-white">
+          <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <div>
+                <h6 class="card-title">Totaal configuraties</h6>
+                <h2 class="mb-0">{{ total_configurations }}</h2>
+              </div>
+              <div class="align-self-center">
+                <i data-feather="settings" style="width: 2.5rem; height: 2.5rem;"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-success text-white">
+          <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <div>
+                <h6 class="card-title">Actieve configuraties</h6>
+                <h2 class="mb-0">{{ configurations|length }}</h2>
+              </div>
+              <div class="align-self-center">
+                <i data-feather="check-circle" style="width: 2.5rem; height: 2.5rem;"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-info text-white">
+          <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <div>
+                <h6 class="card-title">Evenement overrides</h6>
+                <h2 class="mb-0">{{ total_overrides }}</h2>
+              </div>
+              <div class="align-self-center">
+                <i data-feather="calendar" style="width: 2.5rem; height: 2.5rem;"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-warning text-white">
+          <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <div>
+                <h6 class="card-title">Django Admin</h6>
+                <p class="mb-0 small">Geavanceerde instellingen</p>
+              </div>
+              <div class="align-self-center">
+                <a href="{% url 'admin:index' %}" class="text-white">
+                  <i data-feather="external-link" style="width: 2.5rem; height: 2.5rem;"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Configurations -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+              <i data-feather="list" class="me-2"></i>
+              Configuraties
+            </h5>
+            <a href="{% url 'admin:notifications_scheduleconfiguration_changelist' %}" class="btn btn-sm btn-outline-primary">
+              Beheer alle configuraties
+            </a>
+          </div>
+          <div class="card-body">
+            {% if configurations %}
+              <div class="table-responsive">
+                <table class="table table-hover">
+                  <thead>
+                    <tr>
+                      <th>Naam</th>
+                      <th>Taak</th>
+                      <th>Type</th>
+                      <th>Schema</th>
+                      <th>Status</th>
+                      <th>Acties</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for config in configurations %}
+                      <tr>
+                        <td>
+                          <strong>{{ config.name }}</strong>
+                        </td>
+                        <td>
+                          <span class="badge bg-secondary">{{ config.get_task_display }}</span>
+                        </td>
+                        <td>
+                          {% if config.reminder_type %}
+                            <span class="badge bg-info">{{ config.get_reminder_type_display }}</span>
+                          {% else %}
+                            <span class="text-muted">-</span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          <code class="small">{{ config.get_cron_expression }}</code>
+                        </td>
+                        <td>
+                          {% if config.enabled %}
+                            <span class="badge bg-success">
+                              <i data-feather="check" style="width: 12px; height: 12px;"></i>
+                              Actief
+                            </span>
+                          {% else %}
+                            <span class="badge bg-danger">
+                              <i data-feather="x" style="width: 12px; height: 12px;"></i>
+                              Inactief
+                            </span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          <a href="{% url 'admin:notifications_scheduleconfiguration_change' config.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i data-feather="edit" style="width: 14px; height: 14px;"></i>
+                            Bewerken
+                          </a>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <div class="text-center py-4">
+                <i data-feather="clock" style="width: 3rem; height: 3rem;" class="text-muted mb-3"></i>
+                <h5 class="text-muted">Geen configuraties gevonden</h5>
+                <p class="text-muted">Begin met het maken van je eerste taak configuratie.</p>
+                <a href="{% url 'admin:notifications_scheduleconfiguration_add' %}" class="btn btn-primary">
+                  <i data-feather="plus" class="me-1"></i>
+                  Nieuwe configuratie
+                </a>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Event Overrides -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+              <i data-feather="calendar" class="me-2"></i>
+              Recente evenement overrides
+            </h5>
+            <a href="{% url 'admin:notifications_eventscheduleoverride_changelist' %}" class="btn btn-sm btn-outline-primary">
+              Beheer alle overrides
+            </a>
+          </div>
+          <div class="card-body">
+            {% if recent_overrides %}
+              <div class="table-responsive">
+                <table class="table table-hover">
+                  <thead>
+                    <tr>
+                      <th>Evenement</th>
+                      <th>Configuratie</th>
+                      <th>Effectief schema</th>
+                      <th>Status</th>
+                      <th>Aangemaakt</th>
+                      <th>Acties</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for override in recent_overrides %}
+                      <tr>
+                        <td>
+                          <div>
+                            <strong>{{ override.event.name }}</strong>
+                            <br>
+                            <small class="text-muted">{{ override.event.date|date:"d-m-Y H:i" }}</small>
+                          </div>
+                        </td>
+                        <td>
+                          <span class="badge bg-secondary">{{ override.configuration.name }}</span>
+                        </td>
+                        <td>
+                          <code class="small">{{ override.get_effective_cron_expression }}</code>
+                        </td>
+                        <td>
+                          {% if override.enabled %}
+                            <span class="badge bg-success">
+                              <i data-feather="check" style="width: 12px; height: 12px;"></i>
+                              Actief
+                            </span>
+                          {% else %}
+                            <span class="badge bg-danger">
+                              <i data-feather="x" style="width: 12px; height: 12px;"></i>
+                              Inactief
+                            </span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          <small class="text-muted">{{ override.created_at|date:"d-m-Y H:i" }}</small>
+                        </td>
+                        <td>
+                          <a href="{% url 'admin:notifications_eventscheduleoverride_change' override.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i data-feather="edit" style="width: 14px; height: 14px;"></i>
+                            Bewerken
+                          </a>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <div class="text-center py-4">
+                <i data-feather="calendar" style="width: 3rem; height: 3rem;" class="text-muted mb-3"></i>
+                <h5 class="text-muted">Geen overrides gevonden</h5>
+                <p class="text-muted">Evenement-specifieke overrides verschijnen hier.</p>
+                <a href="{% url 'admin:notifications_eventscheduleoverride_add' %}" class="btn btn-primary">
+                  <i data-feather="plus" class="me-1"></i>
+                  Nieuwe override
+                </a>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+  <script>
+    // Initialize Feather icons
+    if (typeof feather !== 'undefined') {
+      feather.replace();
+    }
+  </script>
+{% endblock %}
