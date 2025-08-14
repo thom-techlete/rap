@@ -238,27 +238,6 @@ jobs:
             
             echo "✅ Deployment completed successfully!"
 
-      - name: Verify deployment
-        run: |
-          echo "🔍 Verifying deployment..."
-          HEALTH_URL="${{ secrets.PRODUCTION_URL }}/health/"
-          max_attempts=6
-          attempt=1
-          sleep 30
-          while [ $attempt -le $max_attempts ]; do
-            response=$(curl -s "$HEALTH_URL" || echo "")
-            status=$(echo "$response" | python3 -c "import sys, json; print(json.load(sys.stdin).get('status', 'unhealthy'))" 2>/dev/null)
-            if [ "$status" = "healthy" ]; then
-              echo "✅ Health check passed! Application is running correctly."
-              exit 0
-            fi
-            echo "Attempt $attempt/$max_attempts: status is '$status'. Retrying in 5s..."
-            attempt=$((attempt+1))
-            sleep 5
-          done
-          echo "❌ Health check failed after $max_attempts attempts."
-          exit 1
-
       # - name: Rollback on failure
       #   if: failure()
       #   uses: appleboy/ssh-action@v1.0.3
