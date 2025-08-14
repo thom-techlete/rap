@@ -271,17 +271,23 @@ Zie **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** voor gedetailleerde productie s
 ### Tests Draaien
 
 ```bash
-# Alle tests
-cd web && python manage.py test
+# Alle tests (met SQLite voor snelheid)
+cd web && python manage.py test --settings=rap_web.test_settings
 
 # Specifieke app tests
-cd web && python manage.py test events
+cd web && python manage.py test users --settings=rap_web.test_settings
+cd web && python manage.py test events --settings=rap_web.test_settings
+
+# Met uitgebreide output
+cd web && python manage.py test --settings=rap_web.test_settings --verbosity=2
 
 # Met coverage
-cd web && coverage run --source='.' manage.py test
+cd web && coverage run --source='.' manage.py test --settings=rap_web.test_settings
 cd web && coverage report
 cd web && coverage html  # HTML rapport in htmlcov/
 ```
+
+**Opmerking**: De tests gebruiken een SQLite in-memory database voor snelheid en isolatie. Dit zorgt ervoor dat tests onder de 2 minuten blijven en deterministisch zijn.
 
 ### Code Kwaliteit Tools
 
