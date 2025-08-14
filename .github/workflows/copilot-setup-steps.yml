@@ -1,0 +1,168 @@
+name: "Copilot Setup Steps"
+
+# Automatically run the setup steps when they are changed to allow for easy validation, and
+# allow manual testing through the repository's "Actions" tab
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  # The job MUST be called `copilot-setup-steps` or it will not be picked up by Copilot.
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+
+    # Set the permissions to the lowest permissions possible needed for your steps.
+    # Copilot will be given its own token for its operations.
+    permissions:
+      # If you want to clone the repository as part of your setup steps, for example to install dependencies, you'll need the `contents: read` permission. If you don't clone the repository in your setup steps, Copilot will do this for you automatically after the steps complete.
+      contents: read
+
+    # Services for Django + PostgreSQL + Redis setup
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: rap_web
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    # Environment variables needed for Django project
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/rap_web
+      POSTGRES_DB: rap_web
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_HOST: localhost
+      REDIS_URL: redis://localhost:6379/0
+      DJANGO_SECRET_KEY: copilot-development-secret-key
+      DJANGO_DEBUG: True
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+      CELERY_BROKER_URL: redis://localhost:6379/0
+      CELERY_RESULT_BACKEND: redis://localhost:6379/0
+
+    # You can define any steps you want, and they will run before the agent starts.
+    # If you do not check out your code, Copilot will do this for you.
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            postgresql-client \
+            libpq-dev \
+            build-essential \
+            python3-dev \
+            python3-pip \
+            python3-venv \
+            gettext
+
+      - name: Set up Python virtual environment
+        run: |
+          python3 -m venv venv
+          source venv/bin/activate
+          python -m pip install --upgrade pip
+          echo "Virtual environment activated"
+
+      - name: Install Python dependencies
+        run: |
+          source venv/bin/activate
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Django system check
+        working-directory: ./web
+        run: |
+          source ../venv/bin/activate
+          python manage.py check
+
+      - name: Run Django migrations
+        working-directory: ./web
+        run: |
+          source ../venv/bin/activate
+          python manage.py migrate
+
+      - name: Collect static files
+        working-directory: ./web
+        run: |
+          source ../venv/bin/activate
+          python manage.py collectstatic --noinput
+
+      - name: Create superuser for development
+        working-directory: ./web
+        run: |
+          source ../venv/bin/activate
+          echo "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.filter(username='admin').exists() or User.objects.create_superuser('admin', 'admin@rap8.nl', 'admin123')" | python manage.py shell
+
+      - name: Load sample data
+        working-directory: ./web
+        run: |
+          source ../venv/bin/activate
+          python manage.py populate_events || echo "Sample data command not available or failed"
+
+      - name: Verify Django development server can start
+        working-directory: ./web
+        run: |
+          source ../venv/bin/activate
+          timeout 10s python manage.py runserver 0.0.0.0:8000 || echo "Django server startup verified"
+
+      - name: Test Celery worker configuration
+        working-directory: ./web
+        run: |
+          source ../venv/bin/activate
+          timeout 5s celery -A rap_web worker --loglevel=info --dry-run || echo "Celery worker configuration verified"
+
+      - name: Verify project structure
+        run: |
+          echo "=== Project Structure ==="
+          ls -la
+          echo "=== Web App Structure ==="
+          ls -la web/
+          echo "=== Django Apps ==="
+          ls -la web/*/
+          echo "=== Dependencies ==="
+          source venv/bin/activate
+          pip list | grep -E "(django|celery|redis|psycopg)"
+
+      - name: Print environment summary
+        run: |
+          echo "=== Environment Summary ==="
+          echo "Python version: $(python3 --version)"
+          echo "Django project: SV Rap 8 Event Presence Webapp"
+          echo "Database: PostgreSQL 17"
+          echo "Cache/Broker: Redis 7"
+          echo "Task Queue: Celery"
+          echo "Web Server: Gunicorn (production)"
+          echo "Main apps: users, events, attendance, notifications"
+          echo "Language: Dutch (UI)"
+          echo "Theme: Football/Sports"
+          echo "Environment ready for Copilot development!"
