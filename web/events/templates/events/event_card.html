@@ -1,6 +1,6 @@
 {% load event_extras %}
 
-<div class="card border-0 shadow-sm event-card" data-event-id="{{ event.id }}" style="background: white; transition: all 0.2s ease; cursor: pointer;">
+<div class="card border-0 shadow-sm event-card" data-event-id="{{ event.id }}" style="background: white; transition: all 0.2s ease; cursor: pointer; overflow: visible; z-index:9;">
   <div class="card-body">
     <div class="event-card-content d-flex flex-column flex-md-row align-items-stretch justify-content-between mb-4 gap-4">
       <div class="flex-grow-1 w-100" onclick="window.location.href='{% url 'events:detail' event.id %}'">
