@@ -65,6 +65,30 @@ def send_event_reminder_action(modeladmin, request, queryset):
 send_event_reminder_action.short_description = "Verzend evenement herinneringen"
 
 
+# Inline admin for EventScheduleOverride
+class EventScheduleOverrideInline(admin.StackedInline):
+    from notifications.models import EventScheduleOverride
+    model = EventScheduleOverride
+    extra = 0
+    max_num = 1
+    can_delete = True
+    
+    fieldsets = (
+        ("Schema override configuratie", {
+            "fields": ("configuration", "enabled"),
+            "description": "Configureer aangepaste planning voor dit evenement"
+        }),
+        ("Schema overrides", {
+            "fields": ("override_minute", "override_hour", "override_day_of_week", "override_day_of_month", "override_month_of_year"),
+            "description": "Laat velden leeg om de basis configuratie te gebruiken. Vul alleen in wat je wilt overschrijven.",
+            "classes": ("collapse",)
+        }),
+    )
+    
+    verbose_name = "Planning Override"
+    verbose_name_plural = "Planning Overrides"
+
+
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
     list_display = [
@@ -75,6 +99,7 @@ class EventAdmin(admin.ModelAdmin):
         "is_mandatory",
         "recurrence_display",
         "attendance_info",
+        "schedule_override_info",
         "is_upcoming_display",
     ]
     list_filter = [
@@ -88,6 +113,7 @@ class EventAdmin(admin.ModelAdmin):
     date_hierarchy = "date"
     ordering = ["-date"]
     actions = [send_event_notification_action, send_event_reminder_action]
+    inlines = [EventScheduleOverrideInline]
 
     fieldsets = (
         ("Basis informatie", {"fields": ("name", "description", "event_type")}),
@@ -141,6 +167,22 @@ class EventAdmin(admin.ModelAdmin):
 
     attendance_info.short_description = "Aanwezigheid"
 
+    def schedule_override_info(self, obj):
+        """Show schedule override information"""
+        try:
+            override = obj.schedule_override
+            if override.enabled:
+                return format_html(
+                    '<span style="color: #17a2b8;" title="{}">✓ Override actief</span>',
+                    override.get_effective_cron_expression()
+                )
+            else:
+                return format_html('<span style="color: #6c757d;">Override inactief</span>')
+        except:
+            return format_html('<span style="color: #666;">Geen override</span>')
+
+    schedule_override_info.short_description = "Planning Override"
+
     def recurrence_display(self, obj):
         """Show recurrence information"""
         if obj.recurrence_type == "none" or not obj.recurrence_type:
@@ -172,7 +214,21 @@ class EventAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         """Optimize queries by prefetching related data"""
         qs = super().get_queryset(request)
-        return qs.prefetch_related("attendance_set")
+        return qs.prefetch_related("attendance_set").select_related("schedule_override")
+
+    def save_related(self, request, form, formsets, change):
+        """Sync periodic tasks after saving related objects (like schedule overrides)"""
+        super().save_related(request, form, formsets, change)
+        # Check if any schedule override was saved
+        for formset in formsets:
+            if hasattr(formset, 'model') and 'EventScheduleOverride' in str(formset.model):
+                if formset.has_changed():
+                    try:
+                        from notifications.utils import sync_periodic_tasks
+                        sync_periodic_tasks()
+                        messages.success(request, "Planning overrides gesynchroniseerd met Celery beat.")
+                    except Exception as e:
+                        messages.warning(request, f"Planning override opgeslagen, maar synchronisatie mislukt: {e}")
 
     class Media:
         css = {"all": ("admin/css/custom_admin.css",)}

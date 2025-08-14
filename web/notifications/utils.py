@@ -2,16 +2,151 @@
 Notification utilities for the SV Rap 8 application.
 """
 
+import json
 import logging
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
+from django_celery_beat.models import CrontabSchedule, PeriodicTask
 
 logger = logging.getLogger(__name__)
 
 User = get_user_model()
+
+
+def sync_periodic_tasks():
+    """
+    Synchronize ScheduleConfiguration and EventScheduleOverride models 
+    with django-celery-beat PeriodicTask models.
+    """
+    from .models import ScheduleConfiguration, EventScheduleOverride
+    
+    # Get all active schedule configurations
+    configs = ScheduleConfiguration.objects.filter(enabled=True)
+    
+    for config in configs:
+        # Create or update the periodic task for this configuration
+        task_name = f"auto_{config.name.lower().replace(' ', '_')}"
+        
+        # Create or get the crontab schedule
+        crontab_schedule, created = CrontabSchedule.objects.get_or_create(
+            minute=config.minute,
+            hour=config.hour,
+            day_of_week=config.day_of_week,
+            day_of_month=config.day_of_month,
+            month_of_year=config.month_of_year,
+            defaults={"timezone": "Europe/Amsterdam"}
+        )
+        
+        # Prepare task kwargs
+        task_kwargs = {}
+        if config.reminder_type:
+            task_kwargs["reminder_type"] = config.reminder_type
+        
+        # Create or update periodic task
+        periodic_task, created = PeriodicTask.objects.update_or_create(
+            name=task_name,
+            defaults={
+                "task": config.task,
+                "crontab": crontab_schedule,
+                "kwargs": json.dumps(task_kwargs) if task_kwargs else "{}",
+                "enabled": True,
+                "description": f"Auto-generated from ScheduleConfiguration: {config.name}",
+            }
+        )
+        
+        logger.info(f"{'Created' if created else 'Updated'} periodic task: {task_name}")
+    
+    # Handle event-specific overrides
+    overrides = EventScheduleOverride.objects.filter(enabled=True)
+    
+    for override in overrides:
+        event = override.event
+        config = override.configuration
+        
+        # Create task name specific to this event
+        task_name = f"event_{event.id}_{config.name.lower().replace(' ', '_')}"
+        
+        # Get effective schedule (overrides applied)
+        effective_schedule = override.get_effective_schedule()
+        
+        # Create or get the crontab schedule for this override
+        crontab_schedule, created = CrontabSchedule.objects.get_or_create(
+            minute=effective_schedule["minute"],
+            hour=effective_schedule["hour"],
+            day_of_week=effective_schedule["day_of_week"],
+            day_of_month=effective_schedule["day_of_month"],
+            month_of_year=effective_schedule["month_of_year"],
+            defaults={"timezone": "Europe/Amsterdam"}
+        )
+        
+        # Prepare task kwargs
+        task_kwargs = {}
+        if config.reminder_type:
+            task_kwargs["reminder_type"] = config.reminder_type
+        # Add event-specific context
+        task_kwargs["event_id"] = event.id
+        
+        # Create or update periodic task for this event override
+        periodic_task, created = PeriodicTask.objects.update_or_create(
+            name=task_name,
+            defaults={
+                "task": config.task,
+                "crontab": crontab_schedule,
+                "kwargs": json.dumps(task_kwargs),
+                "enabled": True,
+                "description": f"Auto-generated override for event: {event.name}",
+            }
+        )
+        
+        logger.info(f"{'Created' if created else 'Updated'} event override task: {task_name}")
+    
+    # Clean up orphaned auto-generated tasks
+    cleanup_orphaned_tasks()
+    
+    logger.info("Periodic task synchronization completed")
+
+
+def cleanup_orphaned_tasks():
+    """
+    Remove auto-generated periodic tasks that no longer have corresponding configurations.
+    """
+    from .models import ScheduleConfiguration, EventScheduleOverride
+    
+    # Get all auto-generated task names that should exist
+    expected_task_names = set()
+    
+    # Add general config task names
+    for config in ScheduleConfiguration.objects.filter(enabled=True):
+        task_name = f"auto_{config.name.lower().replace(' ', '_')}"
+        expected_task_names.add(task_name)
+    
+    # Add event override task names
+    for override in EventScheduleOverride.objects.filter(enabled=True):
+        event = override.event
+        config = override.configuration
+        task_name = f"event_{event.id}_{config.name.lower().replace(' ', '_')}"
+        expected_task_names.add(task_name)
+    
+    # Find and delete orphaned auto-generated tasks
+    orphaned_tasks = PeriodicTask.objects.filter(
+        name__startswith="auto_"
+    ).exclude(name__in=expected_task_names)
+    
+    orphaned_event_tasks = PeriodicTask.objects.filter(
+        name__startswith="event_"
+    ).exclude(name__in=expected_task_names)
+    
+    # Delete orphaned tasks
+    for task in orphaned_tasks:
+        logger.info(f"Deleting orphaned auto-generated task: {task.name}")
+        task.delete()
+    
+    for task in orphaned_event_tasks:
+        logger.info(f"Deleting orphaned event override task: {task.name}")
+        task.delete()
 
 
 def send_new_event_notification(event):
