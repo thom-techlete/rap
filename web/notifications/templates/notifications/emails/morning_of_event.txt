@@ -1,0 +1,16 @@
+Beste speler,
+
+Dit is een herinnering dat het volgende evenement vandaag plaatsvindt:
+
+Evenement: {{ event.name }}
+Datum & Tijd: {{ event_date_formatted }}
+Type: {{ event_type_display }}
+Verplicht: {{ is_mandatory_text }}
+
+Aanwezige spelers:
+{% for name in attendees %}
+- {{ name }}
+{% endfor %}
+
+Succes en tot dan,
+SV Rap 8

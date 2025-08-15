@@ -4,7 +4,7 @@ services:
     image: postgres:17
     restart: always
     env_file:
-      - .env
+      - .env.prod
     ports:
       - "5432:5432"
     volumes:
@@ -26,5 +26,37 @@ services:
       timeout: 5s
       retries: 5
 
+  celery_worker:
+    build: ..
+    restart: always
+    env_file:
+      - .env.prod
+    volumes:
+      - ../web:/app/web
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A rap_web worker --loglevel=info --concurrency=2
+    working_dir: /app/web
+
+  celery_beat:
+    build: ..
+    restart: always
+    env_file:
+      - .env.prod
+    volumes:
+      - ../web:/app/web
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A rap_web beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    working_dir: /app/web
+
 volumes:
   postgres_data:
+  static_volume:
+  media_volume:

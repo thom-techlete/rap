@@ -41,12 +41,12 @@
     <!-- Statistics Cards -->
     <div class="row mb-4">
       <div class="col-md-3">
-        <div class="card bg-primary text-white">
+        <div class="card bg-primary text-white h-100">
           <div class="card-body">
             <div class="d-flex justify-content-between">
               <div>
-                <h6 class="card-title">Totaal configuraties</h6>
-                <h2 class="mb-0">{{ total_configurations }}</h2>
+                <h6 class="card-title text-white">Totaal configuraties</h6>
+                <h2 class="mb-0 mt-2 text-white">{{ total_configurations }}</h2>
               </div>
               <div class="align-self-center">
                 <i data-feather="settings" style="width: 2.5rem; height: 2.5rem;"></i>
@@ -56,12 +56,12 @@
         </div>
       </div>
       <div class="col-md-3">
-        <div class="card bg-success text-white">
+        <div class="card bg-primary text-white h-100">
           <div class="card-body">
             <div class="d-flex justify-content-between">
               <div>
-                <h6 class="card-title">Actieve configuraties</h6>
-                <h2 class="mb-0">{{ configurations|length }}</h2>
+                <h6 class="card-title text-white">Actieve configuraties</h6>
+                <h2 class="mb-0 mt-2 text-white">{{ configurations|length }}</h2>
               </div>
               <div class="align-self-center">
                 <i data-feather="check-circle" style="width: 2.5rem; height: 2.5rem;"></i>
@@ -71,12 +71,12 @@
         </div>
       </div>
       <div class="col-md-3">
-        <div class="card bg-info text-white">
+        <div class="card bg-primary text-white h-100">
           <div class="card-body">
             <div class="d-flex justify-content-between">
               <div>
-                <h6 class="card-title">Evenement overrides</h6>
-                <h2 class="mb-0">{{ total_overrides }}</h2>
+                <h6 class="card-title text-white">Evenement overrides</h6>
+                <h2 class="mb-0 mt-2 text-white">{{ total_overrides }}</h2>
               </div>
               <div class="align-self-center">
                 <i data-feather="calendar" style="width: 2.5rem; height: 2.5rem;"></i>
@@ -86,12 +86,12 @@
         </div>
       </div>
       <div class="col-md-3">
-        <div class="card bg-warning text-white">
+        <div class="card bg-primary text-white h-100">
           <div class="card-body">
             <div class="d-flex justify-content-between">
               <div>
-                <h6 class="card-title">Django Admin</h6>
-                <p class="mb-0 small">Geavanceerde instellingen</p>
+                <h6 class="card-title text-white">Django Admin</h6>
+                <p class="mb-0 mt-2 small text-white">Geavanceerde instellingen</p>
               </div>
               <div class="align-self-center">
                 <a href="{% url 'admin:index' %}" class="text-white">

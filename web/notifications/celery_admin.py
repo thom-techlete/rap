@@ -17,6 +17,7 @@ class ReminderPeriodicTaskForm(forms.ModelForm):
         ("1_week", "1 week before event"),
         ("3_days", "3 days before event"),
         ("1_day", "1 day before event"),
+        ("morning_of", "Morning of event"),
     ]
 
     reminder_type = forms.ChoiceField(
@@ -53,7 +54,10 @@ class ReminderPeriodicTaskForm(forms.ModelForm):
         instance = super().save(commit=False)
 
         # Handle reminder task configuration
-        if instance.task == "notifications.tasks.send_automatic_event_reminders":
+        if instance.task in [
+            "notifications.tasks.send_automatic_event_reminders",
+            "notifications.tasks.send_event_summary_to_attendees",
+        ]:
             reminder_type = self.cleaned_data.get("reminder_type")
             if reminder_type:
                 instance.kwargs = json.dumps({"reminder_type": reminder_type})
@@ -122,6 +126,7 @@ class ReminderPeriodicTaskAdmin(BasePeriodicTaskAdmin):
                 task__in=[
                     "notifications.tasks.send_automatic_event_reminders",
                     "notifications.tasks.cleanup_old_reminder_logs",
+                    "notifications.tasks.send_event_summary_to_attendees",
                 ]
             )
         return qs
