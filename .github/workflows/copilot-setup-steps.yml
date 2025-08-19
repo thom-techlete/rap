@@ -30,8 +30,12 @@ jobs:
       CELERY_RESULT_BACKEND: redis://localhost:6379/0
 
     services:
-      db:
+      postgres:
         image: postgres:17
+        env:
+          POSTGRES_USER: rap_user
+          POSTGRES_PASSWORD: rap_db_password
+          POSTGRES_DB: rap_db
         ports:
           - 5432:5432
         options: >-
