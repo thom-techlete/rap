@@ -139,9 +139,9 @@ WSGI_APPLICATION = "rap_web.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("POSTGRES_DB", "rapdb"),
-        "USER": os.environ.get("POSTGRES_USER", "rapuser"),
-        "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "secret"),
+        "NAME": os.environ.get("POSTGRES_DB", "rap_db"),
+        "USER": os.environ.get("POSTGRES_USER", "rap_user"),
+        "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "rap_db_password"),
         "HOST": os.environ.get("POSTGRES_HOST", "db"),
         "PORT": os.environ.get("POSTGRES_PORT", "5432"),
     }

@@ -21,16 +21,16 @@ jobs:
       image: python:3.12-bookworm
 
     services:
-      postgres:
+      db:
         image: postgres:17
         env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: rap_web
+          POSTGRES_USER: rap_user
+          POSTGRES_PASSWORD: rap_db_password
+          POSTGRES_DB: rap_db
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U postgres -d rap_web"
+          --health-cmd="pg_isready -U rap_user -d rap_db"
           --health-interval=5s
           --health-timeout=5s
           --health-retries=12
@@ -60,27 +60,27 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
 
-      - name: wait for postgres
+      - name: wait for db
         env:
-          PGPASSWORD: postgres
+          PGPASSWORD: rap_db_password
         run: |
           for i in $(seq 1 60); do
-            pg_isready -h postgres -p 5432 -U postgres -d rap_web && exit 0
+            pg_isready -h db -p 5432 -U rap_user -d rap_db && exit 0
             sleep 2
           done
-          echo "Postgres not ready in time" >&2
+          echo "Database not ready in time" >&2
           exit 1
         
-      - name: verify postgres auth
+      - name: verify database auth
         env:
-          PGPASSWORD: postgres
+          PGPASSWORD: rap_db_password
         run: |
-          psql "host=postgres port=5432 user=postgres dbname=rap_web" -c "select version();"
+          psql "host=db port=5432 user=rap_user dbname=rap_db" -c "select version();"
 
       - name: Django checks and migrations
         working-directory: ./web
         env:
-            DATABASE_URL: postgres://postgres:postgres@postgres:5432/rap_web
+            DATABASE_URL: postgres://rap_user:rap_db_password@db:5432/rap_db
             REDIS_URL: redis://redis:6379/0
             DJANGO_SECRET_KEY: copilot-development-secret-key
             DJANGO_DEBUG: "True"
@@ -102,7 +102,7 @@ jobs:
         run: |
           python --version
           psql --version
-          echo "DB: postgres://postgres:***@postgres:5432/rap_web"
+          echo "DB: postgres://rap_user:***@db:5432/rap_db"
           echo "Redis: redis://redis:6379/0"
 
       - name: postgres logs on failure
