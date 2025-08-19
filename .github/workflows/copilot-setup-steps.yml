@@ -16,10 +16,7 @@ jobs:
     permissions:
       contents: read
 
-    # Run the job in a Python container so the agent inherits a single, fixed runtime
-    container:
-      image: python:3.12-bookworm
-
+    # No job container. Services are exposed to the host as localhost:<port>.
     services:
       db:
         image: postgres:17
@@ -49,58 +46,63 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install system packages needed for psycopg and psql
-        run: |
-          apt-get update
-          apt-get install -y --no-install-recommends postgresql-client libpq-dev build-essential gettext
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
-      - name: Install Python dependencies
+      - name: Install system packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends postgresql-client libpq-dev build-essential gettext
+
+      - name: Upgrade pip and install dependencies
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
 
-      - name: wait for db
+      - name: Wait for Postgres
         env:
           PGPASSWORD: rap_db_password
         run: |
           for i in $(seq 1 60); do
-            pg_isready -h db -p 5432 -U rap_user -d rap_db && exit 0
+            pg_isready -h localhost -p 5432 -U rap_user -d rap_db && exit 0
             sleep 2
           done
           echo "Database not ready in time" >&2
           exit 1
-        
-      - name: verify database auth
+
+      - name: Verify Postgres auth
         env:
           PGPASSWORD: rap_db_password
         run: |
-          psql "host=db port=5432 user=rap_user dbname=rap_db" -c "select version();"
+          psql "host=localhost port=5432 user=rap_user dbname=rap_db" -c "select version();"
 
       - name: Django checks and migrations
         working-directory: ./web
         env:
-            DATABASE_URL: postgres://rap_user:rap_db_password@db:5432/rap_db
-            REDIS_URL: redis://redis:6379/0
-            DJANGO_SECRET_KEY: copilot-development-secret-key
-            DJANGO_DEBUG: "True"
-            DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+          DATABASE_URL: postgres://rap_user:rap_db_password@localhost:5432/rap_db
+          REDIS_URL: redis://localhost:6379/0
+          DJANGO_SECRET_KEY: copilot-development-secret-key
+          DJANGO_DEBUG: "True"
+          DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
         run: |
           python manage.py check
           python manage.py migrate --noinput
 
-      - name: verify celery config
+      - name: Verify Celery config
         working-directory: ./web
         env:
-          REDIS_URL: redis://redis:6379/0
-          CELERY_BROKER_URL: redis://redis:6379/0
-          CELERY_RESULT_BACKEND: redis://redis:6379/0
+          REDIS_URL: redis://localhost:6379/0
+          CELERY_BROKER_URL: redis://localhost:6379/0
+          CELERY_RESULT_BACKEND: redis://localhost:6379/0
         run: |
           timeout 5s celery -A rap_web worker --loglevel=info --dry-run || true
 
-      - name: environment summary
+      - name: Environment summary
         run: |
           python --version
           psql --version
-          echo "DB: postgres://rap_user:***@db:5432/rap_db"
-          echo "Redis: redis://redis:6379/0"
+          echo "DB: postgres://rap_user:***@localhost:5432/rap_db"
+          echo "Redis: redis://localhost:6379/0"
