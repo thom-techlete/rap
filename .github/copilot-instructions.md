@@ -93,7 +93,7 @@ This repository contains a Django-based web application for managing event prese
 Always assume Python 3.12 with Ubuntu runner. The repository provides a Postgres and Redis service via `.github/workflows/copilot-setup-steps.yml`.
 
 ### Databases and services
-Use the Postgres service on `localhost:5432` with database `rap_web`, user `postgres`, password `postgres`. Use Redis at `redis://localhost:6379/0`. Do not start new databases and do not switch to SQLite.
+Use the Postgres service on `db:5432` with database `rap_web`, user `rap_user`, password `rap_db_password`. Use Redis at `redis://redis:6379/0`. Do not start new databases and do not switch to SQLite.
 
 ### Environment variables
 Read variables from the repository environment named `copilot`. Use:
@@ -103,61 +103,46 @@ Read variables from the repository environment named `copilot`. Use:
 - `CELERY_BROKER_URL`
 - `CELERY_RESULT_BACKEND`
 - `DJANGO_SECRET_KEY`
+- `POSTGRES_DB`
+- `POSTGRES_USER`
+- `POSTGRES_PASSWORD`
+- `POSTGRES_HOST`
+- `POSTGRES_PORT`
 
 Never create new credentials in code or change the database location. If a variable is missing, stop and ask for it to be added to the `copilot` environment.
 
 ### Install, migrate, test
 1. `python -m pip install --upgrade pip`
-2. `pip install -r requirements.txt` and, if present, `pip install -r requirements-dev.txt`
-3. `python manage.py migrate --noinput`
+2. `pip install -r requirements.txt` and `pip install -r requirements-dev.txt`
 4. Run tests with `pytest -q` when `pytest.ini` or `pyproject.toml` defines pytest, otherwise `python manage.py test`
 
 ### Conventions
-- Use the existing `DATABASE_URL` and `REDIS_URL`
-- Do not run a development server or create superusers unless explicitly requested
 - Keep changes minimal and aligned with existing project structure
-
+- When adding dependencies, add them to `pyproject.toml` and compile the new `requirements.txt` and `requirements-dev.txt` files using pip-tools. Never manually ad requirements using pip or manually edit the requirements files.
 
 ### Required Environment Variables
 ```bash
 # Database Configuration
-DATABASE_URL=postgres://postgres:password@localhost:5432/rap_web
+DATABASE_URL=postgres://rap_user:rap_db_password@db:5432/rap_web
 POSTGRES_DB=rap_web
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=password
-POSTGRES_HOST=localhost
+POSTGRES_USER=rap_user
+POSTGRES_PASSWORD=rap_db_password
+POSTGRES_HOST=db
 POSTGRES_PORT=5432
 
 # Redis Configuration
-REDIS_URL=redis://localhost:6379/0
-CELERY_BROKER_URL=redis://localhost:6379/0
-CELERY_RESULT_BACKEND=redis://localhost:6379/0
+REDIS_URL=redis://redis:6379/0
+CELERY_BROKER_URL=redis://redis:6379/0
+CELERY_RESULT_BACKEND=redis://redis:6379/0
 
 # Django Settings
 DJANGO_SECRET_KEY=your-secret-key
 DJANGO_DEBUG=True
 DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
-
-# Email Configuration (Brevo)
-EMAIL_BACKEND=anymail.backends.brevo.EmailBackend
-ANYMAIL_BREVO_API_KEY=your-api-key
-DEFAULT_FROM_EMAIL=noreply@rap8.nl
 ```
 
 ### Common Commands
 ```bash
-# Development server
-cd web && python manage.py runserver
-
-# Run migrations
-cd web && python manage.py migrate
-
-# Create superuser
-cd web && python manage.py createsuperuser
-
-# Collect static files
-cd web && python manage.py collectstatic
-
 # Start Celery worker
 cd web && celery -A rap_web worker --loglevel=info
 
@@ -170,18 +155,6 @@ cd web && python manage.py test
 # Code formatting
 black .
 ruff check .
-```
-
-### Docker Development
-```bash
-# Start development environment
-cd docker && docker-compose -f docker-compose.dev.yml up -d
-
-# View logs
-docker-compose -f docker-compose.dev.yml logs -f
-
-# Execute commands in container
-docker-compose -f docker-compose.dev.yml exec web python manage.py shell
 ```
 
 ## Database Schema Overview
