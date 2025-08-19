@@ -104,8 +104,3 @@ jobs:
           psql --version
           echo "DB: postgres://rap_user:***@db:5432/rap_db"
           echo "Redis: redis://redis:6379/0"
-
-      - name: postgres logs on failure
-        if: failure()
-        run: |
-          docker ps --format '{{.ID}} {{.Image}}' | grep 'postgres:17' | awk '{print $1}' | xargs -r -n1 docker logs --tail 200
