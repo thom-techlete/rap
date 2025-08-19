@@ -48,6 +48,7 @@ dependencies = [
   "django-extensions",
   "django-axes",
   "setuptools",
+  "pytz",
 ]
 
 [project.optional-dependencies]
