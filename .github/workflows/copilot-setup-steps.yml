@@ -60,43 +60,52 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
 
-      - name: Wait for Postgres
+      - name: wait for postgres
         env:
           PGPASSWORD: postgres
         run: |
-          for i in $(seq 1 30); do
-            pg_isready -h localhost -p 5432 -U postgres -d rap_web && exit 0
+          for i in $(seq 1 60); do
+            pg_isready -h postgres -p 5432 -U postgres -d rap_web && exit 0
             sleep 2
           done
           echo "Postgres not ready in time" >&2
           exit 1
+        
+      - name: verify postgres auth
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql "host=postgres port=5432 user=postgres dbname=rap_web" -c "select version();"
 
       - name: Django checks and migrations
         working-directory: ./web
         env:
-          # These are for the setup steps only.
-          # The agent will get its env from the repository environment named 'copilot'.
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/rap_web
-          REDIS_URL: redis://localhost:6379/0
-          DJANGO_SECRET_KEY: copilot-development-secret-key
-          DJANGO_DEBUG: "True"
-          DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+            DATABASE_URL: postgres://postgres:postgres@postgres:5432/rap_web
+            REDIS_URL: redis://redis:6379/0
+            DJANGO_SECRET_KEY: copilot-development-secret-key
+            DJANGO_DEBUG: "True"
+            DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
         run: |
           python manage.py check
           python manage.py migrate --noinput
 
-      - name: Verify Celery config
+      - name: verify celery config
         working-directory: ./web
         env:
-          REDIS_URL: redis://localhost:6379/0
-          CELERY_BROKER_URL: redis://localhost:6379/0
-          CELERY_RESULT_BACKEND: redis://localhost:6379/0
+          REDIS_URL: redis://redis:6379/0
+          CELERY_BROKER_URL: redis://redis:6379/0
+          CELERY_RESULT_BACKEND: redis://redis:6379/0
         run: |
           timeout 5s celery -A rap_web worker --loglevel=info --dry-run || true
 
-      - name: Environment summary
+      - name: environment summary
         run: |
           python --version
           psql --version
-          echo "DB: postgres://postgres:***@localhost:5432/rap_web"
-          echo "Redis: redis://localhost:6379/0"
+          echo "DB: postgres://postgres:***@postgres:5432/rap_web"
+          echo "Redis: redis://redis:6379/0"
+
+      - name: postgres logs on failure
+        if: failure()
+        run: |
+          docker ps --format '{{.ID}} {{.Image}}' | grep 'postgres:17' | awk '{print $1}' | xargs -r -n1 docker logs --tail 200
