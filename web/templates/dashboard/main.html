@@ -263,7 +263,75 @@
                 <i data-feather="mail" class="me-2" style="width: 1rem; height: 1rem;"></i>
                 Uitnodigingen beheren
               </a>
+              <a href="{% url 'polls:create' %}" class="btn btn-outline-primary">
+                <i data-feather="bar-chart-2" class="me-2" style="width: 1rem; height: 1rem;"></i>
+                Nieuwe poll
+              </a>
             </div>
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- Active Polls -->
+      {% if active_polls %}
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-transparent border-0 pb-0">
+            <div class="d-flex align-items-center justify-content-between">
+              <h5 class="mb-0" style="color: #1e293b;">
+                <i data-feather="bar-chart-2" class="me-2" style="width: 1.25rem; height: 1.25rem;"></i>
+                Actieve polls
+              </h5>
+              <a href="{% url 'polls:list' %}" class="btn btn-sm btn-outline-primary">Alle polls</a>
+            </div>
+          </div>
+          <div class="card-body">
+            {% for poll in active_polls %}
+              <div class="d-flex align-items-center border-bottom pb-3 mb-3">
+                <div class="flex-shrink-0 me-3">
+                  <div class="rounded-circle d-flex align-items-center justify-content-center"
+                    style="width: 2.5rem; height: 2.5rem; background: {% if poll.is_open %}#dbeafe{% else %}#f3f4f6{% endif %};">
+                    <i data-feather="bar-chart-2"
+                        style="width: 1rem; height: 1rem; color: {% if poll.is_open %}#3b82f6{% else %}#6b7280{% endif %};">
+                    </i>
+                  </div>
+                </div>
+                <div class="flex-grow-1">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                      <h6 class="mb-1" style="color: #1e293b;">{{ poll.title }}</h6>
+                      <div class="d-flex align-items-center text-muted small">
+                        <span class="me-3">
+                          <i data-feather="users" style="width: 0.875rem; height: 0.875rem;"></i>
+                          {{ poll.unique_voters }} stemmers
+                        </span>
+                        <span class="me-3">
+                          <i data-feather="check-square" style="width: 0.875rem; height: 0.875rem;"></i>
+                          {{ poll.total_votes }} stemmen
+                        </span>
+                      </div>
+                    </div>
+                    <div class="text-end">
+                      {% if poll.is_open %}
+                        <span class="badge bg-success-subtle text-success mb-1">Open</span>
+                      {% else %}
+                        <span class="badge bg-secondary">Gesloten</span>
+                      {% endif %}
+                      <div>
+                        <a href="{% url 'polls:detail' poll.pk %}" class="btn btn-sm btn-outline-primary">
+                          {% if poll.is_open %}Stem{% else %}Resultaten{% endif %}
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+            
+            {% if active_polls|length == 3 %}
+              <div class="text-center mt-2">
+                <a href="{% url 'polls:list' %}" class="btn btn-sm btn-link">Bekijk alle polls →</a>
+              </div>
+            {% endif %}
           </div>
         </div>
       {% endif %}
