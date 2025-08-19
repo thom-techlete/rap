@@ -61,16 +61,21 @@ class Command(BaseCommand):
                 date__gte=target_date_start, date__lte=target_date_end, date__gt=now
             ).exclude(automatic_reminders__reminder_type=reminder_type)
 
+            # Convert to local timezone for display
+            local_start = timezone.localtime(target_date_start)
+            local_end = timezone.localtime(target_date_end)
+            
             self.stdout.write(
-                f"Target date range: {target_date_start.strftime('%d-%m-%Y %H:%M')} to {target_date_end.strftime('%d-%m-%Y %H:%M')}"
+                f"Target date range: {local_start.strftime('%d-%m-%Y %H:%M')} to {local_end.strftime('%d-%m-%Y %H:%M')}"
             )
             self.stdout.write(
                 f"Found {upcoming_events.count()} events that would receive {reminder_type} reminders:"
             )
 
             for event in upcoming_events:
+                local_event_time = timezone.localtime(event.date)
                 self.stdout.write(
-                    f"  - {event.name} on {event.date.strftime('%d-%m-%Y %H:%M')}"
+                    f"  - {event.name} on {local_event_time.strftime('%d-%m-%Y %H:%M')}"
                 )
 
             if not upcoming_events.exists():

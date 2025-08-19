@@ -235,4 +235,6 @@ class AutomaticReminderLog(models.Model):
         unique_together = ["event", "reminder_type"]  # Prevent duplicate reminders
 
     def __str__(self):
-        return f"Herinnering {self.reminder_type} voor {self.event.name} - {self.sent_at.strftime('%d-%m-%Y %H:%M')}"
+        # Convert to local timezone for display
+        local_sent_time = timezone.localtime(self.sent_at)
+        return f"Herinnering {self.reminder_type} voor {self.event.name} - {local_sent_time.strftime('%d-%m-%Y %H:%M')}"
