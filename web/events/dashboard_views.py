@@ -9,6 +9,7 @@ from django.shortcuts import render
 from django.utils import timezone
 
 from .models import Event, MatchStatistic
+from polls.models import Poll
 
 User = get_user_model()
 
@@ -102,6 +103,9 @@ def dashboard(request: HttpRequest):
     # Match statistics (only include completed matches)
     match_stats = calculate_match_statistics()
 
+    # Active polls for dashboard
+    active_polls = Poll.objects.filter(is_active=True).order_by('-created_at')[:3]
+
     context = {
         "stats": stats,
         "recent_past_events": recent_past_events,
@@ -113,6 +117,7 @@ def dashboard(request: HttpRequest):
         "event_type_stats": event_type_stats,
         "recent_events_with_attendance": recent_events_with_attendance,
         "match_stats": match_stats,
+        "active_polls": active_polls,
         "now": now,
     }
 

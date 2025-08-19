@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Polls - SV Rap 8
+{% endblock %}
+
+{% block content %}
+  <div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h1 class="h2 mb-2">Team Polls</h1>
+            <p class="text-muted mb-0">Stem op actieve polls en bekijk resultaten van afgelopen polls.</p>
+          </div>
+          {% if user.is_staff %}
+            <a href="{% url 'polls:create' %}" class="btn btn-primary">
+              <i data-feather="plus" class="me-2"></i>Nieuwe Poll
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Polls -->
+    {% if active_polls %}
+      <div class="row mb-5">
+        <div class="col-12">
+          <h3 class="h4 mb-3">Actieve Polls</h3>
+          <div class="row g-4">
+            {% for poll in active_polls %}
+              <div class="col-md-6 col-lg-4">
+                <div class="card border-0 shadow-sm h-100">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                      <h5 class="card-title mb-0">{{ poll.title }}</h5>
+                      {% if poll.is_open %}
+                        <span class="badge bg-success">Open</span>
+                      {% else %}
+                        <span class="badge bg-secondary">Gesloten</span>
+                      {% endif %}
+                    </div>
+                    
+                    {% if poll.description %}
+                      <p class="card-text text-muted small">{{ poll.description|truncatewords:20 }}</p>
+                    {% endif %}
+                    
+                    <div class="row text-center small text-muted mb-3">
+                      <div class="col-6">
+                        <div class="fw-medium">{{ poll.total_votes }}</div>
+                        <div>Stemmen</div>
+                      </div>
+                      <div class="col-6">
+                        <div class="fw-medium">{{ poll.unique_voters }}</div>
+                        <div>Stemmers</div>
+                      </div>
+                    </div>
+                    
+                    {% if poll.end_date %}
+                      <p class="small text-muted mb-3">
+                        <i data-feather="clock" class="me-1" style="width: 14px; height: 14px;"></i>
+                        Sluit op {{ poll.end_date|date:"d M Y H:i" }}
+                      </p>
+                    {% endif %}
+                    
+                    <div class="d-flex gap-2">
+                      <a href="{% url 'polls:detail' poll.pk %}" class="btn btn-primary btn-sm flex-fill">
+                        {% if poll.is_open %}Bekijk & Stem{% else %}Bekijk Resultaten{% endif %}
+                      </a>
+                      {% if user.is_staff %}
+                        <a href="{% url 'polls:edit' poll.pk %}" class="btn btn-outline-secondary btn-sm">
+                          <i data-feather="edit-2" style="width: 14px; height: 14px;"></i>
+                        </a>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- Closed Polls -->
+    {% if closed_polls %}
+      <div class="row">
+        <div class="col-12">
+          <h3 class="h4 mb-3">Afgelopen Polls</h3>
+          <div class="row g-4">
+            {% for poll in closed_polls %}
+              <div class="col-md-6 col-lg-4">
+                <div class="card border-0 shadow-sm h-100">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                      <h5 class="card-title mb-0">{{ poll.title }}</h5>
+                      <span class="badge bg-secondary">Gesloten</span>
+                    </div>
+                    
+                    {% if poll.description %}
+                      <p class="card-text text-muted small">{{ poll.description|truncatewords:20 }}</p>
+                    {% endif %}
+                    
+                    <div class="row text-center small text-muted mb-3">
+                      <div class="col-6">
+                        <div class="fw-medium">{{ poll.total_votes }}</div>
+                        <div>Stemmen</div>
+                      </div>
+                      <div class="col-6">
+                        <div class="fw-medium">{{ poll.unique_voters }}</div>
+                        <div>Stemmers</div>
+                      </div>
+                    </div>
+                    
+                    {% if poll.closed_at %}
+                      <p class="small text-muted mb-3">
+                        <i data-feather="x-circle" class="me-1" style="width: 14px; height: 14px;"></i>
+                        Gesloten op {{ poll.closed_at|date:"d M Y H:i" }}
+                      </p>
+                    {% endif %}
+                    
+                    <div class="d-flex gap-2">
+                      <a href="{% url 'polls:detail' poll.pk %}" class="btn btn-outline-primary btn-sm flex-fill">
+                        Bekijk Resultaten
+                      </a>
+                      {% if user.is_staff %}
+                        <a href="{% url 'polls:edit' poll.pk %}" class="btn btn-outline-secondary btn-sm">
+                          <i data-feather="edit-2" style="width: 14px; height: 14px;"></i>
+                        </a>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- No polls message -->
+    {% if not active_polls and not closed_polls %}
+      <div class="row">
+        <div class="col-12">
+          <div class="text-center py-5">
+            <i data-feather="bar-chart-2" class="mb-3" style="width: 4rem; height: 4rem; color: #9ca3af;"></i>
+            <h3 class="h4 text-muted mb-2">Geen polls beschikbaar</h3>
+            <p class="text-muted mb-3">Er zijn momenteel geen polls beschikbaar.</p>
+            {% if user.is_staff %}
+              <a href="{% url 'polls:create' %}" class="btn btn-primary">
+                <i data-feather="plus" class="me-2"></i>Maak de eerste poll
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}

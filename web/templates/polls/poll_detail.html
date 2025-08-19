@@ -1,0 +1,319 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  {{ poll.title }} - SV Rap 8
+{% endblock %}
+
+{% block content %}
+  <div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'polls:list' %}">Polls</a></li>
+            <li class="breadcrumb-item active">{{ poll.title }}</li>
+          </ol>
+        </nav>
+        
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <div class="d-flex align-items-center gap-3 mb-2">
+              <h1 class="h2 mb-0">{{ poll.title }}</h1>
+              {% if poll.is_open %}
+                <span class="badge bg-success">Open voor stemmen</span>
+              {% else %}
+                <span class="badge bg-secondary">Gesloten</span>
+              {% endif %}
+            </div>
+            {% if poll.description %}
+              <p class="text-muted mb-2">{{ poll.description }}</p>
+            {% endif %}
+            <div class="d-flex gap-4 small text-muted">
+              <span>
+                <i data-feather="user" class="me-1" style="width: 14px; height: 14px;"></i>
+                Door {{ poll.created_by.get_full_name|default:poll.created_by.username }}
+              </span>
+              <span>
+                <i data-feather="calendar" class="me-1" style="width: 14px; height: 14px;"></i>
+                {{ poll.created_at|date:"d M Y H:i" }}
+              </span>
+              {% if poll.end_date %}
+                <span>
+                  <i data-feather="clock" class="me-1" style="width: 14px; height: 14px;"></i>
+                  {% if poll.is_open %}Sluit op{% else %}Sloot op{% endif %} {{ poll.end_date|date:"d M Y H:i" }}
+                </span>
+              {% endif %}
+            </div>
+          </div>
+          
+          {% if user.is_staff %}
+            <div class="dropdown">
+              <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i data-feather="more-horizontal" class="me-2"></i>Acties
+              </button>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{% url 'polls:edit' poll.pk %}">
+                  <i data-feather="edit-2" class="me-2"></i>Bewerken
+                </a></li>
+                {% if poll.is_open %}
+                  <li><form method="post" action="{% url 'polls:close' poll.pk %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="dropdown-item text-danger" onclick="return confirm('Weet je zeker dat je deze poll wilt sluiten?')">
+                      <i data-feather="x-circle" class="me-2"></i>Poll sluiten
+                    </button>
+                  </form></li>
+                {% else %}
+                  <li><form method="post" action="{% url 'polls:reopen' poll.pk %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="dropdown-item text-success" onclick="return confirm('Weet je zeker dat je deze poll wilt heropenen?')">
+                      <i data-feather="play-circle" class="me-2"></i>Poll heropenen
+                    </button>
+                  </form></li>
+                {% endif %}
+              </ul>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- Voting/Results Section -->
+      <div class="col-lg-8">
+        {% if can_vote %}
+          <!-- Voting Interface -->
+          <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+              <h5 class="mb-0">
+                <i data-feather="check-square" class="me-2"></i>
+                Jouw stem
+                {% if poll.allow_multiple_choices %}
+                  <small class="opacity-75">(meerdere keuzes mogelijk)</small>
+                {% endif %}
+              </h5>
+            </div>
+            <div class="card-body">
+              <form id="vote-form">
+                {% csrf_token %}
+                <div class="voting-options">
+                  {% for result in results %}
+                    <div class="form-check mb-3">
+                      {% if poll.allow_multiple_choices %}
+                        <input class="form-check-input" type="checkbox" 
+                               name="options" value="{{ result.option.id }}" 
+                               id="option_{{ result.option.id }}"
+                               {% if result.option.id in user_votes %}checked{% endif %}>
+                      {% else %}
+                        <input class="form-check-input" type="radio" 
+                               name="options" value="{{ result.option.id }}" 
+                               id="option_{{ result.option.id }}"
+                               {% if result.option.id in user_votes %}checked{% endif %}>
+                      {% endif %}
+                      <label class="form-check-label" for="option_{{ result.option.id }}">
+                        {{ result.option.text }}
+                      </label>
+                    </div>
+                  {% endfor %}
+                </div>
+                
+                <div class="d-flex gap-2 mt-4">
+                  <button type="submit" class="btn btn-primary">
+                    <i data-feather="check" class="me-2"></i>Stem verzenden
+                  </button>
+                  {% if user_votes %}
+                    <button type="button" class="btn btn-outline-secondary" onclick="clearVote()">
+                      <i data-feather="x" class="me-2"></i>Stem intrekken
+                    </button>
+                  {% endif %}
+                </div>
+              </form>
+            </div>
+          </div>
+        {% endif %}
+
+        <!-- Results Section -->
+        <div class="card border-0 shadow-sm">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i data-feather="bar-chart-2" class="me-2"></i>
+              Resultaten
+              <small class="text-muted" id="last-updated"></small>
+            </h5>
+          </div>
+          <div class="card-body" id="results-container">
+            {% include 'polls/includes/poll_results.html' %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Statistics Sidebar -->
+      <div class="col-lg-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i data-feather="info" class="me-2"></i>Poll Informatie
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-3" id="poll-stats">
+              <div class="col-6">
+                <div class="text-center">
+                  <div class="h4 mb-1" id="total-votes">{{ poll.total_votes }}</div>
+                  <div class="small text-muted">Totale stemmen</div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="text-center">
+                  <div class="h4 mb-1" id="unique-voters">{{ poll.unique_voters }}</div>
+                  <div class="small text-muted">Unieke stemmers</div>
+                </div>
+              </div>
+              {% if poll.allow_multiple_choices %}
+                <div class="col-12">
+                  <div class="alert alert-info mb-0">
+                    <i data-feather="info" class="me-2"></i>
+                    Deze poll staat meerdere keuzes toe
+                  </div>
+                </div>
+              {% endif %}
+              {% if poll.closed_at %}
+                <div class="col-12">
+                  <div class="alert alert-secondary mb-0">
+                    <i data-feather="x-circle" class="me-2"></i>
+                    Gesloten op {{ poll.closed_at|date:"d M Y H:i" }}
+                    {% if poll.closed_by %}
+                      door {{ poll.closed_by.get_full_name|default:poll.closed_by.username }}
+                    {% endif %}
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript for real-time updates and voting -->
+  <script>
+    let pollId = {{ poll.pk }};
+    let updateInterval;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      // Handle vote form submission
+      const voteForm = document.getElementById('vote-form');
+      if (voteForm) {
+        voteForm.addEventListener('submit', handleVoteSubmission);
+      }
+      
+      // Start real-time updates if poll is open
+      {% if poll.is_open %}
+        startRealTimeUpdates();
+      {% endif %}
+    });
+    
+    async function handleVoteSubmission(event) {
+      event.preventDefault();
+      
+      const formData = new FormData(event.target);
+      const options = formData.getAll('options');
+      
+      if (options.length === 0) {
+        showNotification('Selecteer minimaal één optie', 'warning');
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/polls/${pollId}/vote/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken(),
+          },
+          body: JSON.stringify({
+            option_ids: options.map(id => parseInt(id))
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          showNotification(data.message, 'success');
+          updateResults(data);
+        } else {
+          showNotification(data.error, 'error');
+        }
+      } catch (error) {
+        showNotification('Er is een fout opgetreden', 'error');
+      }
+    }
+    
+    function clearVote() {
+      if (confirm('Weet je zeker dat je je stem wilt intrekken?')) {
+        document.querySelectorAll('input[name="options"]').forEach(input => {
+          input.checked = false;
+        });
+        document.getElementById('vote-form').dispatchEvent(new Event('submit'));
+      }
+    }
+    
+    function startRealTimeUpdates() {
+      updateInterval = setInterval(fetchResults, 5000); // Update every 5 seconds
+    }
+    
+    async function fetchResults() {
+      try {
+        const response = await fetch(`/polls/${pollId}/results/`);
+        const data = await response.json();
+        updateResults(data);
+        
+        // Stop updates if poll is closed
+        if (!data.is_open && updateInterval) {
+          clearInterval(updateInterval);
+          location.reload(); // Refresh to show closed state
+        }
+      } catch (error) {
+        console.error('Failed to fetch results:', error);
+      }
+    }
+    
+    function updateResults(data) {
+      // Update statistics
+      document.getElementById('total-votes').textContent = data.total_votes;
+      document.getElementById('unique-voters').textContent = data.unique_voters;
+      
+      // Update result bars
+      data.results.forEach(result => {
+        const bar = document.getElementById(`result-bar-${result.option_id}`);
+        const count = document.getElementById(`result-count-${result.option_id}`);
+        const percentage = document.getElementById(`result-percentage-${result.option_id}`);
+        
+        if (bar && count && percentage) {
+          bar.style.width = `${result.percentage}%`;
+          count.textContent = result.vote_count;
+          percentage.textContent = `${result.percentage}%`;
+        }
+      });
+      
+      // Update last updated time
+      document.getElementById('last-updated').textContent = '(zojuist bijgewerkt)';
+      setTimeout(() => {
+        document.getElementById('last-updated').textContent = '';
+      }, 2000);
+    }
+    
+    function getCsrfToken() {
+      return document.querySelector('[name=csrfmiddlewaretoken]').value;
+    }
+    
+    function showNotification(message, type) {
+      // Reuse existing notification system
+      if (window.showNotification) {
+        window.showNotification(message, type);
+      } else {
+        alert(message);
+      }
+    }
+  </script>
+{% endblock %}
