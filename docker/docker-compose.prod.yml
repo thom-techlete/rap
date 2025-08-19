@@ -107,6 +107,7 @@ services:
       - "443:443"
     volumes:
       - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/error-pages:/etc/nginx/error-pages:ro
       - static_volume:/app/staticfiles:ro
       - media_volume:/app/media:ro
       - /etc/letsencrypt/live/rap8.nl/fullchain.pem:/etc/nginx/ssl/fullchain.pem:ro
