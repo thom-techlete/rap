@@ -89,6 +89,35 @@ This repository contains a Django-based web application for managing event prese
 
 ## Development Environment
 
+### Runtime and tools
+Always assume Python 3.12 with Ubuntu runner. The repository provides a Postgres and Redis service via `.github/workflows/copilot-setup-steps.yml`.
+
+### Databases and services
+Use the Postgres service on `localhost:5432` with database `rap_web`, user `postgres`, password `postgres`. Use Redis at `redis://localhost:6379/0`. Do not start new databases and do not switch to SQLite.
+
+### Environment variables
+Read variables from the repository environment named `copilot`. Use:
+- `DATABASE_URL`
+- `REDIS_URL`
+- `DJANGO_SETTINGS_MODULE`
+- `CELERY_BROKER_URL`
+- `CELERY_RESULT_BACKEND`
+- `DJANGO_SECRET_KEY`
+
+Never create new credentials in code or change the database location. If a variable is missing, stop and ask for it to be added to the `copilot` environment.
+
+### Install, migrate, test
+1. `python -m pip install --upgrade pip`
+2. `pip install -r requirements.txt` and, if present, `pip install -r requirements-dev.txt`
+3. `python manage.py migrate --noinput`
+4. Run tests with `pytest -q` when `pytest.ini` or `pyproject.toml` defines pytest, otherwise `python manage.py test`
+
+### Conventions
+- Use the existing `DATABASE_URL` and `REDIS_URL`
+- Do not run a development server or create superusers unless explicitly requested
+- Keep changes minimal and aligned with existing project structure
+
+
 ### Required Environment Variables
 ```bash
 # Database Configuration
@@ -164,18 +193,6 @@ docker-compose -f docker-compose.dev.yml exec web python manage.py shell
 - **Event**: Supports recurring patterns with `recurrence_rule` field
 - **Attendance**: Tracks status changes with timestamps for history
 
-### Important Queries
-```python
-# Optimized event list with attendance counts
-events = Event.objects.select_related('event_type').prefetch_related('attendances')
-
-# Player attendance statistics
-player.attendance_set.filter(status='attending').count()
-
-# Upcoming events for dashboard
-Event.objects.filter(date__gte=timezone.now()).order_by('date')
-```
-
 ## Testing & Quality Assurance
 
 ### Test Coverage
@@ -206,19 +223,6 @@ Event.objects.filter(date__gte=timezone.now()).order_by('date')
 - Static files served via WhiteNoise
 - Email via Brevo SMTP service
 - Automated backups and monitoring
-
-## Feature Roadmap Reference
-Always refer to `docs/roadmap.md` for current development status. Most core features are completed:
-- ✅ User authentication and role management
-- ✅ Event management with recurring events
-- ✅ Attendance tracking and history
-- ✅ Email notifications and reminders
-- ✅ Modern responsive UI in Dutch
-- ✅ Statistics and analytics dashboard
-- ✅ CI/CD pipeline and production deployment
-- ✅ Calendar features and ICS export
-
-When making changes, update the roadmap to mark completed items and track progress.
 
 ## Special Considerations
 
