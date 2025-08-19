@@ -77,8 +77,9 @@ class Command(BaseCommand):
                     self.stdout.write(f"  Max uses: {invitation_code.max_uses}")
 
                 if invitation_code.expires_at:
+                    local_expires = timezone.localtime(invitation_code.expires_at)
                     self.stdout.write(
-                        f'  Expires: {invitation_code.expires_at.strftime("%Y-%m-%d %H:%M")}'
+                        f'  Expires: {local_expires.strftime("%Y-%m-%d %H:%M")}'
                     )
 
                 self.stdout.write("")  # Empty line for spacing

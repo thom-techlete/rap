@@ -9,6 +9,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
+from django.utils import timezone
 from django_celery_beat.models import CrontabSchedule, PeriodicTask
 
 logger = logging.getLogger(__name__)
@@ -177,9 +178,11 @@ def send_new_event_notification(event):
         return
 
     # Prepare email context
+    # Convert to local timezone before formatting
+    local_date = timezone.localtime(event.date)
     context = {
         "event": event,
-        "event_date_formatted": event.date.strftime("%d-%m-%Y om %H:%M"),
+        "event_date_formatted": local_date.strftime("%d-%m-%Y om %H:%M"),
         "event_type_display": event.get_event_type_display(),
         "is_mandatory_text": "Ja" if event.is_mandatory else "Nee",
         "site_name": "SV Rap 8",
@@ -258,9 +261,11 @@ def send_event_reminder_notification(event, days_before: int = 1):
         return
 
     # Prepare email context
+    # Convert to local timezone before formatting
+    local_date = timezone.localtime(event.date)
     context = {
         "event": event,
-        "event_date_formatted": event.date.strftime("%d-%m-%Y om %H:%M"),
+        "event_date_formatted": local_date.strftime("%d-%m-%Y om %H:%M"),
         "event_type_display": event.get_event_type_display(),
         "is_mandatory_text": "Ja" if event.is_mandatory else "Nee",
         "days_before": days_before,
@@ -331,12 +336,16 @@ def send_recurring_event_notification(events: list):
     last_event = events_sorted[-1]
 
     # Prepare email context
+    # Convert to local timezone before formatting
+    first_event_local = timezone.localtime(first_event.date)
+    last_event_local = timezone.localtime(last_event.date) if len(events_sorted) > 1 else None
+    
     context = {
         "event": first_event,  # Use first event as the base
-        "first_event_date_formatted": first_event.date.strftime("%d-%m-%Y om %H:%M"),
+        "first_event_date_formatted": first_event_local.strftime("%d-%m-%Y om %H:%M"),
         "last_event_date_formatted": (
-            last_event.date.strftime("%d-%m-%Y om %H:%M")
-            if len(events_sorted) > 1
+            last_event_local.strftime("%d-%m-%Y om %H:%M")
+            if last_event_local
             else None
         ),
         "event_type_display": first_event.get_event_type_display(),
@@ -477,9 +486,11 @@ def send_morning_of_notification(event):
             return 0
 
         # Prepare context
+        # Convert to local timezone before formatting
+        local_date = timezone.localtime(event.date)
         context = {
             "event": event,
-            "event_date_formatted": event.date.strftime("%d-%m-%Y om %H:%M"),
+            "event_date_formatted": local_date.strftime("%d-%m-%Y om %H:%M"),
             "event_type_display": event.get_event_type_display(),
             "is_mandatory_text": "Ja" if event.is_mandatory else "Nee",
             "attendees": attendees,

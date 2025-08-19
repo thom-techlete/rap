@@ -121,8 +121,9 @@ class Command(BaseCommand):
         for event_data in all_events:
             event = Event.objects.create(**event_data)
             created_events.append(event)
+            local_event_time = timezone.localtime(event.date)
             self.stdout.write(
-                f'Created event: {event.name} on {event.date.strftime("%d-%m-%Y %H:%M")}'
+                f'Created event: {event.name} on {local_event_time.strftime("%d-%m-%Y %H:%M")}'
             )
 
         # Create sample attendance for past events if there are users

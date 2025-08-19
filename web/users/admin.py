@@ -79,9 +79,10 @@ class InvitationCodeAdmin(admin.ModelAdmin):
         if obj.expires_at < timezone.now():
             return format_html('<span style="color: #dc3545;">Verlopen</span>')
         else:
+            local_expires = timezone.localtime(obj.expires_at)
             return format_html(
                 '<span style="color: #28a745;">Geldig tot {}</span>',
-                obj.expires_at.strftime("%d-%m-%Y %H:%M"),
+                local_expires.strftime("%d-%m-%Y %H:%M"),
             )
 
     expires_display.short_description = "Vervaldatum"
