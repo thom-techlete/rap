@@ -16,14 +16,22 @@ jobs:
     permissions:
       contents: read
 
-    # No job container. Services are exposed to the host as localhost:<port>.
+    env:
+      POSTGRES_DB: rap_db
+      POSTGRES_USER: rap_user
+      POSTGRES_PASSWORD: rap_db_password
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      REDIS_URL: redis://localhost:6379/0
+      DJANGO_SECRET_KEY: copilot-development-secret-key
+      DJANGO_DEBUG: "True"
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+      CELERY_BROKER_URL: redis://localhost:6379/0
+      CELERY_RESULT_BACKEND: redis://localhost:6379/0
+
     services:
       db:
         image: postgres:17
-        env:
-          POSTGRES_USER: rap_user
-          POSTGRES_PASSWORD: rap_db_password
-          POSTGRES_DB: rap_db
         ports:
           - 5432:5432
         options: >-
@@ -81,22 +89,12 @@ jobs:
 
       - name: Django checks and migrations
         working-directory: ./web
-        env:
-          DATABASE_URL: postgres://rap_user:rap_db_password@localhost:5432/rap_db
-          REDIS_URL: redis://localhost:6379/0
-          DJANGO_SECRET_KEY: copilot-development-secret-key
-          DJANGO_DEBUG: "True"
-          DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
         run: |
           python manage.py check
           python manage.py migrate --noinput
 
       - name: Verify Celery config
         working-directory: ./web
-        env:
-          REDIS_URL: redis://localhost:6379/0
-          CELERY_BROKER_URL: redis://localhost:6379/0
-          CELERY_RESULT_BACKEND: redis://localhost:6379/0
         run: |
           timeout 5s celery -A rap_web worker --loglevel=info --dry-run || true
 
