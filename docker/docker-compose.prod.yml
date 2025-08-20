@@ -47,11 +47,23 @@ services:
       - media_volume:/app/media
     networks:
       - rap_network
+    expose:
+      - "8000"
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python - <<'PY'\nimport socket,sys\ns=socket.socket(); s.settimeout(3)\ntry:\n  s.connect(('localhost',8000)); s.close(); sys.exit(0)\nexcept Exception:\n  sys.exit(1)\nPY"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
     deploy:
       resources:
         limits:
@@ -115,7 +127,8 @@ services:
     networks:
       - rap_network
     depends_on:
-      - web
+      web:
+        condition: service_healthy
     deploy:
       resources:
         limits:
@@ -130,4 +143,5 @@ volumes:
 
 networks:
   rap_network:
+    name: rap_network
     driver: bridge
