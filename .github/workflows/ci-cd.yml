@@ -306,9 +306,6 @@ jobs:
               echo "🎉 Deployment successful with latest tag!"
               # Update last successful deployment tag to the new one
               echo "$NEW_IMAGE_TAG" > .last-successful-deployment
-              git add .last-successful-deployment
-              git commit -m "Update last successful deployment to $NEW_IMAGE_TAG" || true
-              git push origin main || echo "Warning: Could not push last successful deployment update"
             else
               echo "❌ Deployment failed with latest tag, attempting fallback..."
               
@@ -338,38 +335,3 @@ jobs:
             docker system prune -f
             
             echo "🏁 Deployment process completed!"
-            
-      # - name: Rollback on failure
-      #   if: failure()
-      #   uses: appleboy/ssh-action@v1.0.3
-      #   with:
-      #     host: ${{ secrets.DEPLOY_HOST }}
-      #     username: ${{ secrets.DEPLOY_USER }}
-      #     key: ${{ secrets.DEPLOY_KEY }}
-      #     port: ${{ secrets.DEPLOY_PORT || 22 }}
-      #     script: |
-      #       echo "💥 Deployment failed, attempting rollback..."
-      #       cd ${{ secrets.DEPLOY_PATH || '/opt/rap' }}/docker
-            
-      #       # Get the previous successful commit
-      #       PREV_COMMIT=$(git log --format="%H" -n 2 | tail -1)
-      #       echo "Rolling back to commit: $PREV_COMMIT"
-            
-      #       # Checkout previous commit
-      #       git checkout $PREV_COMMIT
-            
-      #       # Restart services with previous version
-      #       docker-compose -f docker-compose.prod.yml up -d --force-recreate
-            
-      #       echo "🔄 Rollback completed"
-
-      # - name: Notify deployment status
-      #   if: always()
-      #   uses: 8398a7/action-slack@v3
-      #   with:
-      #     status: ${{ job.status }}
-      #     channel: '#deployments'
-      #     fields: repo,message,commit,author,action,eventName,ref,workflow
-      #     webhook_url: ${{ secrets.SLACK_WEBHOOK }}
-      #   env:
-      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
