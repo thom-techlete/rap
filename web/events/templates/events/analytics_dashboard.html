@@ -1,0 +1,903 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Analytics Dashboard - SV Rap 8{% endblock %}
+
+{% block extra_css %}
+<style>
+.analytics-container {
+    padding: 2rem 0;
+}
+
+.analytics-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid #e5e7eb;
+}
+
+.analytics-header {
+    border-bottom: 2px solid #1e40af;
+    padding-bottom: 1rem;
+    margin-bottom: 2rem;
+}
+
+.analytics-title {
+    color: #1e293b;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.analytics-subtitle {
+    color: #64748b;
+    font-size: 1.1rem;
+    margin: 0.5rem 0 0 0;
+}
+
+.chart-container {
+    position: relative;
+    height: 400px;
+    margin: 1rem 0;
+}
+
+.chart-container.small {
+    height: 300px;
+}
+
+.chart-container.large {
+    height: 500px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    margin: 0.25rem 0 0 0;
+}
+
+.section-title {
+    color: #1e293b;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.top-performers {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin: 1rem 0;
+}
+
+.performer-list {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.performer-item {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    padding: 0.75rem;
+    margin: 0.25rem 0;
+    background: white;
+    border-radius: 6px;
+    border-left: 4px solid #1e40af;
+}
+
+.performer-name {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.performer-stat {
+    background: #1e40af;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.response-time-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.response-time-card {
+    background: #f1f5f9;
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+    border-left: 4px solid #3b82f6;
+}
+
+.response-time-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e40af;
+    margin: 0;
+}
+
+.response-time-label {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin: 0.25rem 0 0 0;
+}
+
+@media (max-width: 768px) {
+    .analytics-title {
+        font-size: 2rem;
+    }
+    
+    .chart-container {
+        height: 300px;
+    }
+    
+    .chart-container.large {
+        height: 400px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+    
+    .top-performers {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container analytics-container">
+    <!-- Header -->
+    <div class="analytics-header">
+        <h1 class="analytics-title">
+            <i data-feather="bar-chart-2" class="me-3"></i>
+            Analytics Dashboard
+        </h1>
+        <p class="analytics-subtitle">
+            Uitgebreide analyse van evenementen, aanwezigheid en prestaties
+        </p>
+    </div>
+
+    <!-- Overview Stats -->
+    <div class="analytics-card">
+        <h2 class="section-title">
+            <i data-feather="trending-up"></i>
+            Overzicht Statistieken
+        </h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">{{ event_analytics.event_types|length }}</div>
+                <div class="stat-label">Event Types</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ match_analytics.total_matches }}</div>
+                <div class="stat-label">Totaal Wedstrijden</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ player_analytics.total_active_players }}</div>
+                <div class="stat-label">Actieve Spelers</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ response_time_analytics.avg_response_time }}h</div>
+                <div class="stat-label">Gem. Reactietijd</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Analytics -->
+    <div class="analytics-card">
+        <h2 class="section-title">
+            <i data-feather="calendar"></i>
+            Evenement Analyse
+        </h2>
+        
+        <div class="row">
+            <div class="col-lg-6">
+                <h3>Event Types Verdeling</h3>
+                <div class="chart-container">
+                    <canvas id="eventTypesChart"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <h3>Evenementen per Dag van de Week</h3>
+                <div class="chart-container">
+                    <canvas id="weekdayChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-12">
+                <h3>Evenementen Over Tijd (Maandelijks)</h3>
+                <div class="chart-container large">
+                    <canvas id="eventsTimelineChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Analytics -->
+    <div class="analytics-card">
+        <h2 class="section-title">
+            <i data-feather="users"></i>
+            Aanwezigheid Analyse
+        </h2>
+        
+        <div class="row">
+            <div class="col-lg-6">
+                <h3>Aanwezigheid per Event Type</h3>
+                <div class="chart-container">
+                    <canvas id="attendanceByTypeChart"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <h3>Aanwezigheid per Dag van de Week</h3>
+                <div class="chart-container">
+                    <canvas id="attendanceWeekdayChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-12">
+                <h3>Aanwezigheidspercentage Over Tijd</h3>
+                <div class="chart-container large">
+                    <canvas id="attendanceTimelineChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Match Statistics -->
+    {% if match_analytics.total_matches > 0 %}
+    <div class="analytics-card">
+        <h2 class="section-title">
+            <i data-feather="award"></i>
+            Wedstrijd Statistieken
+        </h2>
+        
+        <div class="row">
+            <div class="col-lg-6">
+                <h3>Statistieken Verdeling</h3>
+                <div class="chart-container">
+                    <canvas id="matchStatsChart"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <h3>Doelpunten Over Tijd</h3>
+                <div class="chart-container">
+                    <canvas id="goalsTimelineChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Top Performers -->
+        <div class="top-performers mt-4">
+            <div class="performer-list">
+                <h4>Top Doelpuntenmakers</h4>
+                {% for player in match_analytics.top_performers.goalscorers|slice:":5" %}
+                <div class="performer-item">
+                    <span class="performer-name">
+                        {% if player.player__first_name and player.player__last_name %}
+                            {{ player.player__first_name }} {{ player.player__last_name }}
+                        {% else %}
+                            {{ player.player__username }}
+                        {% endif %}
+                    </span>
+                    <span class="performer-stat">{{ player.total }}</span>
+                </div>
+                {% empty %}
+                <p class="text-muted">Geen data beschikbaar</p>
+                {% endfor %}
+            </div>
+            
+            <div class="performer-list">
+                <h4>Top Assistgevers</h4>
+                {% for player in match_analytics.top_performers.assisters|slice:":5" %}
+                <div class="performer-item">
+                    <span class="performer-name">
+                        {% if player.player__first_name and player.player__last_name %}
+                            {{ player.player__first_name }} {{ player.player__last_name }}
+                        {% else %}
+                            {{ player.player__username }}
+                        {% endif %}
+                    </span>
+                    <span class="performer-stat">{{ player.total }}</span>
+                </div>
+                {% empty %}
+                <p class="text-muted">Geen data beschikbaar</p>
+                {% endfor %}
+            </div>
+            
+            <div class="performer-list">
+                <h4>Meeste Kaarten</h4>
+                {% for player in match_analytics.top_performers.most_cards|slice:":5" %}
+                <div class="performer-item">
+                    <span class="performer-name">
+                        {% if player.player__first_name and player.player__last_name %}
+                            {{ player.player__first_name }} {{ player.player__last_name }}
+                        {% else %}
+                            {{ player.player__username }}
+                        {% endif %}
+                    </span>
+                    <span class="performer-stat" style="background: #dc2626;">{{ player.total }}</span>
+                </div>
+                {% empty %}
+                <p class="text-muted">Geen data beschikbaar</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Response Time Analytics -->
+    <div class="analytics-card">
+        <h2 class="section-title">
+            <i data-feather="clock"></i>
+            Reactietijd Analyse
+        </h2>
+        
+        <div class="response-time-grid">
+            <div class="response-time-card">
+                <div class="response-time-value">{{ response_time_analytics.response_categories.immediate }}</div>
+                <div class="response-time-label">Direct (&lt;1u)</div>
+            </div>
+            <div class="response-time-card">
+                <div class="response-time-value">{{ response_time_analytics.response_categories.quick }}</div>
+                <div class="response-time-label">Snel (1-6u)</div>
+            </div>
+            <div class="response-time-card">
+                <div class="response-time-value">{{ response_time_analytics.response_categories.same_day }}</div>
+                <div class="response-time-label">Zelfde dag (6-24u)</div>
+            </div>
+            <div class="response-time-card">
+                <div class="response-time-value">{{ response_time_analytics.response_categories.next_day }}</div>
+                <div class="response-time-label">Volgende dag (1-2d)</div>
+            </div>
+            <div class="response-time-card">
+                <div class="response-time-value">{{ response_time_analytics.response_categories.late }}</div>
+                <div class="response-time-label">Laat (&gt;2d)</div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-12">
+                <h3>Reactietijd Verdeling</h3>
+                <div class="chart-container">
+                    <canvas id="responseTimeChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Player Analytics -->
+    <div class="analytics-card">
+        <h2 class="section-title">
+            <i data-feather="user"></i>
+            Speler Analyse
+        </h2>
+        
+        <div class="row">
+            <div class="col-lg-6">
+                <h3>Top 10 Aanwezigheidspercentages</h3>
+                <div class="chart-container">
+                    <canvas id="playerAttendanceChart"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <h3>Team Aanwezigheid Trend</h3>
+                <div class="chart-container">
+                    <canvas id="teamTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// Chart.js configuration
+Chart.defaults.font.family = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+Chart.defaults.font.size = 12;
+Chart.defaults.color = '#64748b';
+
+// Color palette
+const colors = {
+    primary: '#1e40af',
+    secondary: '#3b82f6',
+    success: '#16a34a',
+    warning: '#f59e0b',
+    danger: '#dc2626',
+    info: '#0ea5e9',
+    light: '#f8fafc',
+    dark: '#1e293b'
+};
+
+// Event Types Chart
+const eventTypesCtx = document.getElementById('eventTypesChart').getContext('2d');
+new Chart(eventTypesCtx, {
+    type: 'doughnut',
+    data: {
+        labels: [
+            {% for type in event_analytics.event_types %}
+                '{{ type.event_type|capfirst }}'{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            data: [
+                {% for type in event_analytics.event_types %}
+                    {{ type.count }}{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            backgroundColor: [
+                colors.primary,
+                colors.secondary,
+                colors.success,
+                colors.warning,
+                colors.info,
+                colors.danger
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    padding: 20,
+                    usePointStyle: true
+                }
+            }
+        }
+    }
+});
+
+// Weekday Events Chart
+const weekdayCtx = document.getElementById('weekdayChart').getContext('2d');
+new Chart(weekdayCtx, {
+    type: 'bar',
+    data: {
+        labels: [
+            {% for day in event_analytics.events_by_weekday %}
+                '{{ day.day }}'{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'Aantal Evenementen',
+            data: [
+                {% for day in event_analytics.events_by_weekday %}
+                    {{ day.count }}{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            backgroundColor: colors.primary,
+            borderColor: colors.primary,
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    precision: 0
+                }
+            }
+        },
+        plugins: {
+            legend: {
+                display: false
+            }
+        }
+    }
+});
+
+// Events Timeline Chart
+const eventsTimelineCtx = document.getElementById('eventsTimelineChart').getContext('2d');
+new Chart(eventsTimelineCtx, {
+    type: 'line',
+    data: {
+        labels: [
+            {% for month in event_analytics.events_by_month %}
+                '{{ month.month|date:"M Y" }}'{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'Evenementen per Maand',
+            data: [
+                {% for month in event_analytics.events_by_month %}
+                    {{ month.count }}{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            borderColor: colors.primary,
+            backgroundColor: colors.secondary + '20',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    precision: 0
+                }
+            }
+        }
+    }
+});
+
+// Attendance by Type Chart
+const attendanceByTypeCtx = document.getElementById('attendanceByTypeChart').getContext('2d');
+new Chart(attendanceByTypeCtx, {
+    type: 'bar',
+    data: {
+        labels: [
+            {% for type in attendance_analytics.attendance_by_event_type %}
+                '{{ type.event_type }}'{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'Aanwezigheidspercentage',
+            data: [
+                {% for type in attendance_analytics.attendance_by_event_type %}
+                    {{ type.rate }}{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            backgroundColor: colors.success,
+            borderColor: colors.success,
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100,
+                ticks: {
+                    callback: function(value) {
+                        return value + '%';
+                    }
+                }
+            }
+        },
+        plugins: {
+            legend: {
+                display: false
+            }
+        }
+    }
+});
+
+// Attendance Weekday Chart
+const attendanceWeekdayCtx = document.getElementById('attendanceWeekdayChart').getContext('2d');
+new Chart(attendanceWeekdayCtx, {
+    type: 'bar',
+    data: {
+        labels: [
+            {% for day in attendance_analytics.attendance_by_weekday %}
+                '{{ day.day }}'{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'Aanwezigheidspercentage',
+            data: [
+                {% for day in attendance_analytics.attendance_by_weekday %}
+                    {{ day.rate }}{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            backgroundColor: colors.success,
+            borderColor: colors.success,
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100,
+                ticks: {
+                    callback: function(value) {
+                        return value + '%';
+                    }
+                }
+            }
+        },
+        plugins: {
+            legend: {
+                display: false
+            }
+        }
+    }
+});
+
+// Attendance Timeline Chart
+const attendanceTimelineCtx = document.getElementById('attendanceTimelineChart').getContext('2d');
+new Chart(attendanceTimelineCtx, {
+    type: 'line',
+    data: {
+        labels: [
+            {% for month in attendance_analytics.attendance_by_month %}
+                '{{ month.month_name }}'{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'Aanwezigheidspercentage',
+            data: [
+                {% for month in attendance_analytics.attendance_by_month %}
+                    {{ month.rate }}{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            borderColor: colors.success,
+            backgroundColor: colors.success + '20',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100,
+                ticks: {
+                    callback: function(value) {
+                        return value + '%';
+                    }
+                }
+            }
+        }
+    }
+});
+
+{% if match_analytics.total_matches > 0 %}
+// Match Statistics Chart
+const matchStatsCtx = document.getElementById('matchStatsChart').getContext('2d');
+new Chart(matchStatsCtx, {
+    type: 'doughnut',
+    data: {
+        labels: [
+            {% for stat in match_analytics.statistics_distribution %}
+                '{{ stat.statistic_type|capfirst }}'{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            data: [
+                {% for stat in match_analytics.statistics_distribution %}
+                    {{ stat.count }}{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            backgroundColor: [
+                colors.success,  // goals
+                colors.info,     // assists
+                colors.warning,  // yellow cards
+                colors.danger,   // red cards
+                colors.primary,  // other
+                colors.secondary
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    padding: 20,
+                    usePointStyle: true
+                }
+            }
+        }
+    }
+});
+
+// Goals Timeline Chart
+const goalsTimelineCtx = document.getElementById('goalsTimelineChart').getContext('2d');
+new Chart(goalsTimelineCtx, {
+    type: 'line',
+    data: {
+        labels: [
+            {% for month in match_analytics.goals_by_month %}
+                '{{ month.month_name }}'{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'Doelpunten',
+            data: [
+                {% for month in match_analytics.goals_by_month %}
+                    {{ month.goals }}{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            borderColor: colors.success,
+            backgroundColor: colors.success + '20',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    precision: 0
+                }
+            }
+        }
+    }
+});
+{% endif %}
+
+// Response Time Chart
+const responseTimeCtx = document.getElementById('responseTimeChart').getContext('2d');
+new Chart(responseTimeCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Direct (<1u)', 'Snel (1-6u)', 'Zelfde dag (6-24u)', 'Volgende dag (1-2d)', 'Laat (>2d)'],
+        datasets: [{
+            data: [
+                {{ response_time_analytics.response_categories.immediate }},
+                {{ response_time_analytics.response_categories.quick }},
+                {{ response_time_analytics.response_categories.same_day }},
+                {{ response_time_analytics.response_categories.next_day }},
+                {{ response_time_analytics.response_categories.late }}
+            ],
+            backgroundColor: [
+                colors.success,
+                colors.info,
+                colors.warning,
+                colors.danger,
+                colors.dark
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    padding: 20,
+                    usePointStyle: true
+                }
+            }
+        }
+    }
+});
+
+// Player Attendance Chart
+const playerAttendanceCtx = document.getElementById('playerAttendanceChart').getContext('2d');
+new Chart(playerAttendanceCtx, {
+    type: 'bar',
+    data: {
+        labels: [
+            {% for player in player_analytics.player_stats|slice:":10" %}
+                '{% if player.player.first_name and player.player.last_name %}{{ player.player.first_name }} {{ player.player.last_name }}{% else %}{{ player.player.username }}{% endif %}'{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'Aanwezigheidspercentage',
+            data: [
+                {% for player in player_analytics.player_stats|slice:":10" %}
+                    {{ player.attendance_rate }}{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            backgroundColor: colors.primary,
+            borderColor: colors.primary,
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        scales: {
+            x: {
+                beginAtZero: true,
+                max: 100,
+                ticks: {
+                    callback: function(value) {
+                        return value + '%';
+                    }
+                }
+            }
+        },
+        plugins: {
+            legend: {
+                display: false
+            }
+        }
+    }
+});
+
+// Team Trend Chart
+const teamTrendCtx = document.getElementById('teamTrendChart').getContext('2d');
+new Chart(teamTrendCtx, {
+    type: 'line',
+    data: {
+        labels: [
+            {% for trend in player_analytics.team_trends %}
+                '{{ trend.month_name }}'{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'Team Aanwezigheidspercentage',
+            data: [
+                {% for trend in player_analytics.team_trends %}
+                    {{ trend.rate }}{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            borderColor: colors.primary,
+            backgroundColor: colors.primary + '20',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100,
+                ticks: {
+                    callback: function(value) {
+                        return value + '%';
+                    }
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}
