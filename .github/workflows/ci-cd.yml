@@ -218,7 +218,7 @@ jobs:
             echo "🚀 Starting deployment for SV Rap 8..."
             
             # Navigate to project directory
-            cd /home/rap
+            cd /home/rap/docker
             
             # Pull latest code
             git checkout main
@@ -226,17 +226,44 @@ jobs:
             git pull --ff-only
             
             # Pull latest Docker images
-            cd /home/rap/docker
             docker compose -f docker-compose.prod.yml pull web celery_worker celery_beat
 
             # Restart services
             docker compose -f docker-compose.prod.yml up -d --no-deps web celery_worker celery_beat
-            
-            # Clean up old Docker images
-            docker system prune -f
-            
-            echo "✅ Deployment completed successfully!"
 
+            # Check health of services
+            URL="https://rap8.nl/health/"
+            MAX_ATTEMPTS=30
+            SLEEP_SEC=2
+            LAST_BODY=""
+            echo "Checking ${URL} for status healthy"
+            for i in $(seq 1 "$MAX_ATTEMPTS"); do
+              BODY="$(curl -fsS --max-time 3 "$URL" || true)"
+              if [ -n "$BODY" ]; then
+                LAST_BODY="$BODY"
+                if printf '%s' "$BODY" | tr -d '[:space:]' | grep -q '"status":"healthy"'; then
+                  echo "Service is healthy"
+                  break
+                fi
+              fi
+              printf '.'
+              sleep "$SLEEP_SEC"
+              if [ "$i" -eq "$MAX_ATTEMPTS" ]; then
+                echo
+                echo "Health check failed after $((MAX_ATTEMPTS*SLEEP_SEC)) seconds"
+                echo "Last response body:"
+                printf '%s\n' "${LAST_BODY:-<empty>}"
+                # Show recent logs to aid debugging
+                echo "Recent web logs"
+                docker compose -f docker-compose.prod.yml logs --tail=200 web || true
+                exit 1
+              fi
+            done
+
+            # Clean up
+            docker system prune -f
+
+            
       # - name: Rollback on failure
       #   if: failure()
       #   uses: appleboy/ssh-action@v1.0.3
