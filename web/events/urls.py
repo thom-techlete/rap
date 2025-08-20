@@ -1,6 +1,7 @@
 from django.urls import path
 
 from . import views
+from . import analytics_views
 
 app_name = "events"
 
@@ -22,4 +23,5 @@ urlpatterns = [
         name="delete_statistic",
     ),
     path("export/calendar.ics", views.export_ics, name="export_ics"),
+    path("analytics/", analytics_views.analytics_dashboard, name="analytics"),
 ]
