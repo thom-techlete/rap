@@ -227,11 +227,10 @@ jobs:
             
             # Pull latest Docker images
             cd /home/rap/docker
-            docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml down --remove-orphans
-            
-            # Start services
-            docker compose -f docker-compose.prod.yml up -d
+            docker compose -f docker-compose.prod.yml pull web celery_worker celery_beat
+
+            # Restart services
+            docker compose -f docker-compose.prod.yml up -d --no-deps web celery_worker celery_beat
             
             # Clean up old Docker images
             docker system prune -f
