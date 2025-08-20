@@ -123,22 +123,52 @@ Runs only on pushes to main branch. Features:
 - Pushes to GitHub Container Registry
 - Uses layer caching for faster builds
 - Tags images with commit SHA and `latest`
+- Outputs image tag information for deployment
 
 ### Deploy Job
 
 Runs only on pushes to main branch after successful test and build. Features:
 - SSH deployment to production server
-- Blue-green deployment strategy
+- Smart deployment strategy with automatic fallback
 - Database migrations
 - Static file collection
 - Sample data creation (first deploy only)
 - Health check verification
-- Automatic rollback on failure
+- Automatic rollback to last successful deployment on failure
+- Persistent tracking of successful deployments
+- Enhanced error reporting and debugging
 - Slack notifications
 
 ## Environment Files
 
 The pipeline automatically creates a `.env.prod` file on the server with all necessary environment variables from GitHub secrets.
+
+## Smart Deployment & Fallback System
+
+The CI/CD pipeline includes an intelligent deployment system with automatic fallback capabilities:
+
+### How It Works
+
+1. **First Attempt**: Deploy using the `latest` image tag
+2. **Health Check**: Verify application health using the `/health/` endpoint
+3. **Success Path**: If healthy, update `.last-successful-deployment` file with the new image tag
+4. **Failure Path**: If unhealthy, automatically rollback to the last known successful deployment
+5. **Critical Failure**: If both latest and fallback fail, provide detailed error logs for manual intervention
+
+### Benefits
+
+- **Zero-downtime deployments**: Failed deployments automatically rollback
+- **Persistent tracking**: Last successful deployment persists across CI/CD runs
+- **Enhanced reliability**: Reduces the risk of broken production deployments
+- **Detailed logging**: Comprehensive error reporting for troubleshooting
+
+### File Management
+
+The `.last-successful-deployment` file tracks the image tag of the last successful deployment:
+- Initially contains `latest`
+- Updated only after successful health checks
+- Committed back to the repository for persistence
+- Used as fallback when new deployments fail
 
 ## Monitoring and Debugging
 
@@ -209,6 +239,19 @@ You can trigger a manual deployment by:
    - Check Dockerfile syntax
    - Verify all dependencies in requirements.txt
    - Check for syntax errors in code
+
+5. **Deployment Fallback Triggered**
+   - Review recent code changes that may have caused issues
+   - Check application logs for specific error messages
+   - Verify that the last successful deployment tag exists
+   - Consider manual deployment after fixing issues
+
+6. **Both Latest and Fallback Failed**
+   - This indicates a critical system issue
+   - Check server resources (disk space, memory)
+   - Verify database connectivity and migrations
+   - Review Docker container logs
+   - May require manual server maintenance
 
 ### Getting Help
 
