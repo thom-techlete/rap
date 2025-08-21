@@ -50,3 +50,10 @@ MIDDLEWARE = [
 # Disable Celery for tests
 CELERY_TASK_ALWAYS_EAGER = True
 CELERY_TASK_EAGER_PROPAGATES = True
+
+# Mock VAPID keys for testing
+VAPID_PRIVATE_KEY = "test-private-key"
+VAPID_PUBLIC_KEY = "test-public-key"
+
+# Enable static file serving during tests
+STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'

@@ -18,8 +18,9 @@ class PWATestCase(TestCase):
         """Test that the PWA manifest is accessible."""
         response = self.client.get('/static/manifest.json')
         self.assertEqual(response.status_code, 200)
-        # Should be valid JSON
-        manifest = json.loads(response.content)
+        # Should be valid JSON - handle FileResponse for static files
+        content = b''.join(response.streaming_content) if hasattr(response, 'streaming_content') else response.content
+        manifest = json.loads(content)
         self.assertEqual(manifest['name'], 'SV Rap 8 - Aanwezigheid')
         self.assertEqual(manifest['display'], 'standalone')
     
@@ -27,7 +28,9 @@ class PWATestCase(TestCase):
         """Test that the service worker is accessible."""
         response = self.client.get('/static/sw.js')
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b'Service Worker', response.content)
+        # Handle FileResponse for static files
+        content = b''.join(response.streaming_content) if hasattr(response, 'streaming_content') else response.content
+        self.assertIn(b'Service Worker', content)
     
     def test_offline_page(self):
         """Test that the offline page is accessible."""
