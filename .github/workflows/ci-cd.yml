@@ -237,9 +237,9 @@ jobs:
             cd /home/rap/docker
             
             # Pull latest code
-            git checkout main
             git fetch origin --prune
-            git pull --ff-only
+            git checkout main
+            git reset --hard origin/main
             
             # Function to test deployment with a specific tag
             test_deployment() {
