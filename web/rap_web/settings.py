@@ -414,3 +414,15 @@ CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
 # Optional: Set default schedule (will be created in admin if not exists)
 CELERY_BEAT_SCHEDULE = {}
+
+# =============================================================================
+# PUSH NOTIFICATION SETTINGS (VAPID)
+# =============================================================================
+
+# VAPID keys for web push notifications
+# Generate these with: python -c "from pywebpush import generate_vapid_keys; print(generate_vapid_keys())"
+VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY")
+VAPID_PUBLIC_KEY = os.getenv("VAPID_PUBLIC_KEY")
+VAPID_CLAIMS = {
+    "sub": f"mailto:{os.getenv('DEFAULT_FROM_EMAIL', 'noreply@localhost')}"
+}

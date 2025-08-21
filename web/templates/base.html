@@ -13,8 +13,26 @@
     {% load static %}
     {% load static_versioning %}
 
-    <!-- Favicon -->
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="Voetbalvereniging aanwezigheid beheer systeem voor SV Rap 8" />
+    <meta name="theme-color" content="#1e40af" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="SV Rap 8" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="SV Rap 8" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="{% static_v 'manifest.json' %}" />
+    
+    <!-- Favicon and PWA Icons -->
     <link rel="icon" type="image/x-icon" href="{% static_v 'media/favicon.ico' %}" />
+    <link rel="icon" type="image/png" sizes="192x192" href="{% static_v 'media/icons/icon-192x192.png' %}" />
+    <link rel="apple-touch-icon" href="{% static_v 'media/icons/icon-192x192.png' %}" />
+    <link rel="apple-touch-icon" sizes="152x152" href="{% static_v 'media/icons/icon-152x152.png' %}" />
+    <link rel="apple-touch-icon" sizes="144x144" href="{% static_v 'media/icons/icon-144x144.png' %}" />
+    <link rel="apple-touch-icon" sizes="128x128" href="{% static_v 'media/icons/icon-128x128.png' %}" />
+    <link rel="apple-touch-icon" sizes="96x96" href="{% static_v 'media/icons/icon-96x96.png' %}" />
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
@@ -227,6 +245,86 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.28.0/feather.min.js"></script>
     {% static_v_js 'js/app.js' %}
+    
+    <!-- PWA Service Worker Registration -->
+    <script>
+      // Make VAPID public key available globally
+      {% if settings.VAPID_PUBLIC_KEY %}
+        window.vapidPublicKey = "{{ settings.VAPID_PUBLIC_KEY }}";
+      {% endif %}
+      
+      // Service Worker Registration
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/static/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+              
+              // Check for updates
+              registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    // New content is available
+                    if (confirm('Er is een nieuwe versie beschikbaar. Wil je de pagina verversen?')) {
+                      window.location.reload();
+                    }
+                  }
+                });
+              });
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+
+      // Push Notification Support
+      window.pushNotificationSupport = {
+        isSupported: () => {
+          return 'serviceWorker' in navigator && 'PushManager' in window;
+        },
+        
+        requestPermission: async () => {
+          if (!('Notification' in window)) {
+            return false;
+          }
+          
+          const permission = await Notification.requestPermission();
+          return permission === 'granted';
+        },
+        
+        subscribe: async () => {
+          if (!navigator.serviceWorker.ready) {
+            return null;
+          }
+          
+          const registration = await navigator.serviceWorker.ready;
+          const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: window.vapidPublicKey || null
+          });
+          
+          return subscription;
+        },
+        
+        unsubscribe: async () => {
+          if (!navigator.serviceWorker.ready) {
+            return false;
+          }
+          
+          const registration = await navigator.serviceWorker.ready;
+          const subscription = await registration.pushManager.getSubscription();
+          
+          if (subscription) {
+            return await subscription.unsubscribe();
+          }
+          
+          return true;
+        }
+      };
+    </script>
+    
     <script>
     {% if messages %}
         {% for message in messages %}

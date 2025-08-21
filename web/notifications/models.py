@@ -5,6 +5,124 @@ Models for tracking automatic reminder notifications and scheduling configuratio
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
+import json
+
+
+class PushSubscription(models.Model):
+    """
+    Model to store push notification subscriptions for users.
+    """
+    user = models.ForeignKey(
+        'users.Player',
+        on_delete=models.CASCADE,
+        related_name='push_subscriptions',
+        verbose_name="Gebruiker"
+    )
+    
+    # Push subscription details
+    endpoint = models.URLField(
+        max_length=500,
+        verbose_name="Endpoint",
+        help_text="Push service endpoint URL"
+    )
+    p256dh_key = models.TextField(
+        verbose_name="P256DH Key",
+        help_text="Public key for encryption"
+    )
+    auth_key = models.TextField(
+        verbose_name="Auth Key", 
+        help_text="Authentication secret"
+    )
+    
+    # Metadata
+    user_agent = models.TextField(
+        blank=True,
+        verbose_name="User Agent",
+        help_text="Browser/device information"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_used = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="Actief",
+        help_text="Of deze subscription actief is"
+    )
+    
+    class Meta:
+        verbose_name = "Push Subscription"
+        verbose_name_plural = "Push Subscriptions"
+        unique_together = ["user", "endpoint"]  # Prevent duplicate subscriptions
+        ordering = ["-created_at"]
+    
+    def __str__(self):
+        return f"Push subscription voor {self.user.get_full_name()} ({self.endpoint[:50]}...)"
+    
+    def get_subscription_info(self):
+        """Get subscription info in the format expected by push libraries."""
+        return {
+            'endpoint': self.endpoint,
+            'keys': {
+                'p256dh': self.p256dh_key,
+                'auth': self.auth_key
+            }
+        }
+
+
+class PushNotificationLog(models.Model):
+    """
+    Log of sent push notifications for tracking and debugging.
+    """
+    subscription = models.ForeignKey(
+        PushSubscription,
+        on_delete=models.CASCADE,
+        related_name='notification_logs',
+        verbose_name="Subscription"
+    )
+    
+    title = models.CharField(
+        max_length=100,
+        verbose_name="Titel"
+    )
+    body = models.TextField(
+        verbose_name="Bericht"
+    )
+    
+    # Optional data
+    url = models.URLField(
+        blank=True,
+        verbose_name="URL",
+        help_text="URL to open when notification is clicked"
+    )
+    icon = models.CharField(
+        max_length=200,
+        blank=True,
+        verbose_name="Icoon"
+    )
+    
+    # Sending details
+    sent_at = models.DateTimeField(auto_now_add=True)
+    success = models.BooleanField(
+        default=False,
+        verbose_name="Succesvol"
+    )
+    error_message = models.TextField(
+        blank=True,
+        verbose_name="Foutmelding"
+    )
+    response_code = models.IntegerField(
+        null=True,
+        blank=True,
+        verbose_name="Response Code"
+    )
+    
+    class Meta:
+        verbose_name = "Push Notification Log"
+        verbose_name_plural = "Push Notification Logs"
+        ordering = ["-sent_at"]
+    
+    def __str__(self):
+        status = "✓" if self.success else "✗"
+        return f"{status} {self.title} naar {self.subscription.user.get_full_name()}"
 
 
 class ScheduleConfiguration(models.Model):

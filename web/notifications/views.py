@@ -1,12 +1,21 @@
 from django.contrib import messages
-from django.contrib.auth.decorators import user_passes_test
-from django.http import JsonResponse
+from django.contrib.auth.decorators import user_passes_test, login_required
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from django.views import View
+from django.conf import settings
 from events.models import Event
+import json
+import logging
 
-from .models import ScheduleConfiguration, EventScheduleOverride
+from .models import ScheduleConfiguration, EventScheduleOverride, PushSubscription, PushNotificationLog
 from .utils import send_event_reminder_notification, send_new_event_notification, sync_periodic_tasks
+from .tasks import send_push_notification
+
+logger = logging.getLogger(__name__)
 
 
 def is_staff(user):
@@ -93,3 +102,238 @@ def notification_status(request):
     return JsonResponse(
         {"status": "active", "message": "Notification system is operational"}
     )
+
+
+# ==============================================================================
+# PUSH NOTIFICATION VIEWS
+# ==============================================================================
+
+@method_decorator(login_required, name='dispatch')
+class PushSubscriptionView(View):
+    """
+    Handle push notification subscription management.
+    """
+    
+    def get(self, request):
+        """Get user's current push subscription status."""
+        subscriptions = PushSubscription.objects.filter(
+            user=request.user,
+            is_active=True
+        ).count()
+        
+        return JsonResponse({
+            'subscribed': subscriptions > 0,
+            'count': subscriptions,
+            'vapid_public_key': getattr(settings, 'VAPID_PUBLIC_KEY', None)
+        })
+    
+    @method_decorator(csrf_exempt)
+    def post(self, request):
+        """Subscribe to push notifications."""
+        try:
+            data = json.loads(request.body)
+            subscription_data = data.get('subscription', {})
+            
+            if not subscription_data:
+                return JsonResponse({'error': 'No subscription data provided'}, status=400)
+            
+            # Extract subscription details
+            endpoint = subscription_data.get('endpoint')
+            keys = subscription_data.get('keys', {})
+            p256dh = keys.get('p256dh')
+            auth = keys.get('auth')
+            
+            if not all([endpoint, p256dh, auth]):
+                return JsonResponse({'error': 'Invalid subscription data'}, status=400)
+            
+            # Create or update subscription
+            subscription, created = PushSubscription.objects.update_or_create(
+                user=request.user,
+                endpoint=endpoint,
+                defaults={
+                    'p256dh_key': p256dh,
+                    'auth_key': auth,
+                    'user_agent': request.META.get('HTTP_USER_AGENT', ''),
+                    'is_active': True
+                }
+            )
+            
+            action = 'created' if created else 'updated'
+            logger.info(f"Push subscription {action} for user {request.user.get_full_name()}")
+            
+            return JsonResponse({
+                'success': True,
+                'action': action,
+                'subscription_id': subscription.id
+            })
+            
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+        except Exception as e:
+            logger.error(f"Error creating push subscription: {e}")
+            return JsonResponse({'error': 'Internal server error'}, status=500)
+    
+    @method_decorator(csrf_exempt)
+    def delete(self, request):
+        """Unsubscribe from push notifications."""
+        try:
+            data = json.loads(request.body)
+            endpoint = data.get('endpoint')
+            
+            if not endpoint:
+                # Delete all subscriptions for user
+                deleted_count, _ = PushSubscription.objects.filter(
+                    user=request.user,
+                    is_active=True
+                ).update(is_active=False)
+            else:
+                # Delete specific subscription
+                deleted_count = PushSubscription.objects.filter(
+                    user=request.user,
+                    endpoint=endpoint,
+                    is_active=True
+                ).update(is_active=False)
+            
+            return JsonResponse({
+                'success': True,
+                'unsubscribed_count': deleted_count
+            })
+            
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+        except Exception as e:
+            logger.error(f"Error deleting push subscription: {e}")
+            return JsonResponse({'error': 'Internal server error'}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+@csrf_exempt
+def send_test_notification(request):
+    """
+    Send a test push notification to the user.
+    """
+    try:
+        # Get user's active subscriptions
+        subscriptions = PushSubscription.objects.filter(
+            user=request.user,
+            is_active=True
+        )
+        
+        if not subscriptions.exists():
+            return JsonResponse({'error': 'No active push subscriptions found'}, status=400)
+        
+        # Prepare test notification
+        notification_data = {
+            'title': 'Test Notificatie - SV Rap 8',
+            'body': 'Dit is een test notificatie om te controleren of push notifications werken.',
+            'icon': '/static/media/icons/icon-192x192.png',
+            'badge': '/static/media/icons/icon-96x96.png',
+            'url': '/',
+            'tag': 'test-notification',
+            'actions': [
+                {
+                    'action': 'open',
+                    'title': 'Openen',
+                    'icon': '/static/media/icons/icon-96x96.png'
+                }
+            ],
+            'data': {
+                'url': '/',
+                'test': True
+            }
+        }
+        
+        # Send to all user's subscriptions
+        sent_count = 0
+        for subscription in subscriptions:
+            success = send_push_notification.delay(subscription.id, notification_data)
+            if success:
+                sent_count += 1
+        
+        return JsonResponse({
+            'success': True,
+            'sent_count': sent_count,
+            'total_subscriptions': subscriptions.count()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error sending test notification: {e}")
+        return JsonResponse({'error': 'Failed to send test notification'}, status=500)
+
+
+@login_required
+def get_vapid_public_key(request):
+    """
+    Return the VAPID public key for push subscriptions.
+    """
+    public_key = getattr(settings, 'VAPID_PUBLIC_KEY', None)
+    
+    if not public_key:
+        return JsonResponse({'error': 'VAPID public key not configured'}, status=500)
+    
+    return JsonResponse({'vapid_public_key': public_key})
+
+
+def offline_page(request):
+    """
+    Serve offline page for PWA.
+    """
+    return HttpResponse("""
+    <!DOCTYPE html>
+    <html lang="nl">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Offline - SV Rap 8</title>
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+                margin: 0;
+                background-color: #f8f9fa;
+                color: #343a40;
+                text-align: center;
+                padding: 20px;
+            }
+            .offline-icon {
+                font-size: 4rem;
+                margin-bottom: 1rem;
+                color: #6c757d;
+            }
+            h1 {
+                color: #1e40af;
+                margin-bottom: 0.5rem;
+            }
+            p {
+                color: #6c757d;
+                margin-bottom: 1.5rem;
+                max-width: 400px;
+            }
+            .retry-btn {
+                background-color: #1e40af;
+                color: white;
+                border: none;
+                padding: 0.75rem 1.5rem;
+                border-radius: 0.375rem;
+                cursor: pointer;
+                font-size: 1rem;
+                transition: background-color 0.2s;
+            }
+            .retry-btn:hover {
+                background-color: #1d4ed8;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="offline-icon">📱</div>
+        <h1>Je bent offline</h1>
+        <p>Deze pagina is niet beschikbaar zonder internetverbinding. Controleer je verbinding en probeer opnieuw.</p>
+        <button class="retry-btn" onclick="window.location.reload()">Opnieuw proberen</button>
+    </body>
+    </html>
+    """, content_type='text/html')
