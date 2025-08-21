@@ -54,22 +54,17 @@ class PollOptionForm(forms.ModelForm):
     
     class Meta:
         model = PollOption
-        fields = ['text', 'order']
+        fields = ['text']
         widgets = {
             'text': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Voer optie tekst in...'
-            }),
-            'order': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'min': 0
             }),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['text'].help_text = 'Tekst voor deze poll optie'
-        self.fields['order'].help_text = 'Volgorde (0 = eerst)'
 
 
 # Formset for managing multiple poll options
@@ -81,7 +76,7 @@ PollOptionFormSet = inlineformset_factory(
     min_num=2,  # Require at least 2 options
     validate_min=True,
     can_delete=True,
-    fields=['text', 'order']
+    fields=['text']
 )
 
 

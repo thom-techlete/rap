@@ -94,11 +94,11 @@ class Poll(models.Model):
     def get_results(self):
         """Get poll results with vote counts for each option."""
         results = []
-        total_votes = self.total_votes
+        unique_voters = self.unique_voters
         
         for option in self.options.all():
             vote_count = option.votes.count()
-            percentage = (vote_count / total_votes * 100) if total_votes > 0 else 0
+            percentage = (vote_count / unique_voters * 100) if unique_voters > 0 else 0
             results.append({
                 'option': option,
                 'vote_count': vote_count,

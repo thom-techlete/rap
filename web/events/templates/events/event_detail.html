@@ -84,7 +84,7 @@
                         <!-- Date and Time -->
                         <div class="d-flex align-items-center gap-2 mb-3">
                             <i data-feather="clock" style="width: 1.25rem; height: 1.25rem; color: #6b7280;"></i>
-                            <div>
+                            <div class="flex-grow-1">
                                 <div class="fw-medium" style="color: #374151;">{{ event.date|date:'l j F Y, H:i' }} uur</div>
                                 <div class="small text-muted">
                                     {% if is_upcoming %}
@@ -109,7 +109,7 @@
                         {% endif %}
                         
                         <!-- Type and Status -->
-                        <div class="d-flex align-items-center gap-4 mb-3">
+                        <div class="d-flex align-items-center flex-wrap gap-2 gap-md-4 mb-3">
                             <div class="d-flex align-items-center gap-2">
                                 <i data-feather="tag" style="width: 1.25rem; height: 1.25rem; color: #6b7280;"></i>
                                 <span style="color: #374151;">{{ event.get_event_type_display }}</span>
