@@ -533,6 +533,199 @@ window.makeRequest = makeRequest;
 window.highlightEvent = highlightEvent;
 
 // =======================
+// PUSH NOTIFICATIONS
+// =======================
+
+window.pushNotifications = {
+    // Check if push notifications are supported
+    isSupported: function() {
+        return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+    },
+    
+    // Request notification permission
+    requestPermission: async function() {
+        if (!this.isSupported()) {
+            console.warn('Push notifications not supported');
+            return false;
+        }
+        
+        try {
+            const permission = await Notification.requestPermission();
+            return permission === 'granted';
+        } catch (error) {
+            console.error('Error requesting notification permission:', error);
+            return false;
+        }
+    },
+    
+    // Get VAPID public key from server
+    getVapidKey: async function() {
+        try {
+            const response = await fetch('/notifications/push/vapid-key/');
+            const data = await response.json();
+            return data.vapid_public_key;
+        } catch (error) {
+            console.error('Error getting VAPID key:', error);
+            return null;
+        }
+    },
+    
+    // Subscribe to push notifications
+    subscribe: async function() {
+        if (!this.isSupported()) {
+            showNotification('Push notificaties worden niet ondersteund in deze browser', 'warning');
+            return false;
+        }
+        
+        try {
+            // Request permission first
+            const hasPermission = await this.requestPermission();
+            if (!hasPermission) {
+                showNotification('Notificatie toestemming geweigerd', 'warning');
+                return false;
+            }
+            
+            // Get service worker registration
+            const registration = await navigator.serviceWorker.ready;
+            
+            // Get VAPID public key
+            const vapidKey = await this.getVapidKey();
+            if (!vapidKey) {
+                showNotification('Kon VAPID sleutel niet ophalen', 'error');
+                return false;
+            }
+            
+            // Subscribe to push notifications
+            const subscription = await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: this.urlBase64ToUint8Array(vapidKey)
+            });
+            
+            // Send subscription to server
+            const response = await fetch('/notifications/push/subscribe/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: JSON.stringify({
+                    subscription: subscription.toJSON()
+                })
+            });
+            
+            if (response.ok) {
+                showNotification('Push notificaties ingeschakeld!', 'success');
+                return true;
+            } else {
+                const error = await response.json();
+                showNotification(`Fout bij inschakelen: ${error.error}`, 'error');
+                return false;
+            }
+            
+        } catch (error) {
+            console.error('Error subscribing to push notifications:', error);
+            showNotification('Fout bij inschakelen van notificaties', 'error');
+            return false;
+        }
+    },
+    
+    // Unsubscribe from push notifications
+    unsubscribe: async function() {
+        try {
+            const registration = await navigator.serviceWorker.ready;
+            const subscription = await registration.pushManager.getSubscription();
+            
+            if (subscription) {
+                await subscription.unsubscribe();
+                
+                // Notify server
+                await fetch('/notifications/push/subscribe/', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    body: JSON.stringify({
+                        endpoint: subscription.endpoint
+                    })
+                });
+            }
+            
+            showNotification('Push notificaties uitgeschakeld', 'info');
+            return true;
+            
+        } catch (error) {
+            console.error('Error unsubscribing from push notifications:', error);
+            showNotification('Fout bij uitschakelen van notificaties', 'error');
+            return false;
+        }
+    },
+    
+    // Check current subscription status
+    getSubscriptionStatus: async function() {
+        try {
+            const response = await fetch('/notifications/push/subscribe/');
+            const data = await response.json();
+            return data.subscribed;
+        } catch (error) {
+            console.error('Error checking subscription status:', error);
+            return false;
+        }
+    },
+    
+    // Send test notification
+    sendTest: async function() {
+        try {
+            const response = await fetch('/notifications/push/test/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                }
+            });
+            
+            if (response.ok) {
+                showNotification('Test notificatie verzonden!', 'success');
+            } else {
+                const error = await response.json();
+                showNotification(`Fout: ${error.error}`, 'error');
+            }
+        } catch (error) {
+            console.error('Error sending test notification:', error);
+            showNotification('Fout bij verzenden test notificatie', 'error');
+        }
+    },
+    
+    // Utility function to convert VAPID key
+    urlBase64ToUint8Array: function(base64String) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding)
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+        
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        
+        for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        
+        return outputArray;
+    }
+};
+
+// Initialize push notifications on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Add push notification button to user menu if supported
+    if (window.pushNotifications.isSupported()) {
+        window.pushNotifications.getSubscriptionStatus().then(isSubscribed => {
+            // Could add a notification settings button here
+            console.log('Push notification status:', isSubscribed ? 'subscribed' : 'not subscribed');
+        });
+    }
+});
+
+// =======================
 // Profile Completion Popup
 // =======================
 function initializeProfileCompletionPopup() {

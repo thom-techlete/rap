@@ -108,7 +108,7 @@ notebooks-local/
 .direnv/
 # Django static files
 staticfiles/
-media/
+web/media/
 
 # Development logs
 logs/

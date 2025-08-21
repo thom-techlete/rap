@@ -4,13 +4,17 @@ Celery tasks for automatic notifications.
 
 import logging
 from datetime import timedelta
+import json
+import requests
+from typing import Dict, List, Optional
 
 from celery import shared_task
 from django.db import transaction
 from django.utils import timezone
+from django.conf import settings
 from events.models import Event
 
-from notifications.models import AutomaticReminderLog
+from notifications.models import AutomaticReminderLog, PushSubscription, PushNotificationLog
 from notifications.utils import (
     send_event_reminder_notification,
     send_morning_of_notification,
@@ -296,3 +300,235 @@ def send_event_summary_to_attendees(self, reminder_type: str = "morning_of"):
         raise self.retry(countdown=300)
 
     return result
+
+
+# ==============================================================================
+# PUSH NOTIFICATION TASKS
+# ==============================================================================
+
+@shared_task(bind=True, max_retries=3)
+def send_push_notification(self, subscription_id: int, notification_data: Dict) -> bool:
+    """
+    Send a push notification to a specific subscription.
+    
+    Args:
+        subscription_id: ID of the PushSubscription
+        notification_data: Dict containing title, body, url, icon etc.
+    
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    try:
+        from pywebpush import webpush, WebPushException
+        
+        subscription = PushSubscription.objects.get(id=subscription_id)
+        
+        # Create notification log entry
+        log_entry = PushNotificationLog.objects.create(
+            subscription=subscription,
+            title=notification_data.get('title', 'SV Rap 8'),
+            body=notification_data.get('body', ''),
+            url=notification_data.get('url', ''),
+            icon=notification_data.get('icon', ''),
+        )
+        
+        # Prepare subscription info for pywebpush
+        subscription_info = subscription.get_subscription_info()
+        
+        # VAPID claims
+        vapid_claims = {
+            "sub": f"mailto:{getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@localhost')}"
+        }
+        
+        # Send push notification
+        response = webpush(
+            subscription_info=subscription_info,
+            data=json.dumps(notification_data),
+            vapid_private_key=getattr(settings, 'VAPID_PRIVATE_KEY', None),
+            vapid_claims=vapid_claims
+        )
+        
+        # Update log with success
+        log_entry.success = True
+        log_entry.response_code = response.status_code if hasattr(response, 'status_code') else 200
+        log_entry.save()
+        
+        logger.info(f"Push notification sent successfully to {subscription.user.get_full_name()}")
+        return True
+        
+    except PushSubscription.DoesNotExist:
+        logger.error(f"Push subscription {subscription_id} not found")
+        return False
+        
+    except Exception as e:
+        # Update log with error
+        if 'log_entry' in locals():
+            log_entry.error_message = str(e)
+            log_entry.response_code = getattr(e, 'response', {}).get('status_code', 0)
+            log_entry.save()
+        
+        logger.error(f"Failed to send push notification: {e}")
+        
+        # Retry logic
+        if self.request.retries < self.max_retries:
+            raise self.retry(countdown=60 * (self.request.retries + 1))
+        
+        return False
+
+
+@shared_task
+def send_push_to_users(user_ids: List[int], notification_data: Dict) -> Dict:
+    """
+    Send push notifications to multiple users.
+    
+    Args:
+        user_ids: List of user IDs to send notifications to
+        notification_data: Dict containing notification content
+    
+    Returns:
+        Dict with success/failure counts
+    """
+    results = {'sent': 0, 'failed': 0, 'no_subscription': 0}
+    
+    # Get active subscriptions for the users
+    subscriptions = PushSubscription.objects.filter(
+        user_id__in=user_ids,
+        is_active=True
+    ).select_related('user')
+    
+    for subscription in subscriptions:
+        # Send notification asynchronously
+        success = send_push_notification.delay(subscription.id, notification_data)
+        if success:
+            results['sent'] += 1
+        else:
+            results['failed'] += 1
+    
+    # Track users without subscriptions
+    users_with_subs = set(sub.user_id for sub in subscriptions)
+    users_without_subs = set(user_ids) - users_with_subs
+    results['no_subscription'] = len(users_without_subs)
+    
+    logger.info(f"Push notification batch: {results}")
+    return results
+
+
+@shared_task
+def send_event_push_notification(event_id: int, message_type: str = 'reminder') -> Dict:
+    """
+    Send push notifications for event-related updates.
+    
+    Args:
+        event_id: ID of the event
+        message_type: Type of message ('reminder', 'new_event', 'update', 'cancelled')
+    
+    Returns:
+        Dict with sending results
+    """
+    try:
+        event = Event.objects.get(id=event_id)
+        
+        # Get all active users who should receive notifications
+        from users.models import Player
+        users = Player.objects.filter(is_active=True, email_verified=True)
+        user_ids = list(users.values_list('id', flat=True))
+        
+        # Prepare notification content based on message type
+        if message_type == 'reminder':
+            title = f'Herinnering: {event.name}'
+            body = f'Evenement op {event.date.strftime("%d/%m/%Y om %H:%M")}'
+            icon = '/static/media/icons/icon-192x192.png'
+            
+        elif message_type == 'new_event':
+            title = 'Nieuw evenement aangemaakt'
+            body = f'{event.name} op {event.date.strftime("%d/%m/%Y om %H:%M")}'
+            icon = '/static/media/icons/icon-192x192.png'
+            
+        elif message_type == 'update':
+            title = f'Evenement bijgewerkt: {event.name}'
+            body = f'Wijzigingen voor evenement op {event.date.strftime("%d/%m/%Y")}'
+            icon = '/static/media/icons/icon-192x192.png'
+            
+        elif message_type == 'cancelled':
+            title = f'Evenement geannuleerd: {event.name}'
+            body = f'Het evenement van {event.date.strftime("%d/%m/%Y")} is geannuleerd'
+            icon = '/static/media/icons/icon-192x192.png'
+            
+        else:
+            title = f'SV Rap 8: {event.name}'
+            body = f'Update voor evenement op {event.date.strftime("%d/%m/%Y")}'
+            icon = '/static/media/icons/icon-192x192.png'
+        
+        notification_data = {
+            'title': title,
+            'body': body,
+            'icon': icon,
+            'badge': '/static/media/icons/icon-96x96.png',
+            'url': f'/events/{event.id}/',
+            'tag': f'event-{event.id}-{message_type}',
+            'requireInteraction': message_type in ['new_event', 'cancelled'],
+            'actions': [
+                {
+                    'action': 'open',
+                    'title': 'Bekijk evenement',
+                    'icon': '/static/media/icons/icon-96x96.png'
+                },
+                {
+                    'action': 'close',
+                    'title': 'Sluiten'
+                }
+            ],
+            'data': {
+                'url': f'/events/{event.id}/',
+                'event_id': event.id,
+                'message_type': message_type
+            }
+        }
+        
+        # Send to all users
+        results = send_push_to_users.delay(user_ids, notification_data)
+        
+        logger.info(f"Event push notification sent for {event.name}: {results}")
+        return results
+        
+    except Event.DoesNotExist:
+        logger.error(f"Event {event_id} not found for push notification")
+        return {'error': 'Event not found'}
+    
+    except Exception as e:
+        logger.error(f"Failed to send event push notification: {e}")
+        return {'error': str(e)}
+
+
+@shared_task
+def cleanup_invalid_push_subscriptions():
+    """
+    Clean up push subscriptions that are no longer valid.
+    This task should be run periodically to remove expired or invalid subscriptions.
+    """
+    deleted_count = 0
+    
+    # Find subscriptions that haven't been used in 30 days
+    cutoff_date = timezone.now() - timedelta(days=30)
+    old_subscriptions = PushSubscription.objects.filter(
+        last_used__lt=cutoff_date,
+        is_active=True
+    )
+    
+    for subscription in old_subscriptions:
+        # Try to send a test notification to check if subscription is still valid
+        test_data = {
+            'title': 'Test',
+            'body': 'Testing subscription validity',
+            'tag': 'test-subscription'
+        }
+        
+        # If sending fails, mark as inactive
+        success = send_push_notification.delay(subscription.id, test_data)
+        if not success:
+            subscription.is_active = False
+            subscription.save()
+            deleted_count += 1
+    
+    logger.info(f"Cleaned up {deleted_count} invalid push subscriptions")
+    return deleted_count

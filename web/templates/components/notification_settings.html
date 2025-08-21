@@ -1,0 +1,229 @@
+<!-- Push Notification Settings Component -->
+<div class="modal fade" id="notificationSettingsModal" tabindex="-1" aria-labelledby="notificationSettingsLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="notificationSettingsLabel">
+          <i data-feather="bell" class="me-2"></i>
+          Notificatie Instellingen
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sluiten"></button>
+      </div>
+      <div class="modal-body">
+        <!-- PWA Installation Status -->
+        <div class="mb-4">
+          <h6><i data-feather="smartphone" class="me-2"></i>App Installatie</h6>
+          <p class="text-muted small">Installeer SV Rap 8 als app op je telefoon voor een betere ervaring.</p>
+          <div id="pwa-install-section">
+            <div id="pwa-not-installed" style="display: none;">
+              <div class="alert alert-info d-flex align-items-center">
+                <i data-feather="download" class="me-2"></i>
+                <div>
+                  <strong>App kan geïnstalleerd worden!</strong><br>
+                  <small>Gebruik de browser menu om deze app toe te voegen aan je home screen.</small>
+                </div>
+              </div>
+            </div>
+            <div id="pwa-installed" style="display: none;">
+              <div class="alert alert-success d-flex align-items-center">
+                <i data-feather="check-circle" class="me-2"></i>
+                <div>
+                  <strong>App is geïnstalleerd!</strong><br>
+                  <small>Je gebruikt SV Rap 8 als geïnstalleerde app.</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Push Notifications -->
+        <div class="mb-4">
+          <h6><i data-feather="bell" class="me-2"></i>Push Notificaties</h6>
+          <p class="text-muted small">Ontvang meldingen over nieuwe evenementen en updates, zelfs wanneer de app gesloten is.</p>
+          
+          <div id="push-notification-section">
+            <!-- Not Supported -->
+            <div id="push-not-supported" style="display: none;">
+              <div class="alert alert-warning d-flex align-items-center">
+                <i data-feather="alert-triangle" class="me-2"></i>
+                <div>
+                  <strong>Niet ondersteund</strong><br>
+                  <small>Push notificaties worden niet ondersteund in deze browser.</small>
+                </div>
+              </div>
+            </div>
+
+            <!-- Supported but not enabled -->
+            <div id="push-not-enabled" style="display: none;">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <strong>Push Notificaties</strong><br>
+                  <small class="text-muted">Ontvang meldingen over gebeurtenissen</small>
+                </div>
+                <button id="enable-push-btn" class="btn btn-primary btn-sm">
+                  <i data-feather="bell" class="me-1"></i>
+                  Inschakelen
+                </button>
+              </div>
+            </div>
+
+            <!-- Enabled -->
+            <div id="push-enabled" style="display: none;">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                  <strong>Push Notificaties</strong> <span class="badge bg-success">Actief</span><br>
+                  <small class="text-muted">Je ontvangt notificaties over evenementen</small>
+                </div>
+                <button id="disable-push-btn" class="btn btn-outline-danger btn-sm">
+                  <i data-feather="bell-off" class="me-1"></i>
+                  Uitschakelen
+                </button>
+              </div>
+              <button id="test-push-btn" class="btn btn-outline-primary btn-sm">
+                <i data-feather="send" class="me-1"></i>
+                Test Notificatie Verzenden
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Email Notifications -->
+        <div class="mb-3">
+          <h6><i data-feather="mail" class="me-2"></i>Email Notificaties</h6>
+          <p class="text-muted small">Je ontvangt ook emails voor belangrijke updates.</p>
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <strong>Email Meldingen</strong> <span class="badge bg-success">Actief</span><br>
+              <small class="text-muted">Naar: {{ user.email|default:"Geen email adres" }}</small>
+            </div>
+            <i data-feather="check-circle" class="text-success"></i>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Sluiten</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize notification settings modal
+  initializeNotificationSettings();
+});
+
+function initializeNotificationSettings() {
+  // Check PWA installation status
+  checkPWAInstallStatus();
+  
+  // Check push notification status
+  checkPushNotificationStatus();
+  
+  // Setup event listeners
+  setupNotificationEventListeners();
+}
+
+function checkPWAInstallStatus() {
+  // Check if app is running in standalone mode (installed)
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  
+  if (isStandalone) {
+    document.getElementById('pwa-installed').style.display = 'block';
+    document.getElementById('pwa-not-installed').style.display = 'none';
+  } else {
+    // Check if app can be installed
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      document.getElementById('pwa-not-installed').style.display = 'block';
+      document.getElementById('pwa-installed').style.display = 'none';
+    });
+  }
+}
+
+async function checkPushNotificationStatus() {
+  if (!window.pushNotifications.isSupported()) {
+    document.getElementById('push-not-supported').style.display = 'block';
+    return;
+  }
+  
+  try {
+    const isSubscribed = await window.pushNotifications.getSubscriptionStatus();
+    
+    if (isSubscribed) {
+      document.getElementById('push-enabled').style.display = 'block';
+    } else {
+      document.getElementById('push-not-enabled').style.display = 'block';
+    }
+  } catch (error) {
+    console.error('Error checking push status:', error);
+    document.getElementById('push-not-enabled').style.display = 'block';
+  }
+}
+
+function setupNotificationEventListeners() {
+  // Enable push notifications
+  const enableBtn = document.getElementById('enable-push-btn');
+  if (enableBtn) {
+    enableBtn.addEventListener('click', async function() {
+      this.disabled = true;
+      this.innerHTML = '<i data-feather="loader" class="me-1"></i> Bezig...';
+      
+      const success = await window.pushNotifications.subscribe();
+      if (success) {
+        // Refresh the status
+        checkPushNotificationStatus();
+      }
+      
+      this.disabled = false;
+      this.innerHTML = '<i data-feather="bell" class="me-1"></i> Inschakelen';
+      feather.replace();
+    });
+  }
+  
+  // Disable push notifications
+  const disableBtn = document.getElementById('disable-push-btn');
+  if (disableBtn) {
+    disableBtn.addEventListener('click', async function() {
+      this.disabled = true;
+      this.innerHTML = '<i data-feather="loader" class="me-1"></i> Bezig...';
+      
+      const success = await window.pushNotifications.unsubscribe();
+      if (success) {
+        // Refresh the status
+        checkPushNotificationStatus();
+      }
+      
+      this.disabled = false;
+      this.innerHTML = '<i data-feather="bell-off" class="me-1"></i> Uitschakelen';
+      feather.replace();
+    });
+  }
+  
+  // Test push notification
+  const testBtn = document.getElementById('test-push-btn');
+  if (testBtn) {
+    testBtn.addEventListener('click', async function() {
+      this.disabled = true;
+      this.innerHTML = '<i data-feather="loader" class="me-1"></i> Verzenden...';
+      
+      await window.pushNotifications.sendTest();
+      
+      this.disabled = false;
+      this.innerHTML = '<i data-feather="send" class="me-1"></i> Test Notificatie Verzenden';
+      feather.replace();
+    });
+  }
+}
+
+// Function to open the notification settings modal
+function openNotificationSettings() {
+  const modal = new bootstrap.Modal(document.getElementById('notificationSettingsModal'));
+  modal.show();
+}
+
+// Make function globally available
+window.openNotificationSettings = openNotificationSettings;
+</script>

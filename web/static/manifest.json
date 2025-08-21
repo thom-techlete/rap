@@ -1,0 +1,88 @@
+{
+  "name": "SV Rap 8 - Aanwezigheid",
+  "short_name": "SV Rap 8",
+  "description": "Voetbalvereniging aanwezigheid beheer systeem voor SV Rap 8",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#1e40af",
+  "background_color": "#ffffff",
+  "scope": "/",
+  "lang": "nl",
+  "dir": "ltr",
+  "categories": ["sports", "productivity"],
+  "icons": [
+    {
+      "src": "media/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "media/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "media/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "media/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "media/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "media/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "media/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "media/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Ga naar het hoofddashboard",
+      "url": "/",
+      "icons": [{"src": "media/icons/icon-96x96.png", "sizes": "96x96"}]
+    },
+    {
+      "name": "Evenementen",
+      "short_name": "Events",
+      "description": "Bekijk komende evenementen",
+      "url": "/events/",
+      "icons": [{"src": "media/icons/icon-96x96.png", "sizes": "96x96"}]
+    },
+    {
+      "name": "Aanwezigheid",
+      "short_name": "Aanwezigheid",
+      "description": "Markeer je aanwezigheid",
+      "url": "/attendance/",
+      "icons": [{"src": "media/icons/icon-96x96.png", "sizes": "96x96"}]
+    }
+  ],
+  "prefer_related_applications": false
+}

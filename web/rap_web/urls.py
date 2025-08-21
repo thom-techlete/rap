@@ -37,3 +37,18 @@ urlpatterns: list[URLPattern | URLResolver] = [
 # Serve media files in development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# Serve static files during testing
+import sys
+if 'test' in sys.argv or 'pytest' in sys.modules:
+    from django.contrib.staticfiles.views import serve
+    from django.views.static import serve as static_serve
+    from django.urls import re_path
+    import os
+    
+    # Serve static files during testing
+    urlpatterns += [
+        re_path(r'^static/(?P<path>.*)$', static_serve, {
+            'document_root': settings.STATICFILES_DIRS[0] if settings.STATICFILES_DIRS else settings.STATIC_ROOT
+        }),
+    ]
