@@ -126,60 +126,62 @@
         <div class="card-body">
           {% if upcoming_events %}
             {% for event in upcoming_events %}
-              <div class="d-flex align-items-center border-bottom pb-3 mb-3">
-                <div class="flex-shrink-0 me-3">
-                  <div class="rounded-circle d-flex align-items-center justify-content-center"
-                    style="width: 2.5rem; height: 2.5rem; background: {% if event.event_type == 'training' %} #dbeafe{% elif event.event_type == 'wedstrijd' %} #fee2e2{% else %} #f3f4f6{% endif %};">
-                    <i data-feather="{% if event.event_type == 'training' %}zap{% elif event.event_type == 'wedstrijd' %}target{% else %}calendar{% endif %}"
-                        style="width: 1rem; height: 1rem; color: {% if event.event_type == 'training' %} #3b82f6{% elif event.event_type == 'wedstrijd' %} #ef4444{% else %} #6b7280{% endif %};">
-                    </i>
+              <a href="{% url 'events:detail' event.id %}" class="text-decoration-none">
+                <div class="d-flex align-items-center border-bottom pb-3 mb-3 hover-bg-light" style="border-radius: 0.5rem; transition: background-color 0.2s;">
+                  <div class="flex-shrink-0 me-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center"
+                      style="width: 2.5rem; height: 2.5rem; background: {% if event.event_type == 'training' %} #dbeafe{% elif event.event_type == 'wedstrijd' %} #fee2e2{% else %} #f3f4f6{% endif %};">
+                      <i data-feather="{% if event.event_type == 'training' %}zap{% elif event.event_type == 'wedstrijd' %}target{% else %}calendar{% endif %}"
+                          style="width: 1rem; height: 1rem; color: {% if event.event_type == 'training' %} #3b82f6{% elif event.event_type == 'wedstrijd' %} #ef4444{% else %} #6b7280{% endif %};">
+                      </i>
+                    </div>
                   </div>
-                </div>
-                <div class="flex-grow-1">
-                  <h6 class="mb-1" style="color: #1e293b;">{{ event.name }}</h6>
-                  <div class="d-flex flex-column align-items-start flex-sm-row align-items-sm-center text-muted small">
-                    <span class="me-3">
-                      <i data-feather="calendar" style="width: 0.875rem; height: 0.875rem;"></i>
-                      {{ event.date|date:'d M' }}
-                    </span>
-                    <span class="me-3">
-                      <i data-feather="clock" style="width: 0.875rem; height: 0.875rem;"></i>
-                      {{ event.date|time:'H:i' }}
-                    </span>
-                    {% if event.location %}
-                      <span>
-                        <i data-feather="map-pin" style="width: 0.875rem; height: 0.875rem;"></i>
-                        {{ event.location }}
+                  <div class="flex-grow-1">
+                    <h6 class="mb-1" style="color: #1e293b;">{{ event.name }}</h6>
+                    <div class="d-flex flex-column align-items-start flex-sm-row align-items-sm-center text-muted small">
+                      <span class="me-3">
+                        <i data-feather="calendar" style="width: 0.875rem; height: 0.875rem;"></i>
+                        {{ event.date|date:'d M' }}
                       </span>
+                      <span class="me-3">
+                        <i data-feather="clock" style="width: 0.875rem; height: 0.875rem;"></i>
+                        {{ event.date|time:'H:i' }}
+                      </span>
+                      {% if event.location %}
+                        <span>
+                          <i data-feather="map-pin" style="width: 0.875rem; height: 0.875rem;"></i>
+                          {{ event.location }}
+                        </span>
+                      {% endif %}
+                    </div>
+                  </div>
+                  <div class="flex-shrink-0 d-flex flex-column align-items-end gap-2">
+                    <span class="badge bg-light text-dark">{{ event.get_event_type_display }}</span>
+                    {% if user.is_authenticated %}
+                      {% if event.user_attendance %}
+                        {% with attendance=event.user_attendance.0 %}
+                          {% if attendance.present %}
+                            <span class="badge bg-success-subtle text-success small">
+                              <i data-feather="check" style="width: 0.75rem; height: 0.75rem;"></i>
+                              Aanwezig
+                            </span>
+                          {% else %}
+                            <span class="badge bg-danger-subtle text-error small">
+                              <i data-feather="x" style="width: 0.75rem; height: 0.75rem;"></i>
+                              Afwezig
+                            </span>
+                          {% endif %}
+                        {% endwith %}
+                      {% else %}
+                        <span class="btn btn-sm btn-outline-warning" onclick="event.preventDefault(); window.location.href='{% url 'events:list' %}#event-{{ event.id }}';">
+                          <i data-feather="clock" style="width: 0.875rem; height: 0.875rem;"></i>
+                          Reageer
+                        </span>
+                      {% endif %}
                     {% endif %}
                   </div>
                 </div>
-                <div class="flex-shrink-0 d-flex flex-column align-items-end gap-2">
-                  <span class="badge bg-light text-dark">{{ event.get_event_type_display }}</span>
-                  {% if user.is_authenticated %}
-                    {% if event.user_attendance %}
-                      {% with attendance=event.user_attendance.0 %}
-                        {% if attendance.present %}
-                          <span class="badge bg-success-subtle text-success small">
-                            <i data-feather="check" style="width: 0.75rem; height: 0.75rem;"></i>
-                            Aanwezig
-                          </span>
-                        {% else %}
-                          <span class="badge bg-danger-subtle text-error small">
-                            <i data-feather="x" style="width: 0.75rem; height: 0.75rem;"></i>
-                            Afwezig
-                          </span>
-                        {% endif %}
-                      {% endwith %}
-                    {% else %}
-                      <a href="{% url 'events:list' %}#event-{{ event.id }}" class="btn btn-sm btn-outline-warning">
-                        <i data-feather="clock" style="width: 0.875rem; height: 0.875rem;"></i>
-                        Reageer
-                      </a>
-                    {% endif %}
-                  {% endif %}
-                </div>
-              </div>
+              </a>
             {% endfor %}
           {% else %}
             <div class="text-center py-4">
@@ -562,7 +564,11 @@
 
 {% block extra_css %}
   <style>
-
+    .hover-bg-light:hover {
+      background-color: #f8fafc !important;
+      padding: 0.75rem;
+      margin: -0.75rem;
+    }
     
     .bg-success-subtle {
       background-color: #dcfce7 !important;

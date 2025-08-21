@@ -50,6 +50,10 @@ def calculate_event_analytics():
         .order_by("-count")
     )
     
+    # Training and match counts
+    training_count = Event.objects.filter(event_type="training").count()
+    match_count = Event.objects.filter(event_type="wedstrijd").count()
+    
     # Events over time (monthly)
     events_by_month = (
         Event.objects
@@ -86,11 +90,19 @@ def calculate_event_analytics():
     events_by_weekday = []
     weekdays = ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Zondag"]
     for i in range(7):
-        count = Event.objects.filter(date__week_day=i+1).count()
+        # Django week_day: 1=Sunday, 2=Monday, ..., 7=Saturday
+        # We want: 0=Monday, 1=Tuesday, ..., 6=Sunday
+        # So we map: Monday(i=0) -> week_day=2, Tuesday(i=1) -> week_day=3, ..., Sunday(i=6) -> week_day=1
+        week_day = (i + 2) % 7
+        if week_day == 0:
+            week_day = 7
+        count = Event.objects.filter(date__week_day=week_day).count()
         events_by_weekday.append({"day": weekdays[i], "count": count})
     
     return {
         "event_types": list(event_types),
+        "training_count": training_count,
+        "match_count": match_count,
         "events_by_month": list(events_by_month),
         "events_by_location": list(events_by_location),
         "mandatory_stats": mandatory_stats,

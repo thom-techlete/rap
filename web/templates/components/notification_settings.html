@@ -171,15 +171,24 @@ function setupNotificationEventListeners() {
       this.disabled = true;
       this.innerHTML = '<i data-feather="loader" class="me-1"></i> Bezig...';
       
-      const success = await window.pushNotifications.subscribe();
-      if (success) {
-        // Refresh the status
-        checkPushNotificationStatus();
+      try {
+        const success = await window.pushNotifications.subscribe();
+        if (success) {
+          // Refresh the status
+          checkPushNotificationStatus();
+        } else {
+          // Reset button on failure
+          this.disabled = false;
+          this.innerHTML = '<i data-feather="bell" class="me-1"></i> Inschakelen';
+          feather.replace();
+        }
+      } catch (error) {
+        console.error('Error enabling push notifications:', error);
+        // Reset button on error
+        this.disabled = false;
+        this.innerHTML = '<i data-feather="bell" class="me-1"></i> Inschakelen';
+        feather.replace();
       }
-      
-      this.disabled = false;
-      this.innerHTML = '<i data-feather="bell" class="me-1"></i> Inschakelen';
-      feather.replace();
     });
   }
   
@@ -190,15 +199,24 @@ function setupNotificationEventListeners() {
       this.disabled = true;
       this.innerHTML = '<i data-feather="loader" class="me-1"></i> Bezig...';
       
-      const success = await window.pushNotifications.unsubscribe();
-      if (success) {
-        // Refresh the status
-        checkPushNotificationStatus();
+      try {
+        const success = await window.pushNotifications.unsubscribe();
+        if (success) {
+          // Refresh the status
+          checkPushNotificationStatus();
+        } else {
+          // Reset button on failure
+          this.disabled = false;
+          this.innerHTML = '<i data-feather="bell-off" class="me-1"></i> Uitschakelen';
+          feather.replace();
+        }
+      } catch (error) {
+        console.error('Error disabling push notifications:', error);
+        // Reset button on error
+        this.disabled = false;
+        this.innerHTML = '<i data-feather="bell-off" class="me-1"></i> Uitschakelen';
+        feather.replace();
       }
-      
-      this.disabled = false;
-      this.innerHTML = '<i data-feather="bell-off" class="me-1"></i> Uitschakelen';
-      feather.replace();
     });
   }
   

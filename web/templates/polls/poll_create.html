@@ -69,23 +69,13 @@
               <div id="poll-options">
                 {% for option_form in formset %}
                   <div class="poll-option row g-3 mb-3 align-items-end">
-                    <div class="col-md-8">
+                    <div class="col-md-11">
                       <label for="{{ option_form.text.id_for_label }}" class="form-label">
                         Optie {{ forloop.counter }} <span class="text-danger">*</span>
                       </label>
                       {{ option_form.text }}
                       {% if option_form.text.errors %}
                         <div class="text-danger small mt-1">{{ option_form.text.errors.0 }}</div>
-                      {% endif %}
-                    </div>
-                    
-                    <div class="col-md-3">
-                      <label for="{{ option_form.order.id_for_label }}" class="form-label">
-                        Volgorde
-                      </label>
-                      {{ option_form.order }}
-                      {% if option_form.order.errors %}
-                        <div class="text-danger small mt-1">{{ option_form.order.errors.0 }}</div>
                       {% endif %}
                     </div>
                     
@@ -209,18 +199,11 @@
         
         const newOptionHtml = `
           <div class="poll-option row g-3 mb-3 align-items-end">
-            <div class="col-md-8">
+            <div class="col-md-11">
               <label for="id_form-${formIndex}-text" class="form-label">
                 Optie ${formIndex + 1} <span class="text-danger">*</span>
               </label>
               <input type="text" name="form-${formIndex}-text" class="form-control" id="id_form-${formIndex}-text" placeholder="Voer optie tekst in...">
-            </div>
-            
-            <div class="col-md-3">
-              <label for="id_form-${formIndex}-order" class="form-label">
-                Volgorde
-              </label>
-              <input type="number" name="form-${formIndex}-order" class="form-control" id="id_form-${formIndex}-order" value="${formIndex}" min="0">
             </div>
             
             <div class="col-md-1">
