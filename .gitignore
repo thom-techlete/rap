@@ -112,3 +112,6 @@ web/media/
 
 # Development logs
 logs/
+
+vapid_private_key
+vapid_public_key
