@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import logging
 import os
 from pathlib import Path
 from typing import Any
@@ -27,6 +28,25 @@ def list_config(key, default="", separator=","):
     if isinstance(value, str):
         return [s.strip() for s in value.split(separator) if s.strip()]
     return []
+
+
+logger = logging.getLogger(__name__)
+
+
+def load_file_secret(file_path: str | None) -> str | None:
+    if not file_path:
+        return None
+    p = Path(file_path)
+    try:
+        if p.exists() and p.is_file():
+            data = p.read_text()
+            # basic sanity check
+            return data.strip() if data else None
+        logger.warning("Secret file %s not found", file_path)
+        return None
+    except Exception as exc:
+        logger.error("Failed reading secret file %s: %s", file_path, exc)
+        return None
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -420,9 +440,13 @@ CELERY_BEAT_SCHEDULE = {}
 # =============================================================================
 
 # VAPID keys for web push notifications
-# Generate these with: python -c "from pywebpush import generate_vapid_keys; print(generate_vapid_keys())"
-VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY")
-VAPID_PUBLIC_KEY = os.getenv("VAPID_PUBLIC_KEY")
+# Generate these with: python manage.py generate_vapid_keys
+VAPID_PRIVATE_KEY = load_file_secret(
+    os.getenv("VAPID_PRIVATE_KEY_FILE", "/run/secrets/vapid_private_key")
+)
+VAPID_PUBLIC_KEY = load_file_secret(
+    os.getenv("VAPID_PUBLIC_KEY_PEM_FILE", "/run/secrets/vapid_public_key")
+)
 VAPID_CLAIMS = {
-    "sub": f"mailto:{os.getenv('DEFAULT_FROM_EMAIL', 'noreply@localhost')}"
+    "sub": f"mailto:{os.getenv('VAPID_CONTACT_EMAIL', 'noreply@localhost')}"
 }

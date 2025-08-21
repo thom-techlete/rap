@@ -42,6 +42,12 @@ services:
     restart: always
     env_file:
       - .env.prod
+    secrets:
+      - vapid_private_key
+      - vapid_public_key
+    environment:
+      VAPID_PRIVATE_KEY_FILE: /run/secrets/vapid_private_key
+      VAPID_PUBLIC_KEY_PEM_FILE: /run/secrets/vapid_public_key
     volumes:
       - static_volume:/app/staticfiles
       - media_volume:/app/media
@@ -76,6 +82,12 @@ services:
     restart: always
     env_file:
       - .env.prod
+    secrets:
+      - vapid_private_key
+      - vapid_public_key
+    environment:
+      VAPID_PRIVATE_KEY_FILE: /run/secrets/vapid_private_key
+      VAPID_PUBLIC_KEY_PEM_FILE: /run/secrets/vapid_public_key
     networks:
       - rap_network
     depends_on:
@@ -96,6 +108,12 @@ services:
     restart: always
     env_file:
       - .env.prod
+    secrets:
+      - vapid_private_key
+      - vapid_public_key
+    environment:
+      VAPID_PRIVATE_KEY_FILE: /run/secrets/vapid_private_key
+      VAPID_PUBLIC_KEY_PEM_FILE: /run/secrets/vapid_public_key
     networks:
       - rap_network
     depends_on:
@@ -140,6 +158,12 @@ volumes:
   postgres_data:
   static_volume:
   media_volume:
+
+secrets:
+  vapid_private_key:
+    file: ./vapid_private_key
+  vapid_public_key:
+    file: ./vapid_public_key
 
 networks:
   rap_network:
