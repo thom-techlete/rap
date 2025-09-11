@@ -114,6 +114,7 @@ INSTALLED_APPS = [
     "attendance",
     "notifications",
     "polls",
+    "help",
 ]
 
 MIDDLEWARE = [

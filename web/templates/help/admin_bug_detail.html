@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Bug Rapport #{{ bug_report.id }} - Beheer - SV Rap 8
+{% endblock %}
+
+{% block content %}
+  <div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'help:index' %}">Hulp</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'help:admin_bug_list' %}">Bug Rapporten Beheer</a></li>
+            <li class="breadcrumb-item active">Bug #{{ bug_report.id }}</li>
+          </ol>
+        </nav>
+        
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <h1 class="h2 mb-2">{{ bug_report.title }}</h1>
+            <p class="text-muted mb-0">Bug Rapport #{{ bug_report.id }} - Beheer</p>
+          </div>
+          <div class="d-flex gap-2">
+            <span class="{{ bug_report.status_css_class }}">{{ bug_report.status_display }}</span>
+            <span class="{{ bug_report.priority_css_class }}">{{ bug_report.priority_display }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- Main Content -->
+      <div class="col-lg-8">
+        <!-- Bug Details -->
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i data-feather="info" class="me-2"></i>Bug Details
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row mb-3">
+              <div class="col-sm-3"><strong>Beschrijving:</strong></div>
+              <div class="col-sm-9">{{ bug_report.description|linebreaks }}</div>
+            </div>
+            
+            {% if bug_report.steps_to_reproduce %}
+            <div class="row mb-3">
+              <div class="col-sm-3"><strong>Stappen om te reproduceren:</strong></div>
+              <div class="col-sm-9">{{ bug_report.steps_to_reproduce|linebreaks }}</div>
+            </div>
+            {% endif %}
+            
+            {% if bug_report.expected_behavior %}
+            <div class="row mb-3">
+              <div class="col-sm-3"><strong>Verwacht gedrag:</strong></div>
+              <div class="col-sm-9">{{ bug_report.expected_behavior|linebreaks }}</div>
+            </div>
+            {% endif %}
+            
+            {% if bug_report.actual_behavior %}
+            <div class="row mb-3">
+              <div class="col-sm-3"><strong>Werkelijk gedrag:</strong></div>
+              <div class="col-sm-9">{{ bug_report.actual_behavior|linebreaks }}</div>
+            </div>
+            {% endif %}
+            
+            {% if bug_report.browser_info %}
+            <div class="row mb-3">
+              <div class="col-sm-3"><strong>Browser informatie:</strong></div>
+              <div class="col-sm-9">{{ bug_report.browser_info }}</div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Admin Management -->
+        <div class="card border-0 shadow-sm mb-4 border-primary">
+          <div class="card-header bg-primary bg-opacity-10">
+            <h5 class="mb-0">
+              <i data-feather="settings" class="me-2"></i>Beheer Instellingen
+            </h5>
+          </div>
+          <div class="card-body">
+            <form method="post">
+              {% csrf_token %}
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="{{ form.status.id_for_label }}" class="form-label">{{ form.status.label }}</label>
+                  {{ form.status }}
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                  <label for="{{ form.priority.id_for_label }}" class="form-label">{{ form.priority.label }}</label>
+                  {{ form.priority }}
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                  <label for="{{ form.assigned_to.id_for_label }}" class="form-label">{{ form.assigned_to.label }}</label>
+                  {{ form.assigned_to }}
+                </div>
+                
+                <div class="col-12 mb-3">
+                  <label for="{{ form.admin_notes.id_for_label }}" class="form-label">{{ form.admin_notes.label }}</label>
+                  {{ form.admin_notes }}
+                  {% if form.admin_notes.help_text %}
+                    <div class="form-text">{{ form.admin_notes.help_text }}</div>
+                  {% endif %}
+                </div>
+              </div>
+              
+              <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                  <i data-feather="save" class="me-2"></i>Wijzigingen Opslaan
+                </button>
+                <a href="{% url 'help:admin_bug_list' %}" class="btn btn-outline-secondary">
+                  <i data-feather="arrow-left" class="me-2"></i>Terug naar Lijst
+                </a>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i data-feather="zap" class="me-2"></i>Snelle Acties
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="d-flex gap-2">
+              {% if bug_report.status == 'open' or bug_report.status == 'in_progress' %}
+                <form method="post" action="{% url 'help:admin_bug_mark_resolved' bug_report.pk %}" class="d-inline">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-success btn-sm"
+                          onclick="return confirm('Weet je zeker dat je dit bug rapport als opgelost wilt markeren?')">
+                    <i data-feather="check" class="me-2"></i>Markeren als Opgelost
+                  </button>
+                </form>
+              {% endif %}
+              
+              {% if bug_report.status != 'closed' %}
+                <form method="post" action="{% url 'help:admin_bug_mark_closed' bug_report.pk %}" class="d-inline">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-secondary btn-sm"
+                          onclick="return confirm('Weet je zeker dat je dit bug rapport wilt sluiten?')">
+                    <i data-feather="x" class="me-2"></i>Sluiten
+                  </button>
+                </form>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="col-lg-4">
+        <!-- Status Information -->
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i data-feather="activity" class="me-2"></i>Status Informatie
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-6">
+                <div class="text-center">
+                  <span class="{{ bug_report.status_css_class }}">{{ bug_report.status_display }}</span>
+                  <div class="small text-muted">Status</div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="text-center">
+                  <span class="{{ bug_report.priority_css_class }}">{{ bug_report.priority_display }}</span>
+                  <div class="small text-muted">Prioriteit</div>
+                </div>
+              </div>
+              <div class="col-12">
+                <hr class="my-2">
+                <div class="small">
+                  <div class="d-flex justify-content-between">
+                    <span>Gerapporteerd:</span>
+                    <span>{{ bug_report.reported_at|date:"j M Y H:i" }}</span>
+                  </div>
+                  {% if bug_report.resolved_at %}
+                  <div class="d-flex justify-content-between">
+                    <span>Opgelost:</span>
+                    <span>{{ bug_report.resolved_at|date:"j M Y H:i" }}</span>
+                  </div>
+                  {% endif %}
+                  {% if bug_report.assigned_to %}
+                  <div class="d-flex justify-content-between">
+                    <span>Toegewezen aan:</span>
+                    <span>{{ bug_report.assigned_to.get_full_name|default:bug_report.assigned_to.username }}</span>
+                  </div>
+                  {% endif %}
+                  {% if bug_report.resolved_by %}
+                  <div class="d-flex justify-content-between">
+                    <span>Opgelost door:</span>
+                    <span>{{ bug_report.resolved_by.get_full_name|default:bug_report.resolved_by.username }}</span>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reporter Information -->
+        <div class="card border-0 shadow-sm">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i data-feather="user" class="me-2"></i>Rapporteur
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="user-avatar default me-3">
+                {% if bug_report.reported_by.foto %}
+                  <img src="{{ bug_report.reported_by.foto.url }}" alt="{{ bug_report.reported_by.get_full_name }}" />
+                {% else %}
+                  <div class="avatar-fallback">
+                    {% if bug_report.reported_by.first_name %}
+                      {{ bug_report.reported_by.first_name|first|upper }}{{ bug_report.reported_by.last_name|first|upper }}
+                    {% else %}
+                      {{ bug_report.reported_by.username|first|upper }}
+                    {% endif %}
+                  </div>
+                {% endif %}
+              </div>
+              <div>
+                <div class="fw-medium">{{ bug_report.reported_by.get_full_name|default:bug_report.reported_by.username }}</div>
+                <small class="text-muted">{{ bug_report.reported_by.positie|default:"Speler" }}</small>
+                {% if bug_report.reported_by.email %}
+                  <div class="small text-muted">{{ bug_report.reported_by.email }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

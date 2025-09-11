@@ -117,6 +117,10 @@
                   <i data-feather="bell"></i>
                   <span>Notificaties</span>
                 </a>
+                <a href="{% url 'help:index' %}" class="dropdown-item">
+                  <i data-feather="help-circle"></i>
+                  <span>Hulp</span>
+                </a>
                 {% if user.is_staff %}
                   <a href="{% url 'users:admin_dashboard' %}" class="dropdown-item">
                     <i data-feather="settings"></i>
@@ -192,6 +196,10 @@
           <a href="#" onclick="openNotificationSettings(); return false;" class="mobile-nav-link">
             <i data-feather="bell"></i>
             <span>Notificaties</span>
+          </a>
+          <a href="{% url 'help:index' %}" class="mobile-nav-link">
+            <i data-feather="help-circle"></i>
+            <span>Hulp</span>
           </a>
           <form method="post" action="{% url 'users:logout' %}">
             {% csrf_token %}
