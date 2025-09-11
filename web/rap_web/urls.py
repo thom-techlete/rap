@@ -32,6 +32,7 @@ urlpatterns: list[URLPattern | URLResolver] = [
     path("attendance/", include("attendance.urls")),
     path("notifications/", include("notifications.urls")),
     path("polls/", include("polls.urls")),
+    path("help/", include("help.urls")),
 ]
 
 # Serve media files in development

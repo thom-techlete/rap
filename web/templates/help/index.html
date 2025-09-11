@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Hulp & Ondersteuning - SV Rap 8
+{% endblock %}
+
+{% block content %}
+  <div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <h1 class="h2 mb-2">Hulp & Ondersteuning</h1>
+        <p class="text-muted mb-0">Krijg hulp en rapporteer problemen met de applicatie.</p>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- Bug Reporting -->
+      <div class="col-lg-6 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i data-feather="alert-circle" class="me-2 text-warning"></i>
+              Bug Rapporteren
+            </h5>
+          </div>
+          <div class="card-body">
+            <p class="card-text">
+              Heb je een probleem gevonden in de applicatie? Laat het ons weten zodat we het kunnen oplossen.
+            </p>
+            <div class="d-grid gap-2">
+              <a href="{% url 'help:bug_report' %}" class="btn btn-warning">
+                <i data-feather="bug" class="me-2"></i>
+                Nieuw Bug Rapport
+              </a>
+              <a href="{% url 'help:my_bug_reports' %}" class="btn btn-outline-secondary">
+                <i data-feather="list" class="me-2"></i>
+                Mijn Bug Rapporten
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Help -->
+      <div class="col-lg-6 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i data-feather="help-circle" class="me-2 text-primary"></i>
+              Veelgestelde Vragen
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="accordion" id="helpAccordion">
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false">
+                    Hoe meld ik mijn aanwezigheid?
+                  </button>
+                </h2>
+                <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                  <div class="accordion-body">
+                    Ga naar de Evenementen pagina, zoek het evenement waarvoor je je aanwezigheid wilt melden, en klik op de "Aanwezigheid" knop.
+                  </div>
+                </div>
+              </div>
+              
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false">
+                    Kan ik mijn aanwezigheid later nog wijzigen?
+                  </button>
+                </h2>
+                <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                  <div class="accordion-body">
+                    Ja, je kunt je aanwezigheid wijzigen tot het evenement begint. Ga naar het evenement en klik opnieuw op de aanwezigheidsknop.
+                  </div>
+                </div>
+              </div>
+              
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false">
+                    Hoe kan ik mijn profiel bijwerken?
+                  </button>
+                </h2>
+                <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                  <div class="accordion-body">
+                    Klik op je naam rechtsboven en selecteer "Profiel". Daar kun je je persoonlijke gegevens, foto en positie bijwerken.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if user.is_staff %}
+    <!-- Admin Section -->
+    <div class="row">
+      <div class="col-12 mb-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i data-feather="shield" class="me-2 text-success"></i>
+              Beheerder Functies
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <h6>Bug Beheer</h6>
+                <p class="text-muted small">Bekijk en beheer alle ingediende bug rapporten.</p>
+                <a href="{% url 'help:admin_bug_list' %}" class="btn btn-success btn-sm">
+                  <i data-feather="settings" class="me-2"></i>
+                  Bug Rapporten Beheren
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+{% endblock %}
