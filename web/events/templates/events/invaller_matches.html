@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load static_versioning %}
+
+{% block title %}Wedstrijden - SV Rap 8{% endblock %}
+
+{% block content %}
+
+{% csrf_token %}
+<div class="text-center mb-5">
+    <h1 class="display-5 fw-bold" style="color: #475569;">
+        <i data-feather="trophy" style="width: 2.5rem; height: 2.5rem; margin-right: 1rem; color: #64748b;"></i>
+        Wedstrijden
+    </h1>
+    <p class="lead" style="color: #6b7280;">
+        Als invaller kun je hier je beschikbaarheid voor wedstrijden aangeven
+    </p>
+</div>
+
+<!-- Info for Invallers -->
+<div class="mb-4">
+    <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="d-flex align-items-center">
+                        <div>
+                            <h5 class="mb-1" style="color: #fff;">Invaller Informatie</h5>
+                            <small style="color: #fff;">Je kunt alleen wedstrijden bekijken en je beschikbaarheid aangeven</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 text-md-end mt-2 mt-md-0">
+                    <a href="{% url 'users:profile' %}" class="btn" style="color: #f59e0b; background: white; border: none; padding: 0.5rem 1.5rem; border-radius: 0.5rem; font-weight: 500; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);">
+                        <i data-feather="user"></i>
+                        <span class="d-none d-sm-inline">Mijn Profiel</span>
+                        <span class="d-sm-none">Profiel</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter and Search Section -->
+<div class="mb-4">
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <form method="GET" id="filter-form">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent">
+                                <i data-feather="search"></i>
+                            </span>
+                            <input type="text" 
+                                   class="form-control border-start-0" 
+                                   name="search" 
+                                   value="{{ search_query }}" 
+                                   placeholder="Zoek wedstrijden..."
+                                   style="box-shadow: none;">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <select name="location" class="form-select" style="box-shadow: none;">
+                            <option value="">Alle locaties</option>
+                            {% for location in unique_locations %}
+                                <option value="{{ location }}" {% if location_filter == location %}selected{% endif %}>
+                                    {{ location }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i data-feather="filter"></i>
+                            Filter
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Upcoming Matches -->
+<div class="mb-5">
+    <div class="d-flex align-items-center mb-3">
+        <h3 style="color: #374151; margin: 0;">
+            <i data-feather="calendar-plus" style="width: 1.5rem; height: 1.5rem; margin-right: 0.5rem; color: #10b981;"></i>
+            Aankomende Wedstrijden
+        </h3>
+        <span class="badge bg-primary ms-2">{{ upcoming_events|length }}</span>
+    </div>
+    
+    {% if upcoming_events %}
+        <div class="row">
+            {% for event in upcoming_events %}
+                {% include 'events/event_card.html' with is_invaller=True %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-5">
+                <div style="color: #9ca3af; font-size: 3rem; margin-bottom: 1rem;">
+                    <i data-feather="calendar-x"></i>
+                </div>
+                <h4 style="color: #6b7280;">Geen aankomende wedstrijden</h4>
+                <p style="color: #9ca3af;">Er zijn momenteel geen wedstrijden gepland.</p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Past Matches -->
+<div class="mb-5">
+    <div class="d-flex align-items-center mb-3">
+        <h3 style="color: #374151; margin: 0;">
+            <i data-feather="clock" style="width: 1.5rem; height: 1.5rem; margin-right: 0.5rem; color: #6b7280;"></i>
+            Afgelopen Wedstrijden
+        </h3>
+        <span class="badge bg-secondary ms-2">{{ past_events|length }}</span>
+    </div>
+    
+    {% if past_events %}
+        <div class="row">
+            {% for event in past_events %}
+                {% include 'events/event_card.html' with is_invaller=True %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-4">
+                <div style="color: #9ca3af; font-size: 2rem; margin-bottom: 1rem;">
+                    <i data-feather="archive"></i>
+                </div>
+                <h5 style="color: #6b7280;">Geen afgelopen wedstrijden</h5>
+                <p style="color: #9ca3af;">Er zijn nog geen afgelopen wedstrijden.</p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        transition: all 0.2s ease-in-out;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12) !important;
+    }
+    
+    .input-group-text {
+        border-right: none;
+    }
+    
+    .form-control.border-start-0 {
+        border-left: none;
+    }
+    
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.35em 0.65em;
+    }
+
+    .btn {
+        transition: all 0.2s ease-in-out;
+    }
+    
+    .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit filter form when selection changes
+    const filterSelects = document.querySelectorAll('#filter-form select');
+    filterSelects.forEach(select => {
+        select.addEventListener('change', function() {
+            document.getElementById('filter-form').submit();
+        });
+    });
+    
+    // Initialize Feather icons
+    if (typeof feather !== 'undefined') {
+        feather.replace();
+    }
+});
+</script>
+{% endblock %}

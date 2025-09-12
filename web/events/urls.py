@@ -7,6 +7,7 @@ app_name = "events"
 
 urlpatterns = [
     path("", views.event_list, name="list"),
+    path("invallers/", views.invaller_matches, name="invaller_matches"),
     path("<int:pk>/", views.event_detail, name="detail"),
     path("nieuw/", views.event_create, name="create"),
     path("<int:pk>/bewerken/", views.event_edit, name="edit"),
