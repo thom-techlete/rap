@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Invaller Dashboard - SV Rap 8
+{% endblock %}
+
+{% block content %}
+  {% csrf_token %}
+
+  <!-- Welcome Section for Invaller -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+        <div class="card-body text-white p-4">
+          <div class="row align-items-center">
+            <div class="col-md-8">
+              <h1 class="h2 mb-2">Welkom invaller, {{ user.first_name|default:user.username }}! ⚽</h1>
+              <p class="mb-0 opacity-90" style="color: #fff;">Hier kun je je beschikbaarheid voor wedstrijden aangeven en je profiel beheren.</p>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+              <a href="{% url 'events:invaller_matches' %}" class="btn" style="color: #f59e0b; background: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 500; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+                <i data-feather="trophy" style="width: 1.25rem; height: 1.25rem; margin-right: 0.5rem;"></i>
+                Bekijk Wedstrijden
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics Cards for Invaller -->
+  <div class="row g-4 mb-5">
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center">
+          <div class="d-flex align-items-center justify-content-center mb-3">
+            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 3rem; height: 3rem; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+              <i data-feather="trophy" class="text-white" style="width: 1.5rem; height: 1.5rem;"></i>
+            </div>
+          </div>
+          <h3 class="h4 mb-1" style="color: #1e293b;">{{ stats.total_matches_available }}</h3>
+          <p class="text-muted mb-0 small">Totaal wedstrijden</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center">
+          <div class="d-flex align-items-center justify-content-center mb-3">
+            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 3rem; height: 3rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+              <i data-feather="check-circle" class="text-white" style="width: 1.5rem; height: 1.5rem;"></i>
+            </div>
+          </div>
+          <h3 class="h4 mb-1" style="color: #1e293b;">{{ stats.matches_attended }}</h3>
+          <p class="text-muted mb-0 small">Bijgewoond</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center">
+          <div class="d-flex align-items-center justify-content-center mb-3">
+            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 3rem; height: 3rem; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+              <i data-feather="clock" class="text-white" style="width: 1.5rem; height: 1.5rem;"></i>
+            </div>
+          </div>
+          <h3 class="h4 mb-1" style="color: #1e293b;">{{ stats.upcoming_matches_count }}</h3>
+          <p class="text-muted mb-0 small">Komende wedstrijden</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center">
+          <div class="d-flex align-items-center justify-content-center mb-3">
+            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 3rem; height: 3rem; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">
+              <i data-feather="percent" class="text-white" style="width: 1.5rem; height: 1.5rem;"></i>
+            </div>
+          </div>
+          <h3 class="h4 mb-1" style="color: #1e293b;">{{ stats.availability_rate }}%</h3>
+          <p class="text-muted mb-0 small">Beschikbaarheid</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upcoming Matches -->
+  <div class="row g-4 mb-5">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+          <h4 class="mb-0" style="color: #1e293b;">
+            <i data-feather="calendar-plus" style="width: 1.25rem; height: 1.25rem; margin-right: 0.5rem; color: #10b981;"></i>
+            Komende Wedstrijden
+          </h4>
+          <a href="{% url 'events:invaller_matches' %}" class="btn btn-sm btn-outline-primary">Bekijk Alle</a>
+        </div>
+        <div class="card-body">
+          {% if upcoming_matches %}
+            <div class="list-group list-group-flush">
+              {% for match in upcoming_matches %}
+                <div class="list-group-item border-0 px-0 py-3">
+                  <div class="row align-items-center">
+                    <div class="col-md-8">
+                      <h6 class="mb-1 fw-semibold">{{ match.name }}</h6>
+                      <p class="mb-1 text-muted small">
+                        <i data-feather="calendar" style="width: 1rem; height: 1rem;"></i>
+                        {{ match.date|date:"l j F Y" }} om {{ match.date|date:"H:i" }}
+                      </p>
+                      {% if match.location %}
+                        <p class="mb-0 text-muted small">
+                          <i data-feather="map-pin" style="width: 1rem; height: 1rem;"></i>
+                          {{ match.location }}
+                        </p>
+                      {% endif %}
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                      {% if match.user_attendance %}
+                        {% with attendance=match.user_attendance.0 %}
+                          {% if attendance.present %}
+                            <span class="badge bg-success">Beschikbaar</span>
+                          {% else %}
+                            <span class="badge bg-danger">Niet beschikbaar</span>
+                          {% endif %}
+                        {% endwith %}
+                      {% else %}
+                        <a href="{% url 'events:detail' match.pk %}" class="btn btn-sm btn-outline-warning">
+                          Reageren
+                        </a>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-center py-4">
+              <div style="color: #9ca3af; font-size: 2rem; margin-bottom: 1rem;">
+                <i data-feather="calendar-x"></i>
+              </div>
+              <h5 style="color: #6b7280;">Geen komende wedstrijden</h5>
+              <p style="color: #9ca3af;">Er zijn momenteel geen wedstrijden gepland.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Invaller Info Panel -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent">
+          <h5 class="mb-0" style="color: #1e293b;">
+            <i data-feather="info" style="width: 1.25rem; height: 1.25rem; margin-right: 0.5rem; color: #f59e0b;"></i>
+            Invaller Informatie
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-warning border-0" style="background: #fef3c7; color: #92400e;">
+            <h6 class="alert-heading">Als invaller kun je:</h6>
+            <ul class="mb-0 small">
+              <li>Wedstrijden bekijken en je beschikbaarheid aangeven</li>
+              <li>Je profiel beheren</li>
+              <li>Contact opnemen met de teamleiding</li>
+            </ul>
+          </div>
+          
+          <div class="d-grid gap-2">
+            <a href="{% url 'users:profile' %}" class="btn btn-outline-primary">
+              <i data-feather="user"></i>
+              Mijn Profiel
+            </a>
+            <a href="{% url 'help:index' %}" class="btn btn-outline-secondary">
+              <i data-feather="help-circle"></i>
+              Help & Contact
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Match Activity -->
+      {% if past_matches %}
+        <div class="card border-0 shadow-sm mt-4">
+          <div class="card-header bg-transparent">
+            <h6 class="mb-0" style="color: #1e293b;">
+              <i data-feather="clock" style="width: 1rem; height: 1rem; margin-right: 0.5rem; color: #6b7280;"></i>
+              Recente Wedstrijden
+            </h6>
+          </div>
+          <div class="card-body">
+            <div class="list-group list-group-flush">
+              {% for match in past_matches %}
+                <div class="list-group-item border-0 px-0 py-2">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      <h6 class="mb-0 small">{{ match.name }}</h6>
+                      <small class="text-muted">{{ match.date|date:"j M Y" }}</small>
+                    </div>
+                    {% with attendance=match.attendance_set.all|first %}
+                      {% if attendance and attendance.present %}
+                        <span class="badge bg-success">✓</span>
+                      {% elif attendance %}
+                        <span class="badge bg-danger">✗</span>
+                      {% else %}
+                        <span class="badge bg-secondary">-</span>
+                      {% endif %}
+                    {% endwith %}
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .card {
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12) !important;
+  }
+  
+  .list-group-item {
+    transition: background-color 0.2s ease-in-out;
+  }
+  
+  .list-group-item:hover {
+    background-color: #f8fafc;
+  }
+  
+  .badge {
+    font-size: 0.75rem;
+  }
+  
+  .btn {
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Feather icons
+    if (typeof feather !== 'undefined') {
+        feather.replace();
+    }
+});
+</script>
+{% endblock %}

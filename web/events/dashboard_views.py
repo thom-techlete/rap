@@ -19,6 +19,10 @@ def dashboard(request: HttpRequest):
     """Main dashboard view showing overview of everything"""
     now = timezone.now()
 
+    # Check if user is invaller and redirect to their specific dashboard
+    if hasattr(request.user, 'is_invaller') and request.user.is_invaller:
+        return invaller_dashboard(request)
+
     # Date ranges for statistics
     week_ago = now - timedelta(days=7)
     month_ago = now - timedelta(days=30)
@@ -272,3 +276,69 @@ def calculate_match_statistics():
         "most_carded": most_carded,
         "recent_statistics": recent_statistics,
     }
+
+
+@login_required
+def invaller_dashboard(request: HttpRequest):
+    """Dashboard view specifically for invaller users"""
+    now = timezone.now()
+
+    # Only show matches for invallers
+    upcoming_matches = Event.objects.filter(
+        date__gt=now, 
+        event_type='wedstrijd'
+    ).order_by('date')[:5]
+    
+    past_matches = Event.objects.filter(
+        date__lt=now, 
+        event_type='wedstrijd'
+    ).order_by('-date')[:3]
+
+    # Get user's match attendance
+    user_attendances = Attendance.objects.filter(
+        user=request.user,
+        event__event_type='wedstrijd'
+    ).select_related('event')
+
+    # Add attendance information to upcoming matches
+    from django.db.models import Prefetch
+    user_attendance_prefetch = Prefetch(
+        "attendance_set",
+        queryset=Attendance.objects.filter(user=request.user),
+        to_attr="user_attendance",
+    )
+    upcoming_matches = upcoming_matches.prefetch_related(user_attendance_prefetch)
+
+    # Calculate invaller statistics
+    total_matches_available = Event.objects.filter(
+        event_type='wedstrijd'
+    ).count()
+    
+    # Count matches user attended
+    matches_attended = user_attendances.filter(present=True).count()
+    
+    # Calculate availability rate
+    matches_responded = user_attendances.count()
+    if matches_responded > 0:
+        availability_rate = round((matches_attended / matches_responded) * 100, 1)
+    else:
+        availability_rate = 0
+
+    stats = {
+        'total_matches_available': total_matches_available,
+        'matches_attended': matches_attended,
+        'matches_responded': matches_responded,
+        'availability_rate': availability_rate,
+        'upcoming_matches_count': upcoming_matches.count(),
+    }
+
+    context = {
+        'stats': stats,
+        'upcoming_matches': upcoming_matches,
+        'past_matches': past_matches,
+        'user_attendances': user_attendances,
+        'now': now,
+        'is_invaller': True,
+    }
+
+    return render(request, "dashboard/invaller.html", context)
