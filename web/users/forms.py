@@ -313,10 +313,12 @@ class InvitationCodeRegistrationForm(UserCreationForm):
         user.is_active = False  # Require admin activation
 
         if commit:
-            user.save()
-            # Mark invitation code as used
+            # Get invitation code to set user_type
             invitation_code = self.cleaned_data["invitation_code"]
             invitation = InvitationCode.objects.get(code=invitation_code)
+            user.user_type = invitation.user_type  # Set user type based on invitation
+            user.save()
+            # Mark invitation code as used
             invitation.use_code()
 
         return user

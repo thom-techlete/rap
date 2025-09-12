@@ -37,6 +37,13 @@
                        placeholder="Bijv. Nieuwe spelers 2025">
             </div>
             <div class="col-md-2">
+                <label for="user_type" class="form-label">Gebruikerstype</label>
+                <select id="user_type" name="user_type" class="form-input">
+                    <option value="player">Speler</option>
+                    <option value="invaller">Invaller</option>
+                </select>
+            </div>
+            <div class="col-md-2">
                 <label for="max_uses" class="form-label">Max Gebruik</label>
                 <input type="number" id="max_uses" name="max_uses" class="form-input" 
                        placeholder="Onbeperkt" min="1">
@@ -45,7 +52,7 @@
                 <label for="expires_at" class="form-label">Verloopt op</label>
                 <input type="date" id="expires_at" name="expires_at" class="form-input">
             </div>
-            <div class="col-md-2 d-flex align-items-end">
+            <div class="col-md-1 d-flex align-items-end">
                 <button type="submit" class="btn btn-primary">
                     <i data-feather="plus"></i>
                     Aanmaken
@@ -67,6 +74,7 @@
                     <thead>
                         <tr>
                             <th>Code</th>
+                            <th>Type</th>
                             <th>Beschrijving</th>
                             <th class="hide-mobile">Aangemaakt</th>
                             <th class="hide-mobile">Gebruikt</th>
@@ -81,6 +89,11 @@
                         <tr>
                             <td>
                                 <code class="bg-secondary p-1 rounded">{{ invitation.code }}</code>
+                            </td>
+                            <td>
+                                <span class="badge {% if invitation.user_type == 'invaller' %}badge-warning{% else %}badge-primary{% endif %}">
+                                    {{ invitation.get_user_type_display }}
+                                </span>
                             </td>
                             <td>{{ invitation.description|default:"Geen beschrijving" }}</td>
                             <td class="hide-mobile">

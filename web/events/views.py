@@ -18,8 +18,17 @@ from .models import Event, MatchStatistic
 User = get_user_model()
 
 
+def is_invaller(user):
+    """Check if user is an invaller (substitute)"""
+    return hasattr(user, 'is_invaller') and user.is_invaller
+
+
 @login_required
 def event_list(request: HttpRequest):
+    # If user is an invaller, redirect to invaller-specific view
+    if hasattr(request.user, 'is_invaller') and request.user.is_invaller:
+        return redirect('events:invaller_matches')
+    
     now = timezone.now()
 
     # Get filter parameters
@@ -98,9 +107,83 @@ def event_list(request: HttpRequest):
 
 
 @login_required
+def invaller_matches(request: HttpRequest):
+    """Show only matches for invaller users"""
+    # Check if user is an invaller
+    if not (hasattr(request.user, 'is_invaller') and request.user.is_invaller):
+        messages.error(request, "Je hebt geen toegang tot deze pagina.")
+        return redirect('events:list')
+    
+    now = timezone.now()
+
+    # Get filter parameters
+    search_query = request.GET.get("search", "").strip()
+    location_filter = request.GET.get("location", "")
+
+    # Base querysets - only matches (wedstrijd events)
+    upcoming_events = Event.objects.filter(date__gt=now, event_type='wedstrijd')
+    past_events = Event.objects.filter(date__lte=now, event_type='wedstrijd')
+
+    # Apply search filter
+    if search_query:
+        from django.db.models import Q
+
+        search_filter = (
+            Q(name__icontains=search_query)
+            | Q(description__icontains=search_query)
+            | Q(location__icontains=search_query)
+        )
+        upcoming_events = upcoming_events.filter(search_filter)
+        past_events = past_events.filter(search_filter)
+
+    # Apply location filter
+    if location_filter:
+        upcoming_events = upcoming_events.filter(location__icontains=location_filter)
+        past_events = past_events.filter(location__icontains=location_filter)
+
+    # Order the results
+    upcoming_events = upcoming_events.order_by("date")
+    past_events = past_events.order_by("-date")
+
+    # Prefetch user's attendance for each event
+    user_attendance_prefetch = Prefetch(
+        "attendance_set",
+        queryset=Attendance.objects.filter(user=request.user),
+        to_attr="user_attendance",
+    )
+    upcoming_events = upcoming_events.prefetch_related(user_attendance_prefetch)
+    past_events = past_events.prefetch_related(user_attendance_prefetch)
+
+    # Get unique locations for filter dropdown (only from matches)
+    unique_locations = (
+        Event.objects.filter(event_type='wedstrijd')
+        .exclude(location__exact="")
+        .values_list("location", flat=True)
+        .distinct()
+        .order_by("location")
+    )
+
+    context = {
+        "upcoming_events": upcoming_events,
+        "past_events": past_events,
+        "search_query": search_query,
+        "location_filter": location_filter,
+        "unique_locations": unique_locations,
+        "is_invaller": True,  # Flag for template
+    }
+
+    return render(request, "events/invaller_matches.html", context)
+
+
+@login_required
 def event_detail(request: HttpRequest, pk: int):
     """Show detailed view of a specific event"""
     event = get_object_or_404(Event, pk=pk)
+    
+    # Check if invaller is trying to access non-match event
+    if hasattr(request.user, 'is_invaller') and request.user.is_invaller and event.event_type != 'wedstrijd':
+        messages.error(request, "Als invaller kun je alleen wedstrijden bekijken.")
+        return redirect('events:invaller_matches')
 
     # Get all active players for attendance table
     players = User.objects.filter(is_active=True).order_by("last_name", "first_name")

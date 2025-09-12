@@ -324,11 +324,13 @@ def admin_invitations(request: HttpRequest):
     if request.method == "POST":
         # Create new invitation code
         description = request.POST.get("description", "")
+        user_type = request.POST.get("user_type", "player")  # Get user_type from form
         max_uses = request.POST.get("max_uses")
         expires_at = request.POST.get("expires_at")
 
         invitation = InvitationCode.objects.create(
             description=description,
+            user_type=user_type,  # Set user_type
             created_by=request.user,
             max_uses=int(max_uses) if max_uses else None,
             expires_at=(
@@ -338,8 +340,9 @@ def admin_invitations(request: HttpRequest):
             ),
         )
 
+        user_type_display = "invaller" if user_type == "invaller" else "speler"
         messages.success(
-            request, f'Uitnodigingscode "{invitation.code}" is aangemaakt.'
+            request, f'Uitnodigingscode "{invitation.code}" voor {user_type_display} is aangemaakt.'
         )
         return redirect("users:admin_invitations")
 
