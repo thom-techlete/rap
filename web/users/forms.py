@@ -178,42 +178,37 @@ class CustomAuthenticationForm(AuthenticationForm):
         password = self.cleaned_data.get("password")
 
         if username is not None and password:
-            # Check if user exists
-            try:
-                user = Player.objects.get(username=username)
-                # Check if password is correct
-                if user.check_password(password):
-                    # Password is correct, but check if account is active
+            # Use standard Django authentication (which includes axes backend)
+            self.user_cache = authenticate(
+                self.request, username=username, password=password
+            )
+            
+            if self.user_cache is None:
+                # Authentication failed - could be wrong credentials or inactive account
+                try:
+                    user = Player.objects.get(username=username)
                     if not user.is_active:
                         raise ValidationError(
                             "Je account is nog niet geactiveerd door een beheerder. "
                             "Neem contact op met een teamlid of wacht tot je account wordt geactiveerd.",
                             code="inactive",
                         )
-                    # If we get here, account is active, proceed with normal authentication
-                    self.user_cache = authenticate(
-                        self.request, username=username, password=password
-                    )
-                    if self.user_cache is None:
-                        raise ValidationError(
-                            self.error_messages["invalid_login"],
-                            code="invalid_login",
-                            params={"username": self.username_field.verbose_name},
-                        )
-                else:
-                    # Password is incorrect
-                    raise ValidationError(
-                        self.error_messages["invalid_login"],
-                        code="invalid_login",
-                        params={"username": self.username_field.verbose_name},
-                    )
-            except Player.DoesNotExist:
-                # User doesn't exist
+                except Player.DoesNotExist:
+                    pass
+                
+                # For wrong password or non-existent user, show generic error
                 raise ValidationError(
                     self.error_messages["invalid_login"],
                     code="invalid_login",
                     params={"username": self.username_field.verbose_name},
-                ) from None
+                )
+            elif not self.user_cache.is_active:
+                # Explicitly check is_active (redundant but explicit)
+                raise ValidationError(
+                    "Je account is nog niet geactiveerd door een beheerder. "
+                    "Neem contact op met een teamlid of wacht tot je account wordt geactiveerd.",
+                    code="inactive",
+                )
 
         return self.cleaned_data
 

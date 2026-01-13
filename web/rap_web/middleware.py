@@ -34,7 +34,17 @@ class LoginRequiredMiddleware(MiddlewareMixin):
     }
 
     # Path prefixes that should be publicly accessible
-    EXEMPT_PATH_PREFIXES: tuple[str, ...] = (settings.STATIC_URL,)
+    EXEMPT_PATH_PREFIXES: tuple[str, ...] = ()  # Will be set in __init__
+    
+    # Path prefixes that are accessed via Django admin (starts with admin URL)
+    # These will be checked separately to handle the admin site specially
+    ADMIN_PATH_PREFIXES: tuple[str, ...] = ("/admin",)
+    
+    def __init__(self, get_response):
+        super().__init__(get_response)
+        self.get_response = get_response
+        # Set EXEMPT_PATH_PREFIXES dynamically to include STATIC_URL
+        self.EXEMPT_PATH_PREFIXES = (settings.STATIC_URL,)
 
     def process_view(
         self,
@@ -52,6 +62,13 @@ class LoginRequiredMiddleware(MiddlewareMixin):
         if any(
             path.startswith(prefix) for prefix in self.EXEMPT_PATH_PREFIXES if prefix
         ):
+            return None
+        
+        # Allow admin path (unauthenticated users will be redirected by Django admin)
+        if any(
+            path.startswith(prefix) for prefix in self.ADMIN_PATH_PREFIXES if prefix
+        ):
+            # Let Django's admin handle the authentication redirect
             return None
 
         # Resolve the URL name and namespace if possible
