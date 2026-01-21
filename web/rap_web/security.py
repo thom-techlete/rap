@@ -101,10 +101,14 @@ AXES_ENABLED = True
 AXES_FAILURE_LIMIT = 5  # Lock after 5 failed attempts
 AXES_COOLOFF_TIME = 1  # 1 hour lockout
 AXES_RESET_ON_SUCCESS = True
-AXES_LOCK_OUT_BY_USER_OR_IP = True
+# In production with load balancer, lock by username only (not IP)
+# because all requests appear to come from the same IP (load balancer)
+AXES_LOCK_OUT_BY_USER_OR_IP = False
 AXES_ENABLE_ADMIN = False  # Don't lock out admin
 AXES_ONLY_USER_FAILURES = True
 AXES_HANDLER = "axes.handlers.database.AxesDatabaseHandler"
+# Use X-Forwarded-For header for IP detection when behind proxy
+AXES_PROXY_COUNT = 1
 
 # Session security
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
