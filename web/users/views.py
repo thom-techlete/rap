@@ -50,7 +50,7 @@ def register(request: HttpRequest):
     return render(request, "users/register.html", {"form": form})
 
 
-@ratelimit(key="ip", rate="10/m", method="POST", block=True)
+@ratelimit(key="post:username", rate="6/m", method="POST", block=True)
 @require_http_methods(["GET", "POST"])
 @csrf_protect
 @never_cache
