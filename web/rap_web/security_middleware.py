@@ -110,6 +110,8 @@ class SecurityLoggingMiddleware(MiddlewareMixin):
 class BasicRateLimitMiddleware(MiddlewareMixin):
     """
     Basic rate limiting middleware as fallback when django-ratelimit is not available.
+    Rate limits login attempts per username to avoid locking out all users behind
+    the same proxy/load balancer when using IP-based rate limiting.
     """
 
     def process_request(self, request):
@@ -119,26 +121,45 @@ class BasicRateLimitMiddleware(MiddlewareMixin):
         ):
             return None
 
-        client_ip = self.get_client_ip(request)
-
-        # Rate limit login attempts
+        # Rate limit login attempts by username (not IP, to avoid proxy issues)
         if request.path == "/users/login/" and request.method == "POST":
-            cache_key = f"login_attempts_{client_ip}"
-            attempts = cache.get(cache_key, 0)
+            failure_limit = getattr(settings, "AXES_FAILURE_LIMIT", 5)
+            username = request.POST.get("username", "").strip().lower()
+            if username:
+                cache_key = f"login_attempts_user_{username}"
+                attempts = cache.get(cache_key, 0)
 
-            if attempts >= 5:  # Max 5 attempts per 5 minutes
-                logger.warning(
-                    f"Rate limit exceeded for login attempts from IP {client_ip}"
-                )
-                return HttpResponse(
-                    "Te veel inlogpogingen. Probeer het over 5 minuten opnieuw.",
-                    status=429,
-                )
+                if attempts >= failure_limit:
+                    logger.warning(
+                        f"Rate limit exceeded for login attempts for username '{username}'"
+                    )
+                    return HttpResponse(
+                        "Te veel inlogpogingen. Probeer het over 5 minuten opnieuw.",
+                        status=429,
+                    )
 
-            cache.set(cache_key, attempts + 1, 300)  # 5 minutes
+                cache.set(cache_key, attempts + 1, 300)  # 5 minutes
+            else:
+                # No username provided — fall back to IP-based limiting to block
+                # empty-username probes from the same source.
+                client_ip = self.get_client_ip(request)
+                cache_key = f"login_attempts_nouser_{client_ip}"
+                attempts = cache.get(cache_key, 0)
 
-        # Rate limit registration attempts
+                if attempts >= failure_limit:
+                    logger.warning(
+                        f"Rate limit exceeded for username-less login attempts from IP {client_ip}"
+                    )
+                    return HttpResponse(
+                        "Te veel inlogpogingen. Probeer het over 5 minuten opnieuw.",
+                        status=429,
+                    )
+
+                cache.set(cache_key, attempts + 1, 300)  # 5 minutes
+
+        # Rate limit registration attempts by IP (registration has no username yet)
         if request.path == "/users/register/" and request.method == "POST":
+            client_ip = self.get_client_ip(request)
             cache_key = f"register_attempts_{client_ip}"
             attempts = cache.get(cache_key, 0)
 

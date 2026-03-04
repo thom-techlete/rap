@@ -121,6 +121,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # Static files security
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "axes.middleware.AxesMiddleware",  # Account lockout (must be after SessionMiddleware)
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",  # Must be before custom middleware that uses request.user
@@ -133,8 +134,6 @@ MIDDLEWARE = [
     "rap_web.middleware.LoginRequiredMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # Will be enabled when packages are installed:
-    "axes.middleware.AxesMiddleware",  # Account lockout
     "corsheaders.middleware.CorsMiddleware",  # CORS
     "csp.middleware.CSPMiddleware",  # Content Security Policy
 ]
@@ -404,6 +403,19 @@ AUTHENTICATION_BACKENDS = [
     "axes.backends.AxesStandaloneBackend",  # AxesStandaloneBackend should be first
     "django.contrib.auth.backends.ModelBackend",  # Default Django backend
 ]
+
+# =============================================================================
+# ACCOUNT LOCKOUT CONFIGURATION (django-axes)
+# =============================================================================
+# Lock accounts by username only — NOT by IP address.
+# Locking by IP causes all users behind the same proxy/load balancer to be
+# locked out simultaneously when any one user exceeds the failure limit.
+AXES_ENABLED = True
+AXES_LOCKOUT_PARAMETERS = ["username"]  # Username-only lockout (not IP-based)
+AXES_FAILURE_LIMIT = 5  # Lock after 5 failed attempts
+AXES_COOLOFF_TIME = 1  # Lockout duration in hours
+AXES_RESET_ON_SUCCESS = True  # Clear failed attempts on successful login
+AXES_HANDLER = "axes.handlers.database.AxesDatabaseHandler"
 
 # =============================================================================
 # CELERY CONFIGURATION

@@ -1,4 +1,4 @@
-from django.test import TestCase, Client
+from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -304,3 +304,104 @@ class InvallerTestCase(TestCase):
         # Should be redirected when trying to access invaller matches
         response = self.client.get(reverse('events:invaller_matches'))
         self.assertEqual(response.status_code, 302)  # Redirect
+
+
+# Settings overrides to enable django-axes for lockout tests
+_AXES_TEST_MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'axes.middleware.AxesMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+_AXES_TEST_AUTH_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+
+@override_settings(
+    MIDDLEWARE=_AXES_TEST_MIDDLEWARE,
+    AUTHENTICATION_BACKENDS=_AXES_TEST_AUTH_BACKENDS,
+    AXES_ENABLED=True,
+    AXES_LOCKOUT_PARAMETERS=["username"],
+    AXES_FAILURE_LIMIT=3,
+    AXES_COOLOFF_TIME=1,
+    AXES_RESET_ON_SUCCESS=True,
+    AXES_HANDLER="axes.handlers.database.AxesDatabaseHandler",
+)
+class AccountLockoutTestCase(TestCase):
+    """
+    Tests to verify account lockout is per-username and that one user's
+    failed login attempts do not lock out other users (proxy/IP isolation).
+    """
+
+    def setUp(self):
+        from django.core.cache import cache as _cache
+        _cache.clear()
+        self.client = Client()
+        self.user1 = User.objects.create_user(
+            username='lockout_user1',
+            email='user1@example.com',
+            password='correctpass123!',
+            is_active=True,
+        )
+        self.user2 = User.objects.create_user(
+            username='lockout_user2',
+            email='user2@example.com',
+            password='correctpass456!',
+            is_active=True,
+        )
+
+    def _post_login(self, username, password, ip='127.0.0.1'):
+        return self.client.post(
+            reverse('users:login'),
+            {'username': username, 'password': password},
+            REMOTE_ADDR=ip,
+        )
+
+    def test_failed_logins_lock_only_the_targeted_user(self):
+        """
+        Failing to log in for user1 should not lock out user2,
+        even when requests come from the same IP address.
+        """
+        shared_ip = '10.0.0.1'
+
+        # Exhaust the failure limit for user1 from shared IP
+        for _ in range(3):
+            self._post_login('lockout_user1', 'wrongpassword', ip=shared_ip)
+
+        # user1 should now be locked out (axes returns 429 Too Many Requests)
+        response = self._post_login('lockout_user1', 'correctpass123!', ip=shared_ip)
+        self.assertEqual(response.status_code, 429,
+                         "user1 should be locked out after exceeding failure limit")
+
+        # user2 should still be able to log in from the same IP
+        response = self._post_login('lockout_user2', 'correctpass456!', ip=shared_ip)
+        self.assertEqual(response.status_code, 302,
+                         "user2 should NOT be locked out by user1's failed attempts")
+
+    def test_lockout_is_per_user_not_per_ip(self):
+        """Each user has an independent lockout counter."""
+        # Fail login 2 times for user1 (below limit)
+        for _ in range(2):
+            self._post_login('lockout_user1', 'wrong', ip='192.168.1.1')
+
+        # user2 should still be able to log in
+        response = self._post_login('lockout_user2', 'correctpass456!', ip='192.168.1.1')
+        self.assertEqual(response.status_code, 302,
+                         "user2 should be unaffected by user1's partial failure count")
+
+    def test_user_locked_after_failure_limit(self):
+        """A user is locked after exceeding AXES_FAILURE_LIMIT failed attempts."""
+        for _ in range(3):
+            self._post_login('lockout_user1', 'badpassword')
+
+        # Correct password but account is locked (axes returns 429 Too Many Requests)
+        response = self._post_login('lockout_user1', 'correctpass123!')
+        self.assertEqual(response.status_code, 429,
+                         "User should be locked after exceeding failure limit")
