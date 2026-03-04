@@ -55,9 +55,8 @@ chmod +x scripts/deploy.sh
 This will:
 - Install Docker and Docker Compose
 - Set up firewall rules
-- Generate SSL certificates with Let's Encrypt
 - Generate production secrets
-- Deploy the application with all services
+- Deploy the application with all services (Caddy handles SSL/TLS automatically)
 
 ### 4. DNS Configuration
 
@@ -97,22 +96,7 @@ chmod +x scripts/generate_secrets.sh
 ./scripts/generate_secrets.sh your-domain.com
 ```
 
-### 3. Setup SSL Certificates
-
-Install Certbot and generate certificates:
-
-```bash
-sudo apt install certbot
-sudo certbot certonly --standalone -d your-domain.com
-
-# Copy certificates to nginx directory
-mkdir -p docker/nginx/ssl
-sudo cp /etc/letsencrypt/live/your-domain.com/fullchain.pem docker/nginx/ssl/cert.pem
-sudo cp /etc/letsencrypt/live/your-domain.com/privkey.pem docker/nginx/ssl/key.pem
-sudo chown $USER:$USER docker/nginx/ssl/*.pem
-```
-
-### 4. Deploy Application
+### 3. Deploy Application
 
 ```bash
 # Build and start services
@@ -130,6 +114,8 @@ docker-compose -f docker/docker-compose.prod.yml exec web python manage.py colle
 # Create superuser
 docker-compose -f docker/docker-compose.prod.yml exec web python manage.py createsuperuser
 ```
+
+> **Note**: SSL/TLS certificates are handled automatically by Caddy via Let's Encrypt. No manual certificate management is required.
 
 ## Environment Configuration
 
@@ -177,7 +163,7 @@ docker-compose -f docker/docker-compose.prod.yml logs -f
 # Specific service
 docker-compose -f docker/docker-compose.prod.yml logs -f web
 docker-compose -f docker/docker-compose.prod.yml logs -f db
-docker-compose -f docker/docker-compose.prod.yml logs -f nginx
+docker-compose -f docker/docker-compose.prod.yml logs -f caddy
 ```
 
 ### Check Status
@@ -216,12 +202,7 @@ Backups are stored in `/opt/rap_backups/`
 
 ### SSL Certificate Renewal
 
-SSL certificates are automatically renewed via cron job. To manually renew:
-
-```bash
-sudo certbot renew
-docker-compose -f docker/docker-compose.prod.yml restart nginx
-```
+SSL certificates are managed automatically by Caddy via Let's Encrypt. No manual renewal is required.
 
 ## Security Features
 
@@ -231,7 +212,7 @@ docker-compose -f docker/docker-compose.prod.yml restart nginx
 - HTTPS (port 443)
 - All other ports blocked
 
-### Nginx Security Headers
+### Caddy Security Headers
 - HSTS (HTTP Strict Transport Security)
 - XSS Protection
 - Content Type Options
@@ -273,13 +254,14 @@ df -h
 1. **Port 80/443 already in use**
    ```bash
    sudo netstat -tulpn | grep :80
-   sudo systemctl stop apache2  # or nginx
+   sudo systemctl stop apache2
    ```
 
 2. **SSL certificate issues**
    ```bash
-   sudo certbot certificates
-   sudo certbot renew --dry-run
+   # Caddy stores certificates automatically in the caddy_data volume.
+   # Check Caddy logs for certificate issues:
+   docker-compose -f docker/docker-compose.prod.yml logs caddy
    ```
 
 3. **Database connection issues**
@@ -306,9 +288,10 @@ df -h
 ├── docker/
 │   ├── docker-compose.prod.yml    # Production Docker Compose
 │   ├── .env.prod                  # Production environment variables
-│   └── nginx/
-│       ├── nginx.prod.conf        # Production Nginx config
-│       └── ssl/                   # SSL certificates
+│   └── caddy/
+│       ├── Caddyfile.prod         # Production Caddy config (auto-HTTPS)
+│       ├── Caddyfile.prod.http    # Production HTTP-only Caddy config
+│       └── error-pages/           # Custom error pages
 ├── scripts/
 │   ├── deploy.sh                  # Deployment script
 │   └── generate_secrets.sh        # Secret generation script
@@ -317,7 +300,7 @@ df -h
 
 ## Security Checklist
 
-- [ ] SSL certificates installed and working
+- [ ] SSL certificates managed automatically by Caddy
 - [ ] Firewall configured (UFW)
 - [ ] Strong database passwords generated
 - [ ] Admin URL randomized
@@ -335,7 +318,7 @@ df -h
 - Consider connection pooling for high traffic
 
 ### Static Files
-- Served by Nginx with caching headers
+- Served by Caddy with caching headers
 - Compressed with gzip
 
 ### Application

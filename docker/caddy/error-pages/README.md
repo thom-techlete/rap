@@ -1,6 +1,6 @@
 # Static Error Pages
 
-This directory contains static error pages that are served by nginx when Django/backend errors occur. These pages are designed to match the webapp's styling and provide a user-friendly experience even when the backend is unavailable.
+This directory contains static error pages that are served by Caddy when Django/backend errors occur. These pages are designed to match the webapp's styling and provide a user-friendly experience even when the backend is unavailable.
 
 ## Error Pages
 
@@ -27,24 +27,33 @@ This directory contains static error pages that are served by nginx when Django/
 ### Independence
 - **Self-contained**: No dependencies on Django templates or backend
 - **CDN resources**: Uses external CDNs for fonts and icons (graceful degradation if blocked)
-- **Static assets**: References static files that are served by nginx even if Django is down
+- **Static assets**: References static files that are served by Caddy even if Django is down
 
-## Nginx Configuration
+## Caddy Configuration
 
-The error pages are configured in both development and production nginx configs:
+The error pages are configured in all Caddyfiles via the `handle_errors` block:
 
-```nginx
-# Error page mappings
-error_page 400 /error-pages/400.html;
-error_page 403 /error-pages/403.html;
-error_page 404 /error-pages/404.html;
-error_page 500 502 503 504 /error-pages/500.html;
-error_page 502 /error-pages/502.html;
+```caddyfile
+handle_errors {
+    @404 expression `{http.error.status_code} == 404`
+    @502 expression `{http.error.status_code} == 502`
+    @5xx expression `{http.error.status_code} >= 500 && {http.error.status_code} != 502`
 
-# Static error pages location
-location /error-pages/ {
-    root /etc/nginx;
-    internal;
+    handle @404 {
+        root * /etc/caddy/error-pages
+        rewrite * /404.html
+        file_server
+    }
+    handle @502 {
+        root * /etc/caddy/error-pages
+        rewrite * /502.html
+        file_server
+    }
+    handle @5xx {
+        root * /etc/caddy/error-pages
+        rewrite * /500.html
+        file_server
+    }
 }
 ```
 
@@ -53,19 +62,19 @@ location /error-pages/ {
 The error pages are mounted as read-only volumes in Docker Compose:
 
 ```yaml
-nginx:
+caddy:
   volumes:
-    - ./nginx/error-pages:/etc/nginx/error-pages:ro
+    - ./caddy/error-pages:/etc/caddy/error-pages:ro
 ```
 
 ## Testing
 
 To test the error pages locally:
 
-1. **Development**: Access via nginx proxy at `http://localhost:8080/`
+1. **Development**: Access via Caddy proxy at `http://localhost:8080/`
 2. **Direct testing**: Run a simple HTTP server in this directory:
    ```bash
-   cd docker/nginx/error-pages
+   cd docker/caddy/error-pages
    python -m http.server 8080
    ```
 

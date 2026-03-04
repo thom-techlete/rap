@@ -62,8 +62,8 @@ This web application is designed to help manage the presence of team members at 
 - All UI and notifications will be in Dutch by default.
 
 ### Infrastructure
-- **Nginx**: Web server and reverse proxy for serving the application and static files.
-- **Docker Compose**: Container orchestration for managing all services (Django, PostgreSQL, Redis, Nginx).
+- **Caddy**: Web server and reverse proxy for serving the application and static files, with automatic SSL/TLS via Let's Encrypt.
+- **Docker Compose**: Container orchestration for managing all services (Django, PostgreSQL, Redis, Caddy).
 
 ## Key Functional Requirements
 - Secure user authentication and role-based access control.

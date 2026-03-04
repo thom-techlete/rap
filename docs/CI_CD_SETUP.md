@@ -85,7 +85,7 @@ Your production server should have:
 1. **Docker and Docker Compose installed**
 2. **Git repository cloned** at the deployment path (default: `/opt/rap`)
 3. **Proper permissions** for the deployment user
-4. **SSL certificates** configured in `docker/nginx/ssl/`
+4. **SSL certificates** managed automatically by Caddy via Let's Encrypt
 
 ### Initial Server Setup Commands
 

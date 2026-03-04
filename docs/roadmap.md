@@ -8,7 +8,7 @@ This roadmap outlines the step-by-step development plan for the SV Rap 8 event p
 - ✅ Add simple event and attendance models
 - ✅ Users can mark attendance for events
 - ✅ Use Django templates for frontend
-- ✅ Deploy with Docker Compose and Nginx
+- ✅ Deploy with Docker Compose and Caddy
 
 ## ✅ 2. Admin Functionality - COMPLETED
 - ✅ Add admin role and dashboard
