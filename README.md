@@ -77,7 +77,7 @@ Dit zet alles op wat je nodig hebt voor ontwikkeling!
 
 ### DevOps & Deployment
 - **Docker & Docker Compose** - Containerisatie voor consistente deployment
-- **Nginx** - Reverse proxy en statische bestanden
+- **Caddy** - Reverse proxy met automatische SSL/TLS via Let's Encrypt
 - **GitHub Actions** - CI/CD pipeline met geautomatiseerde tests
 - **Health Checks** - Monitoring en automatische rollback
 - **Brevo SMTP** - Professionele email service integratie
@@ -117,7 +117,7 @@ rap/
 ├── docker/                         # Docker configuraties
 │   ├── docker-compose.dev.yml     # Ontwikkeling
 │   ├── docker-compose.prod.yml    # Productie
-│   └── nginx/                      # Nginx configuratie
+│   └── caddy/                      # Caddy configuratie
 ├── docs/                           # Documentatie
 │   ├── project_description.md      # Project overzicht
 │   ├── roadmap.md                  # Ontwikkelings roadmap
@@ -262,7 +262,7 @@ cd /opt/rap
 - 🐳 **Docker containerisatie** met health checks
 - 📊 **Monitoring** met health endpoints
 - 🔄 **Geautomatiseerde backups** en updates
-- ⚡ **High performance** met Nginx reverse proxy
+- ⚡ **High performance** met Caddy reverse proxy en automatische SSL/TLS
 
 Zie **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** voor gedetailleerde productie setup gids.
 

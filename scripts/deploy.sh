@@ -97,50 +97,6 @@ setup_firewall() {
     log_success "Firewall configured"
 }
 
-# Generate SSL certificates using Let's Encrypt
-setup_ssl() {
-    log_info "Setting up SSL certificates for $DOMAIN_NAME..."
-    
-    # Install certbot if not present
-    if ! command -v certbot &> /dev/null; then
-        sudo apt-get update
-        sudo apt-get install -y certbot
-    fi
-    
-    # Create SSL directory
-    SSL_DIR="$DOCKER_DIR/nginx/ssl"
-    mkdir -p "$SSL_DIR"
-    
-    # Stop any running nginx to free port 80
-    docker-compose -f "$DOCKER_DIR/docker-compose.prod.yml" stop nginx 2>/dev/null || true
-    
-    # Generate certificate
-    log_info "Generating SSL certificate..."
-    sudo certbot certonly \
-        --standalone \
-        --non-interactive \
-        --agree-tos \
-        --email "thom@techletes.ai" \
-        -d "$DOMAIN_NAME"
-    
-    # Copy certificates
-    sudo cp "/etc/letsencrypt/live/$DOMAIN_NAME/fullchain.pem" "$SSL_DIR/cert.pem"
-    sudo cp "/etc/letsencrypt/live/$DOMAIN_NAME/privkey.pem" "$SSL_DIR/key.pem"
-    sudo chown $USER:$USER "$SSL_DIR"/*.pem
-    sudo chmod 644 "$SSL_DIR"/*.pem
-    
-    # Setup automatic renewal
-    cat > /tmp/certbot-renewal << 'EOF'
-#!/bin/bash
-certbot renew --quiet --deploy-hook "docker-compose -f /opt/rap/docker/docker-compose.prod.yml restart nginx"
-EOF
-    
-    sudo cp /tmp/certbot-renewal /etc/cron.weekly/
-    sudo chmod +x /etc/cron.weekly/certbot-renewal
-    
-    log_success "SSL certificates configured"
-}
-
 # Create backup
 create_backup() {
     log_info "Creating backup..."
@@ -275,7 +231,7 @@ show_status() {
     log_info "Logs:"
     echo "  Application: docker-compose -f $DOCKER_DIR/docker-compose.prod.yml logs web"
     echo "  Database: docker-compose -f $DOCKER_DIR/docker-compose.prod.yml logs db"
-    echo "  Nginx: docker-compose -f $DOCKER_DIR/docker-compose.prod.yml logs nginx"
+    echo "  Caddy: docker-compose -f $DOCKER_DIR/docker-compose.prod.yml logs caddy"
 }
 
 # Main execution
@@ -293,7 +249,6 @@ main() {
             check_requirements
             install_dependencies
             setup_firewall
-            setup_ssl
             deploy_application
             show_status
             ;;

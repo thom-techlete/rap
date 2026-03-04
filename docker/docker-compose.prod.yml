@@ -129,19 +129,20 @@ services:
         reservations:
           memory: 128m
 
-  nginx:
-    image: nginx:stable
+  caddy:
+    image: caddy:2
     restart: always
     ports:
       - "80:80"
       - "443:443"
+      - "443:443/udp"
     volumes:
-      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/error-pages:/etc/nginx/error-pages:ro
+      - ./caddy/Caddyfile.prod:/etc/caddy/Caddyfile:ro
+      - ./caddy/error-pages:/etc/caddy/error-pages:ro
       - static_volume:/app/staticfiles:ro
       - media_volume:/app/media:ro
-      - /etc/letsencrypt/live/rap8.nl/fullchain.pem:/etc/nginx/ssl/fullchain.pem:ro
-      - /etc/letsencrypt/live/rap8.nl/privkey.pem:/etc/nginx/ssl/privkey.pem:ro
+      - caddy_data:/data
+      - caddy_config:/config
     networks:
       - rap_network
     depends_on:
@@ -150,14 +151,16 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512m
+          memory: 256m
         reservations:
-          memory: 128m
+          memory: 64m
 
 volumes:
   postgres_data:
   static_volume:
   media_volume:
+  caddy_data:
+  caddy_config:
 
 secrets:
   vapid_private_key:

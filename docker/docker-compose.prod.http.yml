@@ -99,17 +99,15 @@ services:
         reservations:
           memory: 128m
 
-  nginx:
-    image: nginx:stable
+  caddy:
+    image: caddy:2
     restart: always
     ports:
       - "80:80"
-    #  - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./caddy/Caddyfile.prod.http:/etc/caddy/Caddyfile:ro
       - static_volume:/app/staticfiles:ro
       - media_volume:/app/media:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
     networks:
       - rap_network
     depends_on:
@@ -117,9 +115,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512m
+          memory: 256m
         reservations:
-          memory: 128m
+          memory: 64m
 
 volumes:
   postgres_data:
