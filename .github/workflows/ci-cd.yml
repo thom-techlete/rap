@@ -256,7 +256,7 @@ jobs:
               fi
               
               # Restart services
-              if ! docker compose -f docker-compose.prod.yml up -d --no-deps web celery_worker celery_beat; then
+              if ! docker compose -f docker-compose.prod.yml up -d --no-deps --remove-orphans web celery_worker celery_beat; then
                 echo "❌ Failed to start services with tag: $tag"
                 return 1
               fi
