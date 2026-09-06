@@ -252,8 +252,8 @@ jobs:
               local tag="$1"
               echo "🧪 Testing deployment with tag: $tag"
 
-              # Update IMAGE_TAG in .env.prod
-              sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=$tag/" .env.prod
+              # Update IMAGE_TAG in .env
+              sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=$tag/" .env
 
               # Pull the specific image
               if ! docker compose -f docker-compose.prod.yml pull web celery_worker celery_beat; then

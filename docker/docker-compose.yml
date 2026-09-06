@@ -3,7 +3,7 @@ services:
     image: postgres:17-alpine
     restart: always
     env_file:
-      - .env.prod
+      - .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -41,7 +41,7 @@ services:
     image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
     restart: always
     env_file:
-      - .env.prod
+      - .env
     secrets:
       - vapid_private_key
       - vapid_public_key
@@ -81,7 +81,7 @@ services:
     image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
     restart: always
     env_file:
-      - .env.prod
+      - .env
     secrets:
       - vapid_private_key
       - vapid_public_key
@@ -107,7 +107,7 @@ services:
     image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
     restart: always
     env_file:
-      - .env.prod
+      - .env
     secrets:
       - vapid_private_key
       - vapid_public_key

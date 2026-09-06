@@ -141,7 +141,7 @@ Runs only on pushes to main branch after successful test and build. Features:
 
 ## Environment Files
 
-The pipeline automatically creates a `.env.prod` file on the server with all necessary environment variables from GitHub secrets.
+The pipeline automatically creates a `.env` file on the server with all necessary environment variables from GitHub secrets.
 
 ## Smart Deployment & Fallback System
 

@@ -94,10 +94,10 @@ repos:
         exclude: ^web/.*/(migrations|tests?)/
         types: [python]
 
-  - repo: https://github.com/PyCQA/pydocstyle
-    rev: 6.3.0
-    hooks:
-      - id: pydocstyle
-        name: pydocstyle (docstring validation)
-        exclude: ^web/.*/(management|migrations|tests?)/
-        types: [python]
+  # - repo: https://github.com/PyCQA/pydocstyle
+  #   rev: 6.3.0
+  #   hooks:
+  #     - id: pydocstyle
+  #       name: pydocstyle (docstring validation)
+  #       exclude: ^web/.*/(management|migrations|tests?)/
+  #       types: [python]

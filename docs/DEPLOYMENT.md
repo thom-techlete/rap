@@ -45,7 +45,7 @@ cd /opt/rap
 
 ### 3. Configure and start the production stack
 
-Create `docker/.env.prod` and the VAPID key files through your external secret
+Create `docker/.env` and the VAPID key files through your external secret
 manager. Do not commit either the environment file or private keys. Set the
 validated public domain in the Compose environment:
 
@@ -111,7 +111,7 @@ docker compose -f docker/docker-compose.yml exec web python manage.py createsupe
 
 ## Environment Configuration
 
-The production environment file (`.env.prod`) contains:
+The production environment file (`.env`) contains:
 
 ```bash
 # Django Configuration
@@ -281,7 +281,7 @@ df -h
 /opt/rap/
 ├── docker/
 │   ├── docker-compose.yml         # Production Docker Compose
-│   ├── .env.prod                  # Production environment variables
+│   ├── .env                  # Production environment variables
 │   └── caddy/                      # Caddy config and error pages
 └── web/                           # Django application
 ```
@@ -324,4 +324,4 @@ For issues or questions:
 
 ---
 
-**Remember**: Keep your `.env.prod` file secure and never commit it to version control!
+**Remember**: Keep your `.env` file secure and never commit it to version control!

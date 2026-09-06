@@ -241,7 +241,7 @@ DEFAULT_FROM_EMAIL=noreply@rap8.nl
 git clone https://github.com/thom-techlete/rap.git /opt/rap
 cd /opt/rap
 
-# Configureer docker/.env.prod en de VAPID Docker secret-bestanden via je
+# Configureer docker/.env en de VAPID Docker secret-bestanden via je
 # externe secret manager, en zet DOMAIN in de Compose-omgeving.
 docker compose -f docker/docker-compose.yml up -d
 ```
