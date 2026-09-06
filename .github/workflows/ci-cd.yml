@@ -249,19 +249,10 @@ jobs:
         with:
           python-version: 3.12
 
-      - name: Validate image selection
-        env:
-          NEW_IMAGE_TAG: ${{ needs.build.outputs.image-tag || inputs.image_tag }}
-        run: |
-          if [ -z "$NEW_IMAGE_TAG" ]; then
-            echo "Geef image_tag op wanneer de image-build wordt overgeslagen."
-            exit 1
-          fi
-
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.3
         env:
-          NEW_IMAGE_TAG: ${{ needs.build.outputs.image-tag || inputs.image_tag }}
+          NEW_IMAGE_TAG: ${{ needs.build.outputs.image-tag || inputs.image_tag || 'latest' }}
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
