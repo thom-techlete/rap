@@ -53,6 +53,11 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
+      - name: Validate GitHub Actions workflows
+        uses: docker://rhysd/actionlint:1.7.12
+        with:
+          args: -color
+
       - name: Set up Python 3.12
         uses: actions/setup-python@v6.2.0
         with:

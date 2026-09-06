@@ -82,6 +82,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6.0.3
 
+      - name: Validate GitHub Actions workflows
+        uses: docker://rhysd/actionlint:1.7.12
+        with:
+          args: -color
+
       - name: Set up Python 3.12
         uses: actions/setup-python@v6.2.0
         with:
@@ -268,10 +273,21 @@ jobs:
             # Navigate to project directory
             cd ~/rap/docker
 
+            # Keep the production-only environment file out of the checkout reset.
+            # It contains VPS secrets and must not be replaced by repository defaults.
+            if [ ! -f .env ]; then
+              echo "❌ Production environment file is missing: ~/rap/docker/.env"
+              exit 1
+            fi
+            production_env_backup="$(mktemp)"
+            cp .env "$production_env_backup"
+            trap 'rm -f "$production_env_backup"' EXIT
+
             # Pull latest code
             git fetch origin --prune
             git checkout main
             git reset --hard origin/main
+            cp "$production_env_backup" .env
 
             # Function to test deployment with a specific tag
             test_deployment() {
@@ -323,6 +339,73 @@ jobs:
                 fi
               done
             }
+
+            validate_production_config() {
+              local missing=0
+              local variable
+              local value
+              local required_variables=(
+                DJANGO_SECRET_KEY DJANGO_ALLOWED_HOSTS POSTGRES_DB
+                POSTGRES_USER POSTGRES_PASSWORD POSTGRES_HOST REDIS_URL
+                TRUSTED_PROXY_IPS EMAIL_HOST EMAIL_HOST_USER EMAIL_HOST_PASSWORD
+                DEFAULT_FROM_EMAIL SITE_URL ADMIN_URL
+              )
+
+              for variable in "${required_variables[@]}"; do
+                value="$(sed -n "s/^${variable}=//p" .env | head -n 1)"
+                if [ -z "$value" ]; then
+                  echo "❌ Missing production setting: ${variable}"
+                  missing=1
+                fi
+              done
+
+              if [ "$(sed -n 's/^DJANGO_DEBUG=//p' .env | head -n 1)" != "False" ]; then
+                echo "❌ DJANGO_DEBUG must be False in production"
+                missing=1
+              fi
+              if [ "$(sed -n 's/^POSTGRES_HOST=//p' .env | head -n 1)" != "db" ]; then
+                echo "❌ POSTGRES_HOST must be the Compose service name db"
+                missing=1
+              fi
+              if [ "$(sed -n 's/^REDIS_URL=//p' .env | head -n 1)" != "redis://redis:6379/0" ]; then
+                echo "❌ REDIS_URL must use the Compose service name redis"
+                missing=1
+              fi
+              case "$(sed -n 's/^SITE_URL=//p' .env | head -n 1)" in
+                https://*) ;;
+                *) echo "❌ SITE_URL must use https://"; missing=1 ;;
+              esac
+              case "$(sed -n 's/^DJANGO_ALLOWED_HOSTS=//p' .env | head -n 1)" in
+                *rap8.nl*) ;;
+                *) echo "❌ DJANGO_ALLOWED_HOSTS must include rap8.nl"; missing=1 ;;
+              esac
+
+              for secret_file in vapid_private_key vapid_public_key; do
+                if [ ! -s "$secret_file" ]; then
+                  echo "❌ Missing or empty VAPID secret file: ${secret_file}"
+                  missing=1
+                fi
+              done
+
+              if ! docker compose -f docker-compose.yml config --quiet; then
+                echo "❌ Production Compose configuration is invalid"
+                missing=1
+              fi
+
+              if [ "$missing" -ne 0 ]; then
+                return 1
+              fi
+
+              # Verify the non-root application user can read mounted secrets.
+              if ! docker compose -f docker-compose.yml run --rm --no-deps \
+                --entrypoint python web -c \
+                'from pathlib import Path; assert all(Path(p).is_file() and Path(p).stat().st_size for p in ("/run/secrets/vapid_private_key", "/run/secrets/vapid_public_key"))'; then
+                echo "❌ The django container user cannot read the VAPID secrets"
+                return 1
+              fi
+            }
+
+            validate_production_config
 
             # Read last successful deployment tag
             last_successful_tag="latest"
