@@ -22,6 +22,7 @@ RUN apt-get update \
         postgresql-client \
         build-essential \
         libpq-dev \
+        gosu \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --no-cache-dir "uv==${UV_VERSION}"
@@ -44,7 +45,9 @@ RUN mkdir -p /app/staticfiles /app/media /app/logs
 RUN groupadd -r django && useradd -r -g django django
 RUN chown -R django:django /app
 RUN chmod +x /entrypoint.sh
-USER django
+# The entrypoint needs root briefly to read file-backed Docker secrets and to
+# prepare mounted volumes. It drops to django before starting application code.
+USER root
 
 # Expose port
 EXPOSE 8000

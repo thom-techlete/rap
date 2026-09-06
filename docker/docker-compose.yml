@@ -46,6 +46,8 @@ services:
       - vapid_private_key
       - vapid_public_key
     environment:
+      POSTGRES_HOST: db
+      REDIS_URL: redis://redis:6379/0
       VAPID_PRIVATE_KEY_FILE: /run/secrets/vapid_private_key
       VAPID_PUBLIC_KEY_PEM_FILE: /run/secrets/vapid_public_key
     volumes:
@@ -86,6 +88,8 @@ services:
       - vapid_private_key
       - vapid_public_key
     environment:
+      POSTGRES_HOST: db
+      REDIS_URL: redis://redis:6379/0
       VAPID_PRIVATE_KEY_FILE: /run/secrets/vapid_private_key
       VAPID_PUBLIC_KEY_PEM_FILE: /run/secrets/vapid_public_key
     networks:
@@ -112,6 +116,8 @@ services:
       - vapid_private_key
       - vapid_public_key
     environment:
+      POSTGRES_HOST: db
+      REDIS_URL: redis://redis:6379/0
       VAPID_PRIVATE_KEY_FILE: /run/secrets/vapid_private_key
       VAPID_PUBLIC_KEY_PEM_FILE: /run/secrets/vapid_public_key
     networks:

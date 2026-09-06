@@ -143,6 +143,10 @@ main() {
     # Change to the app directory
     cd /app
 
+    # Named volumes are mounted after the image is created. Ensure the runtime
+    # user can write uploads and collected static files.
+    chown -R django:django /app/staticfiles /app/media
+
     # Wait for database
     wait_for_db
 
@@ -168,7 +172,7 @@ main() {
 
     # Execute the main command
     log_info "Starting application server..."
-    exec "$@"
+    exec gosu django "$@"
 }
 
 # Handle different commands
@@ -185,13 +189,13 @@ case "$1" in
         # Celery worker
         wait_for_db
         log_info "Starting Celery worker..."
-        exec celery -A rap_web worker --loglevel=info --concurrency=2
+        exec gosu django celery -A rap_web worker --loglevel=info --concurrency=2
         ;;
     "celery-beat")
         # Celery beat scheduler
         wait_for_db
         log_info "Starting Celery beat scheduler..."
-        exec celery -A rap_web beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+        exec gosu django celery -A rap_web beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
         ;;
     "bash" | "sh")
         # Shell access
@@ -201,7 +205,7 @@ case "$1" in
         # Django management command
         wait_for_db
         shift
-        exec python manage.py "$@"
+        exec gosu django python manage.py "$@"
         ;;
     *)
         # Default: run the provided command
