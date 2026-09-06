@@ -1,9 +1,8 @@
 name: SV Rap 8 CI/CD Pipeline
 
 on:
-  push:
-    branches: [main]
   pull_request:
+    types: [closed]
     branches: [main]
     paths-ignore:
       - 'docs/**'
