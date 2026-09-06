@@ -76,6 +76,14 @@ jobs:
           enable-cache: true
           cache-dependency-glob: uv.lock
 
+      - name: Cache pre-commit environments
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: ${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml', 'uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pre-commit-
+
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -87,16 +95,8 @@ jobs:
       - name: Install Python dependencies
         run: uv sync --locked --no-install-project
 
-      - name: Run formatting and lint checks
-        run: |
-          uv run --locked --no-sync black --check web
-          uv run --locked --no-sync ruff check web
-
-      - name: Audit dependencies
-        run: uv run --locked --no-sync pip-audit
-
-      - name: Scan tracked files for secrets
-        run: uv run --locked --no-sync detect-secrets scan --all-files --force-use-all-plugins
+      - name: Run pre-commit checks
+        run: uv run --locked --no-sync pre-commit run --all-files
 
       - name: Run Django system check
         working-directory: ./web
