@@ -116,7 +116,7 @@ rap/
 │   └── static/                     # CSS, JS, afbeeldingen
 ├── docker/                         # Docker configuraties
 │   ├── docker-compose.dev.yml     # Ontwikkeling
-│   ├── docker-compose.prod.yml    # Productie
+│   ├── docker-compose.yml         # Productie
 │   └── caddy/                      # Caddy configuratie
 ├── docs/                           # Documentatie
 │   ├── project_description.md      # Project overzicht

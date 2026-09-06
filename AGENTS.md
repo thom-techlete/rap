@@ -8,7 +8,7 @@ This repository contains a Django-based web application for managing event prese
 - **Database**: PostgreSQL 17 with psycopg2-binary
 - **Task Queue**: Celery 5.5.3 with Redis 6.4.0 as broker
 - **Web Server**: Gunicorn (production), Django dev server (development)
-- **Reverse Proxy**: Nginx (production)
+- **Reverse Proxy**: Caddy (production)
 - **Containerization**: Docker & Docker Compose
 - **Email**: Django-anymail with Brevo SMTP integration
 - **Security**: django-axes, django-ratelimit, django-csp, django-cors-headers
@@ -29,9 +29,8 @@ This repository contains a Django-based web application for managing event prese
 └── media/             # User-uploaded files (profile pics)
 
 /docker/               # Docker configurations
-├── docker-compose.dev.yml      # Development environment
-├── docker-compose.prod.yml     # Production environment
-└── nginx/             # Nginx configuration files
+├── docker-compose.yml          # Production environment
+└── caddy/                      # Caddy configuration and error pages
 
 /docs/                 # Project documentation
 /scripts/              # Deployment and utility scripts
@@ -218,5 +217,26 @@ ruff check .
 - XSS protection with CSP headers
 - Optimized database queries for performance
 - Media file security and validation
+
+## Current production/VPS context
+
+- The production VPS is `rap8.nl` and must be accessed as `techadmin`, not `root`.
+- SSH access uses the existing SSH-agent key named `ragflow-dev`; never copy or
+  print the private key and never add key material to the repository.
+- The application checkout is `/home/techadmin/rap`. Production operations run
+  from `/home/techadmin/rap/docker`.
+- There is one Compose file: `docker/docker-compose.yml`. Do not reference or
+  create the retired `docker-compose.prod.yml` file.
+- The VPS keeps its production-only `docker/.env` and VAPID secret files outside
+  version control. Do not overwrite, commit, or expose their values.
+- The deployment workflow updates the server checkout and uses the immutable
+  image tag built by CI. It verifies `https://rap8.nl/health/` after restarting
+  the web and Celery services.
+- PostgreSQL data is stored in the named `postgres_data` volume and must never
+  be deleted during deployment or troubleshooting. Attendance, event, and
+  match-statistics records are likewise preserved.
+- Read-only SSH checks are safe by default. Any service restart, migration, or
+  production-data change requires explicit user authorization and must be
+  reported with evidence.
 
 This configuration provides GitHub Copilot with comprehensive context about your Django football team management application, enabling it to provide accurate and relevant code suggestions that align with your project's architecture, coding standards, and domain-specific requirements.

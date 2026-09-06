@@ -256,13 +256,13 @@ jobs:
               sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=$tag/" .env
 
               # Pull the specific image
-              if ! docker compose -f docker-compose.prod.yml pull web celery_worker celery_beat; then
+              if ! docker compose -f docker-compose.yml pull web celery_worker celery_beat; then
                 echo "❌ Failed to pull images for tag: $tag"
                 return 1
               fi
 
               # Restart services
-              if ! docker compose -f docker-compose.prod.yml up -d --no-deps --remove-orphans web celery_worker celery_beat; then
+              if ! docker compose -f docker-compose.yml up -d --no-deps --remove-orphans web celery_worker celery_beat; then
                 echo "❌ Failed to start services with tag: $tag"
                 return 1
               fi
@@ -324,14 +324,14 @@ jobs:
                   echo "💥 Rollback also failed! Manual intervention required."
                   # Show recent logs to aid debugging
                   echo "Recent web logs:"
-                  docker compose -f docker-compose.prod.yml logs --tail=200 web || true
+                  docker compose -f docker-compose.yml logs --tail=200 web || true
                   exit 1
                 fi
               else
                 echo "💥 No fallback available (last successful was also 'latest'). Manual intervention required."
                 # Show recent logs to aid debugging
                 echo "Recent web logs:"
-                docker compose -f docker-compose.prod.yml logs --tail=200 web || true
+                docker compose -f docker-compose.yml logs --tail=200 web || true
                 exit 1
               fi
             fi

@@ -181,7 +181,7 @@ Check deployment logs in the GitHub Actions tab of your repository.
 SSH into your server and run:
 ```bash
 cd /opt/rap/docker
-docker-compose -f docker-compose.prod.yml logs -f
+docker-compose -f docker-compose.yml logs -f
 ```
 
 ### Health Check

@@ -139,28 +139,28 @@ ADMIN_URL=<generated-admin-url>/
 
 ### Start Services
 ```bash
-docker-compose -f docker/docker-compose.prod.yml up -d
+docker-compose -f docker/docker-compose.yml up -d
 ```
 
 ### Stop Services
 ```bash
-docker-compose -f docker/docker-compose.prod.yml down
+docker-compose -f docker/docker-compose.yml down
 ```
 
 ### View Logs
 ```bash
 # All services
-docker-compose -f docker/docker-compose.prod.yml logs -f
+docker-compose -f docker/docker-compose.yml logs -f
 
 # Specific service
-docker-compose -f docker/docker-compose.prod.yml logs -f web
-docker-compose -f docker/docker-compose.prod.yml logs -f db
-docker-compose -f docker/docker-compose.prod.yml logs -f caddy
+docker-compose -f docker/docker-compose.yml logs -f web
+docker-compose -f docker/docker-compose.yml logs -f db
+docker-compose -f docker/docker-compose.yml logs -f caddy
 ```
 
 ### Check Status
 ```bash
-docker-compose -f docker/docker-compose.prod.yml ps
+docker-compose -f docker/docker-compose.yml ps
 ```
 
 ## Maintenance
@@ -255,17 +255,17 @@ df -h
    ```bash
    # Caddy stores certificates automatically in the caddy_data volume.
    # Check Caddy logs for certificate issues:
-   docker-compose -f docker/docker-compose.prod.yml logs caddy
+   docker-compose -f docker/docker-compose.yml logs caddy
    ```
 
 3. **Database connection issues**
    ```bash
-   docker-compose -f docker/docker-compose.prod.yml logs db
+   docker-compose -f docker/docker-compose.yml logs db
    ```
 
 4. **Application not starting**
    ```bash
-   docker-compose -f docker/docker-compose.prod.yml logs web
+   docker-compose -f docker/docker-compose.yml logs web
    ```
 
 ### Getting Help

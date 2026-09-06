@@ -372,7 +372,7 @@ backlog alert, or production smoke test. Add:
   tests passed**.
 - `python manage.py makemigrations --check --dry-run
   --settings=rap_web.test_settings`: **no model changes detected**.
-- `docker compose -f docker/docker-compose.prod.yml config --quiet`: passed.
+- `docker compose -f docker/docker-compose.yml config --quiet`: passed.
 - `docker compose -f docker/docker-compose.dev.yml config --quiet`: passed.
 - `docker build --check -f Dockerfile .`: passed.
 - `uv tool run pip-audit -r requirements.txt`: found **140 vulnerability
