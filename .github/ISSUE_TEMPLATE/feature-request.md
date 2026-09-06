@@ -19,9 +19,9 @@ List clear requirements for the feature (functional and non-functional).
 Have you thought about other solutions or workarounds?
 
 ## Acceptance criteria
-- [ ] Criteria 1 (clear, testable)  
-- [ ] Criteria 2  
-- [ ] Criteria 3  
+- [ ] Criteria 1 (clear, testable)
+- [ ] Criteria 2
+- [ ] Criteria 3
 
 ## Additional context
 Add any screenshots, designs, or references that might help.

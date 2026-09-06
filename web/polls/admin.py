@@ -69,7 +69,6 @@ class VoteAdmin(admin.ModelAdmin):
     ]
     readonly_fields = ["voted_at"]
 
+    @admin.display(description="Poll")
     def poll(self, obj):
         return obj.poll.title
-
-    poll.short_description = "Poll"

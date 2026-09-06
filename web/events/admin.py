@@ -4,6 +4,7 @@ from django.utils.html import format_html
 from .models import Event, MatchStatistic
 
 
+@admin.action(description="Verzend nieuwe evenement notificaties")
 def send_event_notification_action(modeladmin, request, queryset):
     """Admin action to send new event notifications for selected events"""
     from notifications.utils import send_new_event_notification
@@ -31,11 +32,7 @@ def send_event_notification_action(modeladmin, request, queryset):
         messages.warning(request, f"{error_count} notificatie(s) zijn mislukt")
 
 
-send_event_notification_action.short_description = (
-    "Verzend nieuwe evenement notificaties"
-)
-
-
+@admin.action(description="Verzend evenement herinneringen")
 def send_event_reminder_action(modeladmin, request, queryset):
     """Admin action to send event reminders for selected events"""
     from notifications.utils import send_event_reminder_notification
@@ -60,9 +57,6 @@ def send_event_reminder_action(modeladmin, request, queryset):
 
     if error_count > 0:
         messages.warning(request, f"{error_count} herinnering(en) zijn mislukt")
-
-
-send_event_reminder_action.short_description = "Verzend evenement herinneringen"
 
 
 # Inline admin for EventScheduleOverride
@@ -159,6 +153,7 @@ class EventAdmin(admin.ModelAdmin):
 
     readonly_fields = ("created_at", "updated_at", "recurring_event_link_id")
 
+    @admin.display(description="Aanwezigheid")
     def attendance_info(self, obj):
         """Show attendance information with link to attendance overview"""
         total = obj.get_total_responses()
@@ -178,8 +173,7 @@ class EventAdmin(admin.ModelAdmin):
             rate,
         )
 
-    attendance_info.short_description = "Aanwezigheid"
-
+    @admin.display(description="Planning Override")
     def schedule_override_info(self, obj):
         """Show schedule override information"""
         try:
@@ -193,11 +187,10 @@ class EventAdmin(admin.ModelAdmin):
                 return format_html(
                     '<span style="color: #6c757d;">Override inactief</span>'
                 )
-        except:
+        except EventScheduleOverrideInline.model.DoesNotExist:
             return format_html('<span style="color: #666;">Geen override</span>')
 
-    schedule_override_info.short_description = "Planning Override"
-
+    @admin.display(description="Herhaling")
     def recurrence_display(self, obj):
         """Show recurrence information"""
         if obj.recurrence_type == "none" or not obj.recurrence_type:
@@ -215,16 +208,13 @@ class EventAdmin(admin.ModelAdmin):
 
         return display
 
-    recurrence_display.short_description = "Herhaling"
-
+    @admin.display(description="Status")
     def is_upcoming_display(self, obj):
         """Show if event is upcoming with icon"""
         if obj.is_upcoming:
             return format_html('<span style="color: #28a745;">✓ Aankomend</span>')
         else:
             return format_html('<span style="color: #666;">✗ Afgelopen</span>')
-
-    is_upcoming_display.short_description = "Status"
 
     def get_queryset(self, request):
         """Optimize queries by prefetching related data"""

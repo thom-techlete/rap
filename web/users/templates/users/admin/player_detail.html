@@ -48,7 +48,7 @@
                     <h4 class="mb-1">{{ player.get_full_name|default:player.username }}</h4>
                     <p class="page-subtitle">Speler details en beheeropties</p>
                 </div>
-                
+
                 <!-- Player Details -->
                 <div class="space-y-3">
                     <div class="d-flex justify-content-between">
@@ -88,9 +88,9 @@
                 </div>
             </div>
         </div>
-    
+
     </div>
-    
+
     <!-- Statistics -->
     <div class="col-lg-4 mb-4">
         <!-- Admin Actions -->
@@ -123,7 +123,7 @@
                             Actie niet beschikbaar voor beheerder
                         </button>
                     {% endif %}
-                    
+
                     <!-- Only show staff toggle if user can actually perform the action -->
                     {% if not player.is_superuser or user.is_superuser %}
                         {% if user.is_superuser or not player.is_staff or player == user %}
@@ -142,7 +142,7 @@
                             </form>
                         {% endif %}
                     {% endif %}
-                    
+
                     {% comment %} <a href="{% url 'admin:users_player_change' player.pk %}" class="btn btn-ghost btn-block">
                         <i data-feather="edit"></i>
                         Bewerk in Django Admin
@@ -160,7 +160,7 @@
                     <h2 class="text-primary mb-1">{{ attendance_rate }}%</h2>
                     <p class="text-secondary">Aanwezigheidspercentage dit seizoen</p>
                 </div>
-                
+
                 <div class="space-y-3">
                     <div class="d-flex justify-content-between">
                         <span class="text-secondary">Bijgewoond:</span>
@@ -171,7 +171,7 @@
                         <span class="font-medium">{{ total_events }}</span>
                     </div>
                 </div>
-                
+
                 <!-- Progress Bar -->
                 <div class="mt-4">
                     <div class="progress" style="height: 8px;">
@@ -181,7 +181,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Recent Attendance -->
     <div class="col-lg-4 mb-4">
         <div class="card">

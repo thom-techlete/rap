@@ -1,6 +1,6 @@
 # RAP audit recommendations
 
-Date: 2026-09-06  
+Date: 2026-09-06
 Scope: repository source, Django configuration, Docker/Compose, CI/CD, scripts,
 dependencies, and documentation. This is a source-level audit; it does not prove
 the state of the deployed VPS or production traffic.

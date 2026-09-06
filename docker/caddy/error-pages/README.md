@@ -5,7 +5,7 @@ This directory contains static error pages that are served by Caddy when Django/
 ## Error Pages
 
 - **400.html** - Bad Request (Ongeldige aanvraag)
-- **403.html** - Forbidden (Toegang geweigerd)  
+- **403.html** - Forbidden (Toegang geweigerd)
 - **404.html** - Not Found (Pagina niet gevonden)
 - **500.html** - Internal Server Error (Server probleem)
 - **502.html** - Bad Gateway (Service tijdelijk niet beschikbaar)
@@ -83,7 +83,7 @@ To test the error pages locally:
 These pages will be shown when:
 
 - **400**: Invalid request format or malformed data
-- **403**: Authentication/authorization failures  
+- **403**: Authentication/authorization failures
 - **404**: Requested URL/resource not found
 - **500**: Django application errors, database connection issues
 - **502**: Backend unavailable (during deployments, restarts)

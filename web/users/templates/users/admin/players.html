@@ -35,8 +35,8 @@
         <form method="get" class="row g-3">
             <div class="col-md-4">
                 <label for="search" class="form-label">Zoeken</label>
-                <input type="text" id="search" name="search" class="form-input" 
-                       placeholder="Zoek op naam, gebruikersnaam of email..." 
+                <input type="text" id="search" name="search" class="form-input"
+                       placeholder="Zoek op naam, gebruikersnaam of email..."
                        value="{{ search }}">
             </div>
             <div class="col-md-3">
@@ -123,7 +123,7 @@
                                 </div>
                             </td>
                             <td>
-                                <a href="{% url 'users:admin_player_detail' player.id %}" 
+                                <a href="{% url 'users:admin_player_detail' player.id %}"
                                    class="btn btn-sm btn-ghost">
                                     <i data-feather="eye"></i>
                                     Bekijk

@@ -122,7 +122,6 @@ htmlcov/
 
 # Development tools
 setup.py
-requirements-dev.txt
 
 # Docker
 Dockerfile

@@ -33,7 +33,7 @@
             {% csrf_token %}
             <div class="col-md-3">
                 <label for="description" class="form-label">Beschrijving</label>
-                <input type="text" id="description" name="description" class="form-input" 
+                <input type="text" id="description" name="description" class="form-input"
                        placeholder="Bijv. Nieuwe spelers 2025">
             </div>
             <div class="col-md-2">
@@ -45,7 +45,7 @@
             </div>
             <div class="col-md-2">
                 <label for="max_uses" class="form-label">Max Gebruik</label>
-                <input type="number" id="max_uses" name="max_uses" class="form-input" 
+                <input type="number" id="max_uses" name="max_uses" class="form-input"
                        placeholder="Onbeperkt" min="1">
             </div>
             <div class="col-md-2">
@@ -141,8 +141,8 @@
                                             {% endif %}
                                         </button>
                                     </form>
-                                    
-                                    <button type="button" class="btn btn-sm btn-ghost" 
+
+                                    <button type="button" class="btn btn-sm btn-ghost"
                                             onclick="copyToClipboard('{{ invitation.code }}')"
                                             title="Kopieer code">
                                         <i data-feather="copy"></i>
@@ -176,7 +176,7 @@
             <div class="col-md-6">
                 <h5><i data-feather="info"></i> Voor nieuwe spelers:</h5>
                 <p class="text-secondary">
-                    Nieuwe spelers hebben een uitnodigingscode nodig om zich te kunnen registreren. 
+                    Nieuwe spelers hebben een uitnodigingscode nodig om zich te kunnen registreren.
                     Zonder een geldige code kunnen zij geen account aanmaken.
                 </p>
             </div>
@@ -229,11 +229,11 @@
     .card-content .row .col-md-2 {
         margin-bottom: 1rem;
     }
-    
+
     .d-flex.gap-2 {
         flex-direction: column;
     }
-    
+
     .d-flex.gap-2 .btn {
         width: 100%;
         justify-content: center;
@@ -251,10 +251,10 @@ function copyToClipboard(text) {
         notification.className = 'notification notification-success';
         notification.textContent = `Code "${text}" gekopieerd naar klembord!`;
         document.body.appendChild(notification);
-        
+
         // Animate in
         notification.classList.add('animate-slide-in');
-        
+
         // Remove after 3 seconds
         setTimeout(() => {
             notification.classList.add('animate-slide-out');

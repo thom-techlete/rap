@@ -20,6 +20,7 @@ class AttendanceAdmin(admin.ModelAdmin):
     date_hierarchy = "timestamp"
     ordering = ["-timestamp"]
 
+    @admin.display(description="Status", ordering="present")
     def present_display(self, obj):
         """Show attendance status with colors and icons"""
         if obj.present:
@@ -30,9 +31,6 @@ class AttendanceAdmin(admin.ModelAdmin):
             return format_html(
                 '<span style="color: #dc3545; font-weight: bold;">✗ Afwezig</span>'
             )
-
-    present_display.short_description = "Status"
-    present_display.admin_order_field = "present"
 
     def get_queryset(self, request):
         """Optimize queries with select_related"""

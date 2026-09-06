@@ -121,7 +121,7 @@ class BugReportViewTest(TestCase):
 
     def test_bug_detail_view_user_cannot_access_others(self):
         """Test that users cannot view other users' bug reports."""
-        other_user = User.objects.create_user(
+        User.objects.create_user(
             username="otheruser", email="other@example.com", password="otherpass123"
         )
 

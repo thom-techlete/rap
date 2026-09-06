@@ -74,7 +74,7 @@
                 <div class="text-center">
                     <h2 class="text-primary mb-1">{{ present_count }}/{{ total_players }}</h2>
                     <p class="text-secondary mb-3">Aanwezig</p>
-                    
+
                     <div class="row text-center">
                         <div class="col-4">
                             <div class="text-success font-semibold">{{ present_count }}</div>
@@ -169,37 +169,37 @@
                             <td class="text-center">
                                 <div class="attendance-buttons">
                                     <div class="btn-group" role="group">
-                                        <input type="radio" 
-                                               id="present_{{ pa.player.id }}" 
-                                               name="attendance_{{ pa.player.id }}" 
-                                               value="present" 
+                                        <input type="radio"
+                                               id="present_{{ pa.player.id }}"
+                                               name="attendance_{{ pa.player.id }}"
+                                               value="present"
                                                class="btn-check"
                                                {% if pa.present == True %}checked{% endif %}>
-                                        <label for="present_{{ pa.player.id }}" 
+                                        <label for="present_{{ pa.player.id }}"
                                                class="btn btn-sm btn-outline-success">
                                             <i data-feather="check"></i>
                                             <span class="hide-mobile">Aanwezig</span>
                                         </label>
-                                        
-                                        <input type="radio" 
-                                               id="absent_{{ pa.player.id }}" 
-                                               name="attendance_{{ pa.player.id }}" 
-                                               value="absent" 
+
+                                        <input type="radio"
+                                               id="absent_{{ pa.player.id }}"
+                                               name="attendance_{{ pa.player.id }}"
+                                               value="absent"
                                                class="btn-check"
                                                {% if pa.present == False %}checked{% endif %}>
-                                        <label for="absent_{{ pa.player.id }}" 
+                                        <label for="absent_{{ pa.player.id }}"
                                                class="btn btn-sm btn-outline-danger">
                                             <i data-feather="x"></i>
                                             <span class="hide-mobile">Afwezig</span>
                                         </label>
-                                        
-                                        <input type="radio" 
-                                               id="none_{{ pa.player.id }}" 
-                                               name="attendance_{{ pa.player.id }}" 
-                                               value="" 
+
+                                        <input type="radio"
+                                               id="none_{{ pa.player.id }}"
+                                               name="attendance_{{ pa.player.id }}"
+                                               value=""
                                                class="btn-check"
                                                {% if pa.present == None %}checked{% endif %}>
-                                        <label for="none_{{ pa.player.id }}" 
+                                        <label for="none_{{ pa.player.id }}"
                                                class="btn btn-sm btn-outline-secondary">
                                             <i data-feather="minus"></i>
                                             <span class="hide-mobile">Wissen</span>

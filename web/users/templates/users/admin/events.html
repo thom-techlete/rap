@@ -35,8 +35,8 @@
         <form method="get" class="row g-3">
             <div class="col-md-3">
                 <label for="search" class="form-label">Zoeken</label>
-                <input type="text" id="search" name="search" class="form-input" 
-                       placeholder="Zoek evenementen..." 
+                <input type="text" id="search" name="search" class="form-input"
+                       placeholder="Zoek evenementen..."
                        value="{{ search }}">
             </div>
             <div class="col-md-3">
@@ -125,17 +125,17 @@
                             </td>
                             <td>
                                 <div class="d-flex gap-2">
-                                    <a href="{% url 'events:admin_attendance' event.pk %}" 
+                                    <a href="{% url 'events:admin_attendance' event.pk %}"
                                        class="btn btn-sm btn-ghost"
                                        title="Beheer Aanwezigheid">
                                         <i data-feather="users"></i>
                                     </a>
-                                    <a href="{% url 'events:edit' event.pk %}" 
+                                    <a href="{% url 'events:edit' event.pk %}"
                                        class="btn btn-sm btn-secondary"
                                        title="Bewerk Evenement">
                                         <i data-feather="edit"></i>
                                     </a>
-                                    <a href="{% url 'events:delete' event.pk %}" 
+                                    <a href="{% url 'events:delete' event.pk %}"
                                        class="btn btn-sm btn-outline-danger"
                                        title="Verwijder Evenement">
                                         <i data-feather="trash-2"></i>
@@ -196,11 +196,11 @@
     .card-content .row .col-md-2 {
         margin-bottom: 1rem;
     }
-    
+
     .d-flex.gap-2 {
         flex-direction: column;
     }
-    
+
     .d-flex.gap-2 .btn {
         width: 100%;
         justify-content: center;

@@ -14,15 +14,15 @@ Een moderne web-applicatie voor het beheren van aanwezigheid bij evenementen van
 
 ## ✨ Belangrijkste Functies
 
-🔐 **Gebruikersbeheer** - Veilige authenticatie met rollen (spelers, coaches, invaller)  
-📅 **Evenementenbeheer** - Maak en beheer trainingen, wedstrijden en toernooien  
-✅ **Aanwezigheidsregistratie** - Markeer aanwezigheid met volledige geschiedenis  
-🔄 **Terugkerende Evenementen** - Ondersteuning voor wekelijkse trainingen  
-📧 **Email Notificaties** - Automatische herinneringen en updates (Brevo SMTP)  
-📊 **Statistieken & Analytics** - Uitgebreide aanwezigheidsstatistieken  
-📱 **Mobiel Responsive** - Modern ontwerp geoptimaliseerd voor alle apparaten  
-📅 **Kalender Export** - ICS export voor kalender-apps  
-🚀 **CI/CD Pipeline** - Geautomatiseerde tests en deployment  
+🔐 **Gebruikersbeheer** - Veilige authenticatie met rollen (spelers, coaches, invaller)
+📅 **Evenementenbeheer** - Maak en beheer trainingen, wedstrijden en toernooien
+✅ **Aanwezigheidsregistratie** - Markeer aanwezigheid met volledige geschiedenis
+🔄 **Terugkerende Evenementen** - Ondersteuning voor wekelijkse trainingen
+📧 **Email Notificaties** - Automatische herinneringen en updates (Brevo SMTP)
+📊 **Statistieken & Analytics** - Uitgebreide aanwezigheidsstatistieken
+📱 **Mobiel Responsive** - Modern ontwerp geoptimaliseerd voor alle apparaten
+📅 **Kalender Export** - ICS export voor kalender-apps
+🚀 **CI/CD Pipeline** - Geautomatiseerde tests en deployment
 
 ## 🚀 Quick Start
 
@@ -429,6 +429,6 @@ Dit project is gelicenseerd onder de MIT License - zie het LICENSE bestand voor 
 
 ---
 
-**⚽ Klaar om te voetballen met moderne technologie!** 
+**⚽ Klaar om te voetballen met moderne technologie!**
 
 Voor meer informatie of ondersteuning, neem contact op met het SV Rap 8 ontwikkelteam.

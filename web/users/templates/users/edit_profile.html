@@ -43,11 +43,11 @@
                     Persoonlijke gegevens
                 </h2>
             </div>
-            
+
             <div class="card-body">
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
-                    
+
                     <div class="row g-3">
                         <!-- First Name -->
                         <div class="col-md-6">
@@ -64,7 +64,7 @@
                                 </div>
                             {% endif %}
                         </div>
-                        
+
                         <!-- Last Name -->
                         <div class="col-md-6">
                             <label for="{{ form.last_name.id_for_label }}" class="form-label fw-medium">
@@ -80,7 +80,7 @@
                                 </div>
                             {% endif %}
                         </div>
-                        
+
                         <!-- Email -->
                         <div class="col-12">
                             <label for="{{ form.email.id_for_label }}" class="form-label fw-medium">
@@ -96,7 +96,7 @@
                                 </div>
                             {% endif %}
                         </div>
-                        
+
                         <!-- Phone Number -->
                         <div class="col-md-6">
                             <label for="{{ form.telefoonnummer.id_for_label }}" class="form-label fw-medium">
@@ -112,7 +112,7 @@
                                 </div>
                             {% endif %}
                         </div>
-                        
+
                         <!-- Birth Date -->
                         <div class="col-md-6">
                             <label for="{{ form.geboortedatum.id_for_label }}" class="form-label fw-medium">
@@ -133,12 +133,12 @@
                                 </div>
                             {% endif %}
                         </div>
-                        
+
                         <!-- Address Fields -->
                         <div class="col-12">
                             <h6 class="fw-semibold text-muted mb-3 mt-2">Adresgegevens</h6>
                         </div>
-                        
+
                         <!-- Street -->
                         <div class="col-md-6">
                             <label for="{{ form.straat.id_for_label }}" class="form-label fw-medium">
@@ -151,7 +151,7 @@
                                 </div>
                             {% endif %}
                         </div>
-                        
+
                         <!-- House Number -->
                         <div class="col-md-3">
                             <label for="{{ form.huisnummer.id_for_label }}" class="form-label fw-medium">
@@ -164,7 +164,7 @@
                                 </div>
                             {% endif %}
                         </div>
-                        
+
                         <!-- Addition -->
                         <div class="col-md-3">
                             <label for="{{ form.toevoeging.id_for_label }}" class="form-label fw-medium">
@@ -180,7 +180,7 @@
                                 </div>
                             {% endif %}
                         </div>
-                        
+
                         <!-- Postal Code -->
                         <div class="col-md-4">
                             <label for="{{ form.postcode.id_for_label }}" class="form-label fw-medium">
@@ -196,7 +196,7 @@
                                 </div>
                             {% endif %}
                         </div>
-                        
+
                         <!-- City -->
                         <div class="col-md-8">
                             <label for="{{ form.plaats.id_for_label }}" class="form-label fw-medium">
@@ -209,17 +209,17 @@
                                 </div>
                             {% endif %}
                         </div>
-                        
+
                         <!-- Profile Photo -->
                         <div class="col-12">
                             <label for="{{ form.foto.id_for_label }}" class="form-label fw-medium">
                                 {{ form.foto.label }}
                             </label>
-                            
+
                             {% if user.foto %}
                                 <div class="mb-3">
                                     <div class="d-flex align-items-center gap-3">
-                                        <img src="{{ user.foto.url }}" 
+                                        <img src="{{ user.foto.url }}"
                                              alt="Huidige profielfoto"
                                              class="rounded-circle"
                                              style="width: 64px; height: 64px; object-fit: cover;">
@@ -231,7 +231,7 @@
                                     </div>
                                 </div>
                             {% endif %}
-                            
+
                             {{ form.foto }}
                             {% if form.foto.help_text %}
                                 <div class="form-text">{{ form.foto.help_text }}</div>
@@ -243,7 +243,7 @@
                             {% endif %}
                         </div>
                     </div>
-                    
+
                     <!-- Restricted Fields Notice -->
                     <div class="alert alert-info mt-4">
                         <div class="d-flex align-items-start">
@@ -252,16 +252,16 @@
                                 <strong>Let op:</strong> Je positie en rugnummer kunnen alleen door een beheerder worden gewijzigd.
                                 <br>
                                 <small class="text-muted">
-                                    Huidig: 
+                                    Huidig:
                                     {% if user.positie %}{{ user.positie }}{% else %}Geen positie ingesteld{% endif %}
                                     {% if user.rugnummer %} • Rugnummer {{ user.rugnummer }}{% endif %}
                                 </small>
                             </div>
                         </div>
                     </div>
-                    
+
                     <hr class="my-4">
-                    
+
                     <!-- Form Actions -->
                     <div class="d-flex gap-2 flex-wrap">
                         <button type="submit" class="btn btn-primary">
@@ -286,7 +286,7 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    
+
     // Initialize the datepicker for birthday field
     const birthdateField = document.getElementById('{{ form.geboortedatum.id_for_label }}');
     if (birthdateField) {
@@ -312,40 +312,40 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
-        
+
         // Add input validation for manual entry
         birthdateField.addEventListener('input', function(e) {
             let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
             let formatted = '';
-            
+
             if (value.length >= 2) {
                 formatted += value.substr(0, 2) + '/';
             } else {
                 formatted += value;
             }
-            
+
             if (value.length >= 4) {
                 formatted += value.substr(2, 2) + '/';
             } else if (value.length >= 2) {
                 formatted += value.substr(2);
             }
-            
+
             if (value.length >= 8) {
                 formatted += value.substr(4, 4);
             } else if (value.length >= 4) {
                 formatted += value.substr(4);
             }
-            
+
             // Limit to dd/mm/yyyy format
             if (formatted.length > 10) {
                 formatted = formatted.substring(0, 10);
             }
-            
+
             // Only update if the formatted value is different
             if (formatted !== e.target.value) {
                 const cursorPos = e.target.selectionStart;
                 e.target.value = formatted;
-                
+
                 // Restore cursor position
                 let newPos = cursorPos;
                 if (formatted.length > e.target.value.length) {
@@ -354,7 +354,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.target.setSelectionRange(newPos, newPos);
             }
         });
-        
+
         // Add pattern validation
         birthdateField.setAttribute('pattern', '\\d{2}/\\d{2}/\\d{4}');
         birthdateField.setAttribute('title', 'Voer een geldige datum in (dd/mm/jjjj)');

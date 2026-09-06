@@ -53,10 +53,10 @@
                             <span class="input-group-text bg-transparent">
                                 <i data-feather="search"></i>
                             </span>
-                            <input type="text" 
-                                   class="form-control border-start-0" 
-                                   name="search" 
-                                   value="{{ search_query }}" 
+                            <input type="text"
+                                   class="form-control border-start-0"
+                                   name="search"
+                                   value="{{ search_query }}"
                                    placeholder="Zoek wedstrijden..."
                                    style="box-shadow: none;">
                         </div>
@@ -92,7 +92,7 @@
         </h3>
         <span class="badge bg-primary ms-2">{{ upcoming_events|length }}</span>
     </div>
-    
+
     {% if upcoming_events %}
         <div class="row">
             {% for event in upcoming_events %}
@@ -121,7 +121,7 @@
         </h3>
         <span class="badge bg-secondary ms-2">{{ past_events|length }}</span>
     </div>
-    
+
     {% if past_events %}
         <div class="row">
             {% for event in past_events %}
@@ -148,26 +148,26 @@
     .card {
         transition: all 0.2s ease-in-out;
     }
-    
+
     .card:hover {
         transform: translateY(-2px);
         box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12) !important;
     }
-    
+
     .input-group-text {
         border-right: none;
     }
-    
+
     .form-control.border-start-0 {
         border-left: none;
     }
-    
+
     .form-control:focus,
     .form-select:focus {
         border-color: #3b82f6;
         box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
     }
-    
+
     .badge {
         font-size: 0.75rem;
         padding: 0.35em 0.65em;
@@ -176,7 +176,7 @@
     .btn {
         transition: all 0.2s ease-in-out;
     }
-    
+
     .btn:hover {
         transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -194,7 +194,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('filter-form').submit();
         });
     });
-    
+
     // Initialize Feather icons
     if (typeof feather !== 'undefined') {
         feather.replace();

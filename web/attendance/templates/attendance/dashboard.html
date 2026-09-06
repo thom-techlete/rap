@@ -110,7 +110,7 @@
                         </div>
                     </div>
                     {% endif %}
-                    
+
                     <div class="pt-3" style="border-top: 1px solid #e5e7eb;">
                         <p class="small mb-0" style="color: #9ca3af;">
                             Aanwezigheidspercentage gebaseerd op afgelopen evenementen. Geen reactie telt als afwezig.
@@ -120,7 +120,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="col-lg-6">
         <div class="card h-100 border-0 shadow-sm">
             <div class="card-header bg-transparent border-0">
@@ -137,14 +137,14 @@
                             <span class="small" style="color: #6b7280;">{{ attendance_rate }}%</span>
                         </div>
                         <div class="progress" style="height: 8px; background-color: #f3f4f6;">
-                            <div class="progress-bar" role="progressbar" 
-                                 style="width: {{ attendance_rate|floatformat:0 }}%; background: linear-gradient(90deg, #60a5fa 0%, #3b82f6 100%);" 
-                                 aria-valuenow="{{ attendance_rate|floatformat:0 }}" 
-                                 aria-valuemin="0" 
+                            <div class="progress-bar" role="progressbar"
+                                 style="width: {{ attendance_rate|floatformat:0 }}%; background: linear-gradient(90deg, #60a5fa 0%, #3b82f6 100%);"
+                                 aria-valuenow="{{ attendance_rate|floatformat:0 }}"
+                                 aria-valuemin="0"
                                  aria-valuemax="100"></div>
                         </div>
                     </div>
-                    
+
                     {% if attendance_rate < 90 %}
                     <div class="small" style="color: #6b7280;">
                         <p class="mb-0">Nog {{ remaining_to_goal }}% te gaan om je doel te bereiken!</p>
@@ -168,7 +168,7 @@
             Recente Aanwezigheid
         </h2>
     </div>
-    
+
     <div class="card-body p-0">
         {% if attendances %}
         <div class="table-responsive">

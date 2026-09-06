@@ -1,4 +1,4 @@
-from .settings import *
+from .settings import *  # noqa: F403
 
 # Override database settings for testing
 DATABASES = {

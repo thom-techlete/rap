@@ -115,10 +115,10 @@ class VoteForm(forms.Form):
 
         # Validate option IDs belong to this poll
         if self.poll.allow_multiple_choices:
-            valid_option_ids = set(
+            valid_option_ids = {
                 str(option_id)
                 for option_id in self.poll.options.values_list("id", flat=True)
-            )
+            }
             if not set(options).issubset(valid_option_ids):
                 raise forms.ValidationError("Ongeldige opties geselecteerd.")
         else:

@@ -15,7 +15,7 @@
             <li class="breadcrumb-item active">{{ poll.title }}</li>
           </ol>
         </nav>
-        
+
         <div class="d-flex justify-content-between align-items-start">
           <div>
             <div class="d-flex align-items-center gap-3 mb-2">
@@ -46,7 +46,7 @@
               {% endif %}
             </div>
           </div>
-          
+
           {% if user.is_staff %}
             <div class="dropdown">
               <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
@@ -100,13 +100,13 @@
                   {% for result in results %}
                     <div class="form-check mb-3">
                       {% if poll.allow_multiple_choices %}
-                        <input class="form-check-input" type="checkbox" 
-                               name="options" value="{{ result.option.id }}" 
+                        <input class="form-check-input" type="checkbox"
+                               name="options" value="{{ result.option.id }}"
                                id="option_{{ result.option.id }}"
                                {% if result.option.id in user_votes %}checked{% endif %}>
                       {% else %}
-                        <input class="form-check-input" type="radio" 
-                               name="options" value="{{ result.option.id }}" 
+                        <input class="form-check-input" type="radio"
+                               name="options" value="{{ result.option.id }}"
                                id="option_{{ result.option.id }}"
                                {% if result.option.id in user_votes %}checked{% endif %}>
                       {% endif %}
@@ -116,7 +116,7 @@
                     </div>
                   {% endfor %}
                 </div>
-                
+
                 <div class="d-flex gap-2 mt-4">
                   <button type="submit" class="btn btn-primary">
                     <i data-feather="check" class="me-2"></i>Stem verzenden
@@ -199,31 +199,31 @@
   <script>
     let pollId = {{ poll.pk }};
     let updateInterval;
-    
+
     document.addEventListener('DOMContentLoaded', function() {
       // Handle vote form submission
       const voteForm = document.getElementById('vote-form');
       if (voteForm) {
         voteForm.addEventListener('submit', handleVoteSubmission);
       }
-      
+
       // Start real-time updates if poll is open
       {% if poll.is_open %}
         startRealTimeUpdates();
       {% endif %}
     });
-    
+
     async function handleVoteSubmission(event) {
       event.preventDefault();
-      
+
       const formData = new FormData(event.target);
       const options = formData.getAll('options');
-      
+
       if (options.length === 0) {
         showNotification('Selecteer minimaal één optie', 'warning');
         return;
       }
-      
+
       try {
         const response = await fetch(`/polls/${pollId}/vote/`, {
           method: 'POST',
@@ -235,9 +235,9 @@
             option_ids: options.map(id => parseInt(id))
           })
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
           showNotification(data.message, 'success');
           updateResults(data);
@@ -248,7 +248,7 @@
         showNotification('Er is een fout opgetreden', 'error');
       }
     }
-    
+
     function clearVote() {
       if (confirm('Weet je zeker dat je je stem wilt intrekken?')) {
         document.querySelectorAll('input[name="options"]').forEach(input => {
@@ -257,17 +257,17 @@
         document.getElementById('vote-form').dispatchEvent(new Event('submit'));
       }
     }
-    
+
     function startRealTimeUpdates() {
       updateInterval = setInterval(fetchResults, 5000); // Update every 5 seconds
     }
-    
+
     async function fetchResults() {
       try {
         const response = await fetch(`/polls/${pollId}/results/`);
         const data = await response.json();
         updateResults(data);
-        
+
         // Stop updates if poll is closed
         if (!data.is_open && updateInterval) {
           clearInterval(updateInterval);
@@ -277,36 +277,36 @@
         console.error('Failed to fetch results:', error);
       }
     }
-    
+
     function updateResults(data) {
       // Update statistics
       document.getElementById('total-votes').textContent = data.total_votes;
       document.getElementById('unique-voters').textContent = data.unique_voters;
-      
+
       // Update result bars
       data.results.forEach(result => {
         const bar = document.getElementById(`result-bar-${result.option_id}`);
         const count = document.getElementById(`result-count-${result.option_id}`);
         const percentage = document.getElementById(`result-percentage-${result.option_id}`);
-        
+
         if (bar && count && percentage) {
           bar.style.width = `${result.percentage}%`;
           count.textContent = result.vote_count;
           percentage.textContent = `${result.percentage}%`;
         }
       });
-      
+
       // Update last updated time
       document.getElementById('last-updated').textContent = '(zojuist bijgewerkt)';
       setTimeout(() => {
         document.getElementById('last-updated').textContent = '';
       }, 2000);
     }
-    
+
     function getCsrfToken() {
       return document.querySelector('[name=csrfmiddlewaretoken]').value;
     }
-    
+
     function showNotification(message, type) {
       // Reuse existing notification system
       if (window.showNotification) {

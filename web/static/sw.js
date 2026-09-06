@@ -25,7 +25,7 @@ const STATIC_CACHE_URLS = [
 // Install event - cache resources
 self.addEventListener('install', (event) => {
   console.log('Service Worker: Installing...');
-  
+
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
@@ -45,7 +45,7 @@ self.addEventListener('install', (event) => {
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
   console.log('Service Worker: Activating...');
-  
+
   event.waitUntil(
     caches.keys()
       .then((cacheNames) => {
@@ -109,7 +109,7 @@ self.addEventListener('fetch', (event) => {
             if (event.request.mode === 'navigate') {
               return caches.match(OFFLINE_URL);
             }
-            
+
             // Return a simple offline response for other requests
             return new Response('Offline - Deze inhoud is niet beschikbaar', {
               status: 503,
@@ -200,7 +200,7 @@ self.addEventListener('notificationclick', (event) => {
 // Background sync event (for future use)
 self.addEventListener('sync', (event) => {
   console.log('Service Worker: Background sync event', event.tag);
-  
+
   if (event.tag === 'background-sync') {
     // Handle background sync tasks
     // This could be used for syncing attendance when back online

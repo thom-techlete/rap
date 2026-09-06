@@ -33,7 +33,7 @@
                   {% endfor %}
                 </select>
               </div>
-              
+
               <div class="col-md-3">
                 <label for="priority" class="form-label">Prioriteit</label>
                 <select name="priority" id="priority" class="form-select">
@@ -43,13 +43,13 @@
                   {% endfor %}
                 </select>
               </div>
-              
+
               <div class="col-md-4">
                 <label for="search" class="form-label">Zoeken</label>
-                <input type="text" name="q" id="search" class="form-control" 
+                <input type="text" name="q" id="search" class="form-control"
                        value="{{ search_query }}" placeholder="Zoek op titel, beschrijving of gebruiker...">
               </div>
-              
+
               <div class="col-md-2">
                 <label class="form-label">&nbsp;</label>
                 <div class="d-grid">
@@ -119,15 +119,15 @@
                     </td>
                     <td>
                       <div class="btn-group" role="group">
-                        <a href="{% url 'help:admin_bug_detail' bug_report.pk %}" 
+                        <a href="{% url 'help:admin_bug_detail' bug_report.pk %}"
                            class="btn btn-sm btn-outline-primary" title="Bekijken/bewerken">
                           <i data-feather="edit" class="small"></i>
                         </a>
                         {% if bug_report.status == 'open' or bug_report.status == 'in_progress' %}
                           <form method="post" action="{% url 'help:admin_bug_mark_resolved' bug_report.pk %}" class="d-inline">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-outline-success" 
-                                    title="Markeren als opgelost" 
+                            <button type="submit" class="btn btn-sm btn-outline-success"
+                                    title="Markeren als opgelost"
                                     onclick="return confirm('Weet je zeker dat je dit bug rapport als opgelost wilt markeren?')">
                               <i data-feather="check" class="small"></i>
                             </button>
@@ -152,7 +152,7 @@
                 <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_priority %}&priority={{ current_priority }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">Vorige</a>
               </li>
             {% endif %}
-            
+
             {% for page_num in page_obj.paginator.page_range %}
               {% if page_num == page_obj.number %}
                 <li class="page-item active">
@@ -164,7 +164,7 @@
                 </li>
               {% endif %}
             {% endfor %}
-            
+
             {% if page_obj.has_next %}
               <li class="page-item">
                 <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_priority %}&priority={{ current_priority }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">Volgende</a>

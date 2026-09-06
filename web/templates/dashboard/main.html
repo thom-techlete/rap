@@ -328,7 +328,7 @@
                 </div>
               </div>
             {% endfor %}
-            
+
             {% if active_polls|length == 3 %}
               <div class="text-center mt-2">
                 <a href="{% url 'polls:list' %}" class="btn btn-sm btn-link">Bekijk alle polls →</a>
@@ -352,7 +352,7 @@
               <div class="d-flex align-items-center justify-content-between {% if not forloop.last %}mb-3{% endif %}">
                 <div class="d-flex align-items-center">
                   <div class="rounded-circle me-2"
-                    style="width: 0.75rem; height: 0.75rem; 
+                    style="width: 0.75rem; height: 0.75rem;
                                     background: {% if stat.event_type == 'training' %}
                       #3b82f6
                     {% elif stat.event_type == 'wedstrijd' %}
@@ -501,7 +501,7 @@
                 <div class="flex-shrink-0 me-3">
                   <div class="position-relative">
                     <!-- Ranking position badge -->
-                    <div 
+                    <div
                       class="position-absolute top-0 start-0 translate-middle rounded-circle d-flex align-items-center justify-content-center"
                       style="width: 1.5rem; height: 1.5rem; background: {% if ranking.position == 1 %}#fbbf24{% elif ranking.position == 2 %}#9ca3af{% elif ranking.position == 3 %}#cd7c2f{% else %}#e5e7eb{% endif %}; color: {% if ranking.position <= 3 %}white{% else %}#6b7280{% endif %}; font-size: 0.75rem; font-weight: 600; z-index: 10;"
                     >
@@ -526,7 +526,7 @@
                   <div class="d-flex align-items-center">
                     <div class="progress flex-grow-1 me-2" style="height: 4px;">
                       <div class="progress-bar"
-                        style="width: {{ ranking.attendance_rate|floatformat:0 }}%; 
+                        style="width: {{ ranking.attendance_rate|floatformat:0 }}%;
                                                 background: {% if ranking.attendance_rate >= 80 %}
                           #10b981
                         {% elif ranking.attendance_rate >= 60 %}
@@ -569,11 +569,11 @@
       padding: 0.75rem;
       margin: -0.75rem;
     }
-    
+
     .bg-success-subtle {
       background-color: #dcfce7 !important;
     }
-    
+
     .bg-danger-subtle {
       background-color: #fee2e2 !important;
     }

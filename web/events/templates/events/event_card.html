@@ -89,7 +89,7 @@
               {% comment %} <li>
                 <form method="post" action="{% url 'notifications:send_event_notification' event.id %}" style="margin: 0;">
                   {% csrf_token %}
-                  <button type="submit" class="dropdown-item d-flex align-items-center gap-2 text-primary" 
+                  <button type="submit" class="dropdown-item d-flex align-items-center gap-2 text-primary"
                           onclick="return confirm('Weet je zeker dat je een nieuwe evenement notificatie wilt verzenden naar alle actieve spelers?')">
                     <i data-feather="mail" style="width: 1rem; height: 1rem;"></i>
                     Verzend evenement notificatie
@@ -99,7 +99,7 @@
               <li>
                 <form method="post" action="{% url 'notifications:send_event_reminder' event.id %}" style="margin: 0;">
                   {% csrf_token %}
-                  <button type="submit" class="dropdown-item d-flex align-items-center gap-2 text-warning" 
+                  <button type="submit" class="dropdown-item d-flex align-items-center gap-2 text-warning"
                           onclick="return confirm('Weet je zeker dat je een herinnering wilt verzenden naar spelers die nog niet hebben gereageerd?')">
                     <i data-feather="bell" style="width: 1rem; height: 1rem;"></i>
                     Verzend herinnering
@@ -141,7 +141,7 @@
           <span id="attendance-count-{{ event.id }}">{{ event|attendance_count }}</span>
           <span>aangemeld</span>
         </div>
-        
+
         <!-- Recurring event indicator -->
         {% if event.is_recurring %}
         <div class="d-flex align-items-center gap-2 small" style="color: #7c3aed;">

@@ -254,7 +254,7 @@ class InvallerTestCase(TestCase):
     def test_invaller_event_access_restrictions(self):
         """Test that invallers can only access matches"""
         # Create invaller user
-        invaller = User.objects.create_user(
+        User.objects.create_user(
             username="testinvaller",
             email="invaller@example.com",
             password="testpass123",
@@ -303,7 +303,7 @@ class InvallerTestCase(TestCase):
     def test_regular_player_cannot_access_invaller_matches(self):
         """Test that regular players cannot access invaller matches page"""
         # Create regular player
-        player = User.objects.create_user(
+        User.objects.create_user(
             username="testplayer",
             email="player@example.com",
             password="testpass123",

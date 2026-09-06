@@ -157,7 +157,7 @@ LOGGING = {
         "security_file": {
             "level": "WARNING",
             "class": "logging.handlers.RotatingFileHandler",
-            "filename": "/tmp/rap_security.log",
+            "filename": "rap_security.log",
             "maxBytes": 1024 * 1024 * 10,  # 10MB
             "backupCount": 5,
             "formatter": "security",

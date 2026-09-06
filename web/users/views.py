@@ -466,7 +466,7 @@ def admin_bulk_edit_positions(request: HttpRequest):
             forms_data.append(form_data)
 
         # Validate jersey number uniqueness
-        used_numbers = {}
+        used_numbers: dict[int, Player] = {}
         errors = {}
 
         for _i, (player, form_data) in enumerate(

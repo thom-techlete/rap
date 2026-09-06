@@ -158,19 +158,19 @@
     .analytics-title {
         font-size: 2rem;
     }
-    
+
     .chart-container {
         height: 300px;
     }
-    
+
     .chart-container.large {
         height: 400px;
     }
-    
+
     .stats-grid {
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     }
-    
+
     .top-performers {
         grid-template-columns: 1fr;
     }
@@ -223,7 +223,7 @@
             <i data-feather="calendar"></i>
             Evenement Analyse
         </h2>
-        
+
         <div class="row">
             <div class="col-lg-6">
                 <h3>Event Types Verdeling</h3>
@@ -238,7 +238,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="row mt-4">
             <div class="col-12">
                 <h3>Evenementen Over Tijd (Maandelijks)</h3>
@@ -255,7 +255,7 @@
             <i data-feather="users"></i>
             Aanwezigheid Analyse
         </h2>
-        
+
         <div class="row">
             <div class="col-lg-6">
                 <h3>Aanwezigheid per Event Type</h3>
@@ -270,7 +270,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="row mt-4">
             <div class="col-12">
                 <h3>Aanwezigheidspercentage Over Tijd</h3>
@@ -288,7 +288,7 @@
             <i data-feather="award"></i>
             Wedstrijd Statistieken
         </h2>
-        
+
         <div class="row">
             <div class="col-lg-6">
                 <h3>Statistieken Verdeling</h3>
@@ -303,7 +303,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Top Performers -->
         <div class="top-performers mt-4">
             <div class="performer-list">
@@ -323,7 +323,7 @@
                 <p class="text-muted">Geen data beschikbaar</p>
                 {% endfor %}
             </div>
-            
+
             <div class="performer-list">
                 <h4>Top Assistgevers</h4>
                 {% for player in match_analytics.top_performers.assisters|slice:":5" %}
@@ -341,7 +341,7 @@
                 <p class="text-muted">Geen data beschikbaar</p>
                 {% endfor %}
             </div>
-            
+
             <div class="performer-list">
                 <h4>Meeste Kaarten</h4>
                 {% for player in match_analytics.top_performers.most_cards|slice:":5" %}
@@ -369,7 +369,7 @@
             <i data-feather="clock"></i>
             Reactietijd Analyse
         </h2>
-        
+
         <div class="response-time-grid">
             <div class="response-time-card">
                 <div class="response-time-value">{{ response_time_analytics.response_categories.immediate }}</div>
@@ -392,7 +392,7 @@
                 <div class="response-time-label">Laat (&gt;2d)</div>
             </div>
         </div>
-        
+
         <div class="row mt-4">
             <div class="col-12">
                 <h3>Reactietijd Verdeling</h3>
@@ -409,7 +409,7 @@
             <i data-feather="user"></i>
             Speler Analyse
         </h2>
-        
+
         <div class="row">
             <div class="col-lg-6">
                 <h3>Top 10 Aanwezigheidspercentages</h3>

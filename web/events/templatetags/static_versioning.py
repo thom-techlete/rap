@@ -4,7 +4,7 @@ import os
 from django import template
 from django.conf import settings
 from django.templatetags.static import static
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html, format_html_join
 
 register = template.Library()
 
@@ -62,13 +62,15 @@ def static_v(path):
 
         # Create a hash based on mtime and size for shorter version string
         version_string = f"{mtime}-{size}"
-        version_hash = hashlib.md5(version_string.encode()).hexdigest()[:8]
+        version_hash = hashlib.md5(
+            version_string.encode(), usedforsecurity=False
+        ).hexdigest()[:8]
 
         # Add version parameter to URL
         separator = "&" if "?" in static_url else "?"
         versioned_url = f"{static_url}{separator}v={version_hash}"
 
-        return mark_safe(versioned_url)
+        return versioned_url
     except OSError:
         # Error accessing file, return original URL
         return static_url
@@ -83,7 +85,7 @@ def static_v_css(path):
     Result: <link rel="stylesheet" href="/static/css/style.css?v=abc123def456" />
     """
     versioned_url = static_v(path)
-    return mark_safe(f'<link rel="stylesheet" href="{versioned_url}" />')
+    return format_html('<link rel="stylesheet" href="{}" />', versioned_url)
 
 
 @register.simple_tag
@@ -95,7 +97,7 @@ def static_v_js(path):
     Result: <script src="/static/js/app.js?v=abc123def456"></script>
     """
     versioned_url = static_v(path)
-    return mark_safe(f'<script src="{versioned_url}"></script>')
+    return format_html('<script src="{}"></script>', versioned_url)
 
 
 @register.simple_tag
@@ -109,19 +111,19 @@ def static_v_img(path, alt_text="", css_class="", **attrs):
     versioned_url = static_v(path)
 
     # Build attributes string
-    attr_parts = []
+    attr_parts: list[tuple[str, object]] = []
     if alt_text:
-        attr_parts.append(f'alt="{alt_text}"')
+        attr_parts.append(("alt", alt_text))
     if css_class:
-        attr_parts.append(f'class="{css_class}"')
+        attr_parts.append(("class", css_class))
 
     # Add any additional attributes
     for key, value in attrs.items():
-        attr_parts.append(f'{key}="{value}"')
+        attr_parts.append((key, value))
 
-    attrs_string = " " + " ".join(attr_parts) if attr_parts else ""
+    attrs_string = format_html_join("", ' {}="{}"', attr_parts)
 
-    return mark_safe(f'<img src="{versioned_url}"{attrs_string} />')
+    return format_html('<img src="{}"{} />', versioned_url, attrs_string)
 
 
 @register.simple_tag
@@ -135,10 +137,10 @@ def static_v_link(path, rel="stylesheet", **attrs):
     versioned_url = static_v(path)
 
     # Build attributes string
-    attr_parts = [f'rel="{rel}"']
+    attr_parts: list[tuple[str, object]] = [("rel", rel)]
     for key, value in attrs.items():
-        attr_parts.append(f'{key}="{value}"')
+        attr_parts.append((key, value))
 
-    attrs_string = " ".join(attr_parts)
+    attrs_string = format_html_join("", ' {}="{}"', attr_parts)
 
-    return mark_safe(f'<link {attrs_string} href="{versioned_url}" />')
+    return format_html('<link{} href="{}" />', attrs_string, versioned_url)

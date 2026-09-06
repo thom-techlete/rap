@@ -273,7 +273,7 @@ LOGGING = {
             "filename": (
                 "/app/logs/rap_web.log"
                 if "/app" in str(BASE_DIR)
-                else "/tmp/rap_web.log"
+                else str(BASE_DIR / "rap_web.log")
             ),
             "formatter": "verbose",
         },
@@ -283,7 +283,7 @@ LOGGING = {
             "filename": (
                 "/app/logs/rap_security.log"
                 if "/app" in str(BASE_DIR)
-                else "/tmp/rap_security.log"
+                else str(BASE_DIR / "rap_security.log")
             ),
             "formatter": "security",
         },
@@ -446,7 +446,7 @@ CELERY_TASK_SOFT_TIME_LIMIT = 25 * 60  # 25 minutes
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
 # Optional: Set default schedule (will be created in admin if not exists)
-CELERY_BEAT_SCHEDULE = {}
+CELERY_BEAT_SCHEDULE: dict[str, Any] = {}
 
 # =============================================================================
 # PUSH NOTIFICATION SETTINGS (VAPID)

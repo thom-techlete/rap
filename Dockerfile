@@ -10,6 +10,8 @@ ENV PYTHONUNBUFFERED=1
 ENV DJANGO_SETTINGS_MODULE=rap_web.settings
 ENV PATH="/app/.venv/bin:$PATH"
 ENV UV_COMPILE_BYTECODE=1
+ENV UV_LINK_MODE=copy
+ENV PYTHONPATH="/app"
 
 # Set work directory
 WORKDIR /app
@@ -26,7 +28,8 @@ RUN pip install --no-cache-dir "uv==${UV_VERSION}"
 
 # Install Python dependencies from the committed lockfile.
 COPY pyproject.toml uv.lock ./
-RUN uv sync --locked --no-dev --no-install-project
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --no-dev --no-install-project
 
 # Copy entrypoint script
 COPY docker/entrypoint.sh /entrypoint.sh

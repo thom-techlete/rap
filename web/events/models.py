@@ -116,7 +116,7 @@ class Event(models.Model):
         """Get number of attendees marked as present"""
         from attendance.models import Attendance  # Lazy import
 
-        return Attendance.objects.filter(event=self, present=True).count()
+        return int(Attendance.objects.filter(event=self, present=True).count())
 
     def get_total_responses(self):
         """Get total number of attendance responses"""

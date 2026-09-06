@@ -40,7 +40,7 @@
         <div class="mb-4">
           <h6><i data-feather="bell" class="me-2"></i>Push Notificaties</h6>
           <p class="text-muted small">Ontvang meldingen over nieuwe evenementen en updates, zelfs wanneer de app gesloten is.</p>
-          
+
           <div id="push-notification-section">
             <!-- Not Supported -->
             <div id="push-not-supported" style="display: none;">
@@ -116,10 +116,10 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeNotificationSettings() {
   // Check PWA installation status
   checkPWAInstallStatus();
-  
+
   // Check push notification status
   checkPushNotificationStatus();
-  
+
   // Setup event listeners
   setupNotificationEventListeners();
 }
@@ -127,7 +127,7 @@ function initializeNotificationSettings() {
 function checkPWAInstallStatus() {
   // Check if app is running in standalone mode (installed)
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-  
+
   if (isStandalone) {
     document.getElementById('pwa-installed').style.display = 'block';
     document.getElementById('pwa-not-installed').style.display = 'none';
@@ -148,10 +148,10 @@ async function checkPushNotificationStatus() {
     document.getElementById('push-not-supported').style.display = 'block';
     return;
   }
-  
+
   try {
     const isSubscribed = await window.pushNotifications.getSubscriptionStatus();
-    
+
     if (isSubscribed) {
       document.getElementById('push-enabled').style.display = 'block';
     } else {
@@ -170,7 +170,7 @@ function setupNotificationEventListeners() {
     enableBtn.addEventListener('click', async function() {
       this.disabled = true;
       this.innerHTML = '<i data-feather="loader" class="me-1"></i> Bezig...';
-      
+
       try {
         const success = await window.pushNotifications.subscribe();
         if (success) {
@@ -191,14 +191,14 @@ function setupNotificationEventListeners() {
       }
     });
   }
-  
+
   // Disable push notifications
   const disableBtn = document.getElementById('disable-push-btn');
   if (disableBtn) {
     disableBtn.addEventListener('click', async function() {
       this.disabled = true;
       this.innerHTML = '<i data-feather="loader" class="me-1"></i> Bezig...';
-      
+
       try {
         const success = await window.pushNotifications.unsubscribe();
         if (success) {
@@ -219,16 +219,16 @@ function setupNotificationEventListeners() {
       }
     });
   }
-  
+
   // Test push notification
   const testBtn = document.getElementById('test-push-btn');
   if (testBtn) {
     testBtn.addEventListener('click', async function() {
       this.disabled = true;
       this.innerHTML = '<i data-feather="loader" class="me-1"></i> Verzenden...';
-      
+
       await window.pushNotifications.sendTest();
-      
+
       this.disabled = false;
       this.innerHTML = '<i data-feather="send" class="me-1"></i> Test Notificatie Verzenden';
       feather.replace();

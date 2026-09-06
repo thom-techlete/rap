@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle recurrence type selection
     const recurrenceTypeField = document.getElementById(window.recurrenceTypeFieldId);
     const recurrenceEndDateField = document.getElementById('recurrence-end-date-field');
-    
+
     if (recurrenceTypeField && recurrenceEndDateField) {
         function toggleRecurrenceEndDate() {
             const selectedValue = recurrenceTypeField.value;
@@ -23,14 +23,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         }
-        
+
         // Initial state
         toggleRecurrenceEndDate();
-        
+
         // Listen for changes
         recurrenceTypeField.addEventListener('change', toggleRecurrenceEndDate);
     }
-    
+
     // Initialize the datetime picker for event date field
     const dateField = document.getElementById(window.dateFieldId);
     if (dateField && typeof flatpickr !== 'undefined') {
@@ -57,52 +57,52 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
-        
+
         // Add input validation for manual entry
         dateField.addEventListener('input', function(e) {
             let value = e.target.value.replace(/[^\d]/g, ''); // Remove non-digits
             let formatted = '';
-            
+
             if (value.length >= 2) {
                 formatted += value.substr(0, 2) + '/';
             } else {
                 formatted += value;
             }
-            
+
             if (value.length >= 4) {
                 formatted += value.substr(2, 2) + '/';
             } else if (value.length >= 2) {
                 formatted += value.substr(2);
             }
-            
+
             if (value.length >= 8) {
                 formatted += value.substr(4, 4) + ' ';
             } else if (value.length >= 4) {
                 formatted += value.substr(4);
             }
-            
+
             if (value.length >= 10) {
                 formatted += value.substr(8, 2) + ':';
             } else if (value.length >= 8) {
                 formatted += value.substr(8);
             }
-            
+
             if (value.length >= 12) {
                 formatted += value.substr(10, 2);
             } else if (value.length >= 10) {
                 formatted += value.substr(10);
             }
-            
+
             // Limit to dd/mm/yyyy hh:mm format
             if (formatted.length > 16) {
                 formatted = formatted.substring(0, 16);
             }
-            
+
             // Only update if the formatted value is different
             if (formatted !== e.target.value) {
                 const cursorPos = e.target.selectionStart;
                 e.target.value = formatted;
-                
+
                 // Restore cursor position
                 let newPos = cursorPos;
                 if (formatted.length > e.target.value.length) {
@@ -111,12 +111,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.target.setSelectionRange(newPos, newPos);
             }
         });
-        
+
         // Add pattern validation
         dateField.setAttribute('pattern', '\\d{2}/\\d{2}/\\d{4} \\d{2}:\\d{2}');
         dateField.setAttribute('title', 'Voer een geldige datum en tijd in (dd/mm/jjjj hh:mm)');
     }
-    
+
     // Auto-resize textarea
     const descriptionField = document.getElementById(window.descriptionFieldId);
     if (descriptionField) {
@@ -124,23 +124,23 @@ document.addEventListener('DOMContentLoaded', function() {
             this.style.height = 'auto';
             this.style.height = this.scrollHeight + 'px';
         });
-        
+
         // Trigger initial resize
         descriptionField.style.height = 'auto';
         descriptionField.style.height = descriptionField.scrollHeight + 'px';
     }
-    
+
     // Handle recurring event update options
     const updateSingleRadio = document.getElementById('update_single');
     const updateAllRadio = document.getElementById('update_all');
     const recurringOptions = document.getElementById('recurring-update-options');
-    
+
     if (updateSingleRadio && updateAllRadio && recurringOptions) {
         function handleRecurringOptionChange() {
             // Add visual feedback for the selected option
             const singleCheckDiv = updateSingleRadio.closest('.form-check');
             const allCheckDiv = updateAllRadio.closest('.form-check');
-            
+
             if (updateSingleRadio.checked) {
                 singleCheckDiv.classList.add('border', 'border-warning', 'rounded', 'p-2', 'bg-light');
                 allCheckDiv.classList.remove('border', 'border-primary', 'rounded', 'p-2', 'bg-light');
@@ -149,14 +149,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 singleCheckDiv.classList.remove('border', 'border-warning', 'rounded', 'p-2', 'bg-light');
             }
         }
-        
+
         // Initial state
         handleRecurringOptionChange();
-        
+
         // Listen for changes
         updateSingleRadio.addEventListener('change', handleRecurringOptionChange);
         updateAllRadio.addEventListener('change', handleRecurringOptionChange);
-        
+
         // Add confirmation before submitting if updating all events
         const form = document.querySelector('form');
         if (form) {

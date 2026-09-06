@@ -48,21 +48,21 @@ check_root() {
 # Check system requirements
 check_requirements() {
     log_info "Checking system requirements..."
-    
+
     # Check if Docker is installed
     if ! command -v docker &> /dev/null; then
         log_error "Docker is not installed. Please install Docker first."
         echo "Installation guide: https://docs.docker.com/engine/install/"
         exit 1
     fi
-    
+
     # Check if Docker Compose is installed
     if ! command -v docker-compose &> /dev/null; then
         log_error "Docker Compose is not installed. Please install Docker Compose first."
         echo "Installation guide: https://docs.docker.com/compose/install/"
         exit 1
     fi
-    
+
     # Check if user is in docker group
     if ! groups $USER | grep &> /dev/null '\bdocker\b'; then
         log_warning "User is not in docker group. Adding user to docker group..."
@@ -71,20 +71,20 @@ check_requirements() {
         log_warning "Then run this script again."
         exit 1
     fi
-    
+
     log_success "System requirements check passed"
 }
 
 # Setup firewall
 setup_firewall() {
     log_info "Setting up firewall..."
-    
+
     # Install UFW if not present
     if ! command -v ufw &> /dev/null; then
         sudo apt-get update
         sudo apt-get install -y ufw
     fi
-    
+
     # Configure firewall
     sudo ufw --force reset
     sudo ufw default deny incoming
@@ -93,29 +93,29 @@ setup_firewall() {
     sudo ufw allow 80/tcp
     sudo ufw allow 443/tcp
     sudo ufw --force enable
-    
+
     log_success "Firewall configured"
 }
 
 # Create backup
 create_backup() {
     log_info "Creating backup..."
-    
+
     BACKUP_DIR="/opt/rap_backups"
     TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
     BACKUP_FILE="$BACKUP_DIR/rap_backup_$TIMESTAMP.tar.gz"
-    
+
     sudo mkdir -p "$BACKUP_DIR"
-    
+
     # Stop services
     cd "$PROJECT_DIR"
     docker-compose -f "$DOCKER_DIR/docker-compose.prod.yml" stop
-    
+
     # Create database backup
     docker-compose -f "$DOCKER_DIR/docker-compose.prod.yml" up -d db
     sleep 10
     docker-compose -f "$DOCKER_DIR/docker-compose.prod.yml" exec -T db pg_dump -U rap_user rap_db > "$BACKUP_DIR/db_backup_$TIMESTAMP.sql"
-    
+
     # Create full backup
     sudo tar -czf "$BACKUP_FILE" \
         --exclude='*.pyc' \
@@ -124,79 +124,79 @@ create_backup() {
         --exclude='venv' \
         --exclude='node_modules' \
         "$PROJECT_DIR"
-    
+
     log_success "Backup created: $BACKUP_FILE"
 }
 
 # Deploy application
 deploy_application() {
     log_info "Deploying RAP Web Application..."
-    
+
     cd "$PROJECT_DIR"
-    
+
     # Generate production secrets if not exists
     if [[ ! -f "$ENV_FILE" ]]; then
         log_info "Generating production secrets..."
         "$SCRIPT_DIR/generate_secrets.sh" "$DOMAIN_NAME"
     fi
-    
+
     # Pull latest images
     log_info "Pulling latest Docker images..."
     docker-compose -f "$DOCKER_DIR/docker-compose.prod.yml" pull
-    
+
     # Build and start services
     log_info "Building and starting services..."
     docker-compose -f "$DOCKER_DIR/docker-compose.prod.yml" up --build -d
-    
+
     # Wait for database to be ready
     log_info "Waiting for database to be ready..."
     sleep 20
-    
+
     # Run migrations
     log_info "Running database migrations..."
     docker-compose -f "$DOCKER_DIR/docker-compose.prod.yml" exec web python manage.py migrate
-    
+
     # Collect static files
     log_info "Collecting static files..."
     docker-compose -f "$DOCKER_DIR/docker-compose.prod.yml" exec web python manage.py collectstatic --noinput
-    
+
     # Create superuser if needed
     log_info "Creating superuser..."
     echo "Please create a superuser account:"
     docker-compose -f "$DOCKER_DIR/docker-compose.prod.yml" exec web python manage.py createsuperuser || true
-    
+
     log_success "Application deployed successfully!"
 }
 
 # Update application
 update_application() {
     log_info "Updating RAP Web Application..."
-    
+
     cd "$PROJECT_DIR"
-    
+
     # Create backup before update
     create_backup
-    
+
     # Pull latest code
     git pull origin main
-    
+
     # Update containers
     docker-compose -f "$DOCKER_DIR/docker-compose.prod.yml" pull
     docker-compose -f "$DOCKER_DIR/docker-compose.prod.yml" up --build -d
-    
+
     # Run migrations
     docker-compose -f "$DOCKER_DIR/docker-compose.prod.yml" exec web python manage.py migrate
-    
+
     # Collect static files
     docker-compose -f "$DOCKER_DIR/docker-compose.prod.yml" exec web python manage.py collectstatic --noinput
-    
+
     log_success "Application updated successfully!"
 }
 
 # Install system dependencies
 install_dependencies() {
     log_info "Installing system dependencies..."
-    
+
     sudo apt-get update
     sudo apt-get install -y \
         curl \
@@ -209,7 +209,7 @@ install_dependencies() {
         ca-certificates \
         gnupg \
         lsb-release
-    
+
     log_success "System dependencies installed"
 }
 
@@ -218,7 +218,7 @@ show_status() {
     log_info "Application Status:"
     cd "$PROJECT_DIR"
     docker-compose -f "$DOCKER_DIR/docker-compose.prod.yml" ps
-    
+
     echo ""
     log_info "Application URLs:"
     echo "  Main site: https://$DOMAIN_NAME"
@@ -226,7 +226,7 @@ show_status() {
         ADMIN_URL=$(grep "ADMIN_URL=" "$ENV_FILE" | cut -d'=' -f2)
         echo "  Admin: https://$DOMAIN_NAME/$ADMIN_URL"
     fi
-    
+
     echo ""
     log_info "Logs:"
     echo "  Application: docker-compose -f $DOCKER_DIR/docker-compose.prod.yml logs web"
@@ -241,9 +241,9 @@ main() {
     echo "Domain: $DOMAIN_NAME"
     echo "Action: $ACTION"
     echo ""
-    
+
     check_root
-    
+
     case $ACTION in
         --setup)
             check_requirements
@@ -273,7 +273,7 @@ main() {
             exit 1
             ;;
     esac
-    
+
     echo ""
     log_success "🎉 Operation completed successfully!"
     echo ""

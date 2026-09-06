@@ -15,6 +15,8 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+import sys
+
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -40,8 +42,6 @@ if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # Serve static files during testing
-import sys
-
 if "test" in sys.argv or "pytest" in sys.modules:
 
     from django.urls import re_path

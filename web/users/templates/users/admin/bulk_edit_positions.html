@@ -49,7 +49,7 @@
 <!-- Bulk Edit Form -->
 <form method="post">
     {% csrf_token %}
-    
+
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h3 class="card-title">
@@ -61,7 +61,7 @@
                 Alle Wijzigingen Opslaan
             </button>
         </div>
-        
+
         <div class="card-content p-0">
             {% if players %}
                 <div class="table-container">
@@ -99,7 +99,7 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <select name="player_{{ player.pk }}_positie" 
+                                    <select name="player_{{ player.pk }}_positie"
                                             class="form-select form-select-sm"
                                             id="positie_{{ player.pk }}">
                                         {% with current_form_data=form_data|default_if_none:""|add:"player_"|add:player.pk %}
@@ -126,7 +126,7 @@
                                 <td>
                                     {% with current_form_data=form_data|default_if_none:""|add:"player_"|add:player.pk %}
                                     {% with current_rugnummer=current_form_data.rugnummer|default:player.rugnummer %}
-                                    <input type="number" 
+                                    <input type="number"
                                            name="player_{{ player.pk }}_rugnummer"
                                            class="form-control form-control-sm"
                                            placeholder="#"
@@ -154,7 +154,7 @@
                                     </div>
                                 </td>
                             </tr>
-                            
+
                             <!-- Error row -->
                             {% for key, error in errors.items %}
                                 {% if key == "player_"|add:player.pk %}
@@ -172,7 +172,7 @@
                         </tbody>
                     </table>
                 </div>
-                
+
                 <!-- Save button at bottom -->
                 <div class="card-footer">
                     <div class="d-flex justify-content-between align-items-center">
@@ -273,11 +273,11 @@
     .table-responsive {
         font-size: 0.875rem;
     }
-    
+
     .card-content .row .col-md-4 {
         margin-bottom: 1rem;
     }
-    
+
     .current-info {
         font-size: 0.75rem;
     }
@@ -288,7 +288,7 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    
+
     // Functions for quick actions
     window.clearAllJerseyNumbers = function() {
         if (confirm('Weet je zeker dat je alle rugnummers wilt wissen?')) {
@@ -296,7 +296,7 @@ document.addEventListener('DOMContentLoaded', function() {
             jerseyInputs.forEach(input => input.value = '');
         }
     };
-    
+
     window.autoAssignJerseyNumbers = function() {
         if (confirm('Weet je zeker dat je automatisch rugnummers wilt toewijzen? Dit overschrijft bestaande nummers.')) {
             const jerseyInputs = document.querySelectorAll('input[name$="_rugnummer"]');
@@ -307,14 +307,14 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     };
-    
+
     window.clearAllPositions = function() {
         if (confirm('Weet je zeker dat je alle posities wilt wissen?')) {
             const positionSelects = document.querySelectorAll('select[name$="_positie"]');
             positionSelects.forEach(select => select.value = '');
         }
     };
-    
+
     // Real-time jersey number validation
     const jerseyInputs = document.querySelectorAll('input[name$="_rugnummer"]');
     jerseyInputs.forEach(input => {
@@ -322,12 +322,12 @@ document.addEventListener('DOMContentLoaded', function() {
             validateJerseyNumbers();
         });
     });
-    
+
     function validateJerseyNumbers() {
         const jerseyInputs = document.querySelectorAll('input[name$="_rugnummer"]');
         const usedNumbers = new Set();
         const duplicates = new Set();
-        
+
         // Find duplicates
         jerseyInputs.forEach(input => {
             const value = input.value.trim();
@@ -340,7 +340,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
-        
+
         // Clear previous errors
         jerseyInputs.forEach(input => {
             input.classList.remove('is-invalid');
@@ -349,7 +349,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 errorDiv.remove();
             }
         });
-        
+
         // Mark duplicates
         if (duplicates.size > 0) {
             jerseyInputs.forEach(input => {

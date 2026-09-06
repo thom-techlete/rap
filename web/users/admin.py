@@ -30,6 +30,7 @@ class InvitationCodeAdmin(admin.ModelAdmin):
         ),
     )
 
+    @admin.display(description="Status")
     def is_active_display(self, obj):
         """Show active status with colors"""
         if obj.is_active:
@@ -48,8 +49,7 @@ class InvitationCodeAdmin(admin.ModelAdmin):
                 '<span style="color: #dc3545; font-weight: bold;">✗ Inactief</span>'
             )
 
-    is_active_display.short_description = "Status"
-
+    @admin.display(description="Gebruik")
     def usage_display(self, obj):
         """Show usage statistics"""
         if obj.max_uses:
@@ -69,8 +69,7 @@ class InvitationCodeAdmin(admin.ModelAdmin):
         else:
             return format_html("<span>{}/∞</span>", obj.used_count)
 
-    usage_display.short_description = "Gebruik"
-
+    @admin.display(description="Vervaldatum")
     def expires_display(self, obj):
         """Show expiration status"""
         if not obj.expires_at:
@@ -84,8 +83,6 @@ class InvitationCodeAdmin(admin.ModelAdmin):
                 '<span style="color: #28a745;">Geldig tot {}</span>',
                 local_expires.strftime("%d-%m-%Y %H:%M"),
             )
-
-    expires_display.short_description = "Vervaldatum"
 
     def save_model(self, request, obj, form, change):
         """Set created_by field when creating new invitation codes"""
@@ -149,15 +146,13 @@ class PlayerAdmin(UserAdmin):
         ),
     )
 
+    @admin.display(description="Naam", ordering="last_name")
     def get_full_name_display(self, obj):
         """Display full name with fallback to username"""
         full_name = obj.get_full_name()
         if full_name.strip():
             return full_name
         return obj.username
-
-    get_full_name_display.short_description = "Naam"
-    get_full_name_display.admin_order_field = "last_name"
 
     def has_change_permission(self, request, obj=None):
         """Prevent staff from editing superusers or other staff (unless they are superuser themselves)"""

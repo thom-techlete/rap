@@ -19,8 +19,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read        
-  packages: write   
+  contents: read
+  packages: write
 
 concurrency:
   group: prod-${{ github.event.pull_request.base.ref || github.ref }}
@@ -62,25 +62,19 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.3
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6.2.0
         with:
           python-version: 3.12
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v8.2.0
         with:
           version: "0.11.7"
-
-      - name: Cache uv dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/uv
-          key: ${{ runner.os }}-uv-${{ hashFiles('pyproject.toml', 'uv.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-uv-
+          enable-cache: true
+          cache-dependency-glob: uv.lock
 
       - name: Install system dependencies
         run: |
@@ -152,7 +146,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.3
         with:
           ref: ${{ github.event.pull_request.merge_commit_sha }}
 
@@ -168,11 +162,11 @@ jobs:
           IMAGE_ID="${{ env.REGISTRY }}/${OWNER}/${NAME}"
           COMMIT_SHA="${{ github.sha }}"
           SHORT_SHA="${COMMIT_SHA:0:7}"
-          
+
           echo "IMAGE_ID=${IMAGE_ID}" >> $GITHUB_ENV
           echo "image-tag=sha-${SHORT_SHA}" >> $GITHUB_OUTPUT
           echo "commit-sha=${COMMIT_SHA}" >> $GITHUB_OUTPUT
-          
+
           echo "🏷️ Image will be tagged as: ${IMAGE_ID}:latest and ${IMAGE_ID}:sha-${SHORT_SHA}"
 
       - name: Log in to ghcr
@@ -212,7 +206,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.3
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
@@ -234,44 +228,44 @@ jobs:
             set -e
             echo "🚀 Starting deployment for SV Rap 8..."
             echo "📦 New image tag: ${NEW_IMAGE_TAG}"
-            
+
             # Navigate to project directory
             cd /home/rap/docker
-            
+
             # Pull latest code
             git fetch origin --prune
             git checkout main
             git reset --hard origin/main
-            
+
             # Function to test deployment with a specific tag
             test_deployment() {
               local tag="$1"
               echo "🧪 Testing deployment with tag: $tag"
-              
+
               # Update IMAGE_TAG in .env.prod
               sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=$tag/" .env.prod
-              
+
               # Pull the specific image
               if ! docker compose -f docker-compose.prod.yml pull web celery_worker celery_beat; then
                 echo "❌ Failed to pull images for tag: $tag"
                 return 1
               fi
-              
+
               # Restart services
               if ! docker compose -f docker-compose.prod.yml up -d --no-deps --remove-orphans web celery_worker celery_beat; then
                 echo "❌ Failed to start services with tag: $tag"
                 return 1
               fi
-              
+
               # Wait a moment for services to initialize
               sleep 10
-              
+
               # Check health of services
               local url="https://rap8.nl/health/"
               local max_attempts=30
               local sleep_sec=2
               local last_body=""
-              
+
               echo "🔍 Checking ${url} for status healthy"
               for i in $(seq 1 "$max_attempts"); do
                 local body="$(curl -fsS --max-time 3 "$url" || true)"
@@ -293,7 +287,7 @@ jobs:
                 fi
               done
             }
-            
+
             # Read last successful deployment tag
             last_successful_tag="latest"
             if [ -f .last-successful-deployment ]; then
@@ -302,7 +296,7 @@ jobs:
             else
               echo "📋 No previous successful deployment found, using 'latest'"
             fi
-            
+
             # Try deployment with latest tag first
             if test_deployment "latest"; then
               echo "🎉 Deployment successful with latest tag!"
@@ -310,7 +304,7 @@ jobs:
               echo "$NEW_IMAGE_TAG" > .last-successful-deployment
             else
               echo "❌ Deployment failed with latest tag, attempting fallback..."
-              
+
               # Try with last successful tag if it's different from latest
               if [ "$last_successful_tag" != "latest" ]; then
                 echo "🔄 Attempting rollback to last successful tag: $last_successful_tag"
@@ -335,5 +329,5 @@ jobs:
 
             # Clean up old images
             docker system prune -f
-            
+
             echo "🏁 Deployment process completed!"

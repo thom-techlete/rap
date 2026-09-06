@@ -89,7 +89,7 @@ public_key_b64 = base64.urlsafe_b64encode(raw_public_key).decode('utf-8').rstrip
 
 ### 3. Environment Variables
 ```bash
-export VAPID_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+export VAPID_PRIVATE_KEY="<PEM-encoded-private-key>"
 export VAPID_PUBLIC_KEY="BChQ0eFZqW-0nBlV3N734..."
 ```
 

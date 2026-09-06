@@ -23,7 +23,7 @@
                     Persoonlijke gegevens
                 </h2>
             </div>
-            
+
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-md-6">
@@ -32,42 +32,42 @@
                             {{ user.first_name|default:"Niet ingevuld" }}
                         </div>
                     </div>
-                    
+
                     <div class="col-md-6">
                         <label class="form-label fw-medium">Achternaam</label>
                         <div class="form-control bg-light">
                             {{ user.last_name|default:"Niet ingevuld" }}
                         </div>
                     </div>
-                    
+
                     <div class="col-md-6">
                         <label class="form-label fw-medium">E-mailadres</label>
                         <div class="form-control bg-light">
                             {{ user.email|default:"Niet ingevuld" }}
                         </div>
                     </div>
-                    
+
                     <div class="col-md-6">
                         <label class="form-label fw-medium">Telefoonnummer</label>
                         <div class="form-control bg-light">
                             {{ user.telefoonnummer|default:"Niet ingevuld" }}
                         </div>
                     </div>
-                    
+
                     <div class="col-md-6">
                         <label class="form-label fw-medium">Positie</label>
                         <div class="form-control bg-light">
                             {{ user.positie|default:"Niet ingevuld" }}
                         </div>
                     </div>
-                    
+
                     <div class="col-md-6">
                         <label class="form-label fw-medium">Rugnummer</label>
                         <div class="form-control bg-light">
                             {{ user.rugnummer|default:"Niet toegewezen" }}
                         </div>
                     </div>
-                    
+
                     <div class="col-12">
                         <label class="form-label fw-medium">Adres</label>
                         <div class="form-control bg-light">
@@ -80,7 +80,7 @@
                             {% endif %}
                         </div>
                     </div>
-                    
+
                     {% if user.geboortedatum %}
                     <div class="col-md-6">
                         <label class="form-label fw-medium">Geboortedatum</label>
@@ -90,7 +90,7 @@
                     </div>
                     {% endif %}
                 </div>
-                
+
                 <hr class="my-4">
                 <div class="d-flex gap-2 flex-wrap">
                     <a href="{% url 'users:edit_profile' %}" class="btn btn-primary">
@@ -107,7 +107,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Right Column -->
     <div class="col-lg-4">
         <!-- Profile Card -->
@@ -115,7 +115,7 @@
             <div class="card-body text-center">
                 <div class="mb-3">
                     {% if user.foto %}
-                        <img src="{{ user.foto.url }}" 
+                        <img src="{{ user.foto.url }}"
                              alt="{{ user.get_full_name }}"
                              class="rounded-circle border border-primary border-3"
                              style="width: 96px; height: 96px; object-fit: cover;">
@@ -126,11 +126,11 @@
                         </div>
                     {% endif %}
                 </div>
-                
+
                 <h3 class="h5 fw-semibold text-dark mb-3">
                     {{ user.get_full_name|default:user.username }}
                 </h3>
-                
+
                 <div class="d-flex flex-column gap-2 mb-3">
                     {% if user.positie %}
                     <span class="badge bg-primary" style="background: var(--gradient-primary); color: #fff; padding: .5rem 1rem">
@@ -138,20 +138,20 @@
                         {{ user.positie }}
                     </span>
                     {% endif %}
-                    
+
                     {% if user.rugnummer %}
                     <span class="badge bg-secondary" style="background: var(--gradient-primary); color: #fff; padding: .5rem 1rem">
                         <i data-feather="hash" style="width: 0.875rem; height: 0.875rem;"></i>
                         Nummer {{ user.rugnummer }}
                     </span>
                     {% endif %}
-                    
+
                     <span class="badge" style="background: var(--gradient-primary); color: #fff; padding: .5rem 1rem">
                         <i data-feather="calendar" style="width: 0.875rem; height: 0.875rem;"></i>
                         Lid sinds {{ user.date_joined|date:"m/Y" }}
                     </span>
                 </div>
-                
+
                 {% if user.is_staff %}
                 <div class="alert alert-info">
                     <div class="d-flex align-items-center">
@@ -165,7 +165,7 @@
                 {% endif %}
             </div>
         </div>
-        
+
         <!-- Quick Stats -->
         <div class="card shadow-sm">
             <div class="card-header bg-light">
@@ -184,21 +184,21 @@
                             <small class="text-muted">({{ stats.season_present }}/{{ stats.season_total }})</small>
                         </span>
                     </div>
-                    
+
                     {% if stats.training_total > 0 %}
                     <div class="d-flex justify-content-between align-items-center">
                         <span class="small text-muted">Trainingen bijgewoond</span>
                         <span class="fw-semibold">{{ stats.training_present }}/{{ stats.training_total }}</span>
                     </div>
                     {% endif %}
-                    
+
                     {% if stats.match_total > 0 %}
                     <div class="d-flex justify-content-between align-items-center">
                         <span class="small text-muted">Wedstrijden gespeeld</span>
                         <span class="fw-semibold">{{ stats.match_present }}/{{ stats.match_total }}</span>
                     </div>
                     {% endif %}
-                    
+
                     {% if stats.recent_total > 0 %}
                     <hr class="my-2">
                     <div class="d-flex justify-content-between align-items-center">

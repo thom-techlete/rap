@@ -17,8 +17,8 @@ jobs:
       - name: Clean up old GHCR images
         uses: actions/delete-package-versions@v5
         with:
-          owner: ${{ github.repository_owner }} 
+          owner: ${{ github.repository_owner }}
           package-name: ${{ github.event.repository.name }}
           package-type: container
           min-versions-to-keep: 5
-          token: ${{ secrets.GHCR_PAT }}     
+          token: ${{ secrets.GHCR_PAT }}

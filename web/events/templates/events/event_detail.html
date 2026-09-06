@@ -18,7 +18,7 @@
             <h1 class="h2 fw-bold mb-1" style="color: #374151;">{{ event.name }}</h1>
             <p class="text-muted mb-0">{{ event.get_event_type_display }}</p>
         </div>
-        
+
         <!-- Staff Actions -->
         {% if user.is_staff %}
         <div class="dropdown">
@@ -42,7 +42,7 @@
                 <li>
                     <form method="post" action="{% url 'notifications:send_event_reminder' event.id %}" style="margin: 0;">
                         {% csrf_token %}
-                        <button type="submit" class="dropdown-item d-flex align-items-center gap-2 text-warning" 
+                        <button type="submit" class="dropdown-item d-flex align-items-center gap-2 text-warning"
                                 onclick="return confirm('Weet je zeker dat je een herinnering wilt verzenden naar spelers die nog niet hebben gereageerd?')">
                             <i data-feather="bell" style="width: 1rem; height: 1rem;"></i>
                             Verzend herinnering
@@ -80,7 +80,7 @@
                     </div>
                     <div class="flex-grow-1">
                         <h2 class="h4 fw-semibold mb-3" style="color: #374151;">Evenement details</h2>
-                        
+
                         <!-- Date and Time -->
                         <div class="d-flex align-items-center gap-2 mb-3">
                             <i data-feather="clock" style="width: 1.25rem; height: 1.25rem; color: #6b7280;"></i>
@@ -99,7 +99,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Location -->
                         {% if event.location %}
                         <div class="d-flex align-items-center gap-2 mb-3">
@@ -107,14 +107,14 @@
                             <span style="color: #374151;">{{ event.location }}</span>
                         </div>
                         {% endif %}
-                        
+
                         <!-- Type and Status -->
                         <div class="d-flex align-items-center flex-wrap gap-2 gap-md-4 mb-3">
                             <div class="d-flex align-items-center gap-2">
                                 <i data-feather="tag" style="width: 1.25rem; height: 1.25rem; color: #6b7280;"></i>
                                 <span style="color: #374151;">{{ event.get_event_type_display }}</span>
                             </div>
-                            
+
                             <div class="d-flex align-items-center gap-2">
                                 <div class="rounded-circle"
                                     style="width: 8px; height: 8px; background-color: {% if is_upcoming %}#22c55e{% else %}#94a3b8{% endif %};"></div>
@@ -127,14 +127,14 @@
                                     {% endif %}
                                 </span>
                             </div>
-                            
+
                             {% if event.is_mandatory %}
                             <div class="d-flex align-items-center gap-2">
                                 <i data-feather="alert-circle" style="width: 1.25rem; height: 1.25rem; color: #f59e0b;"></i>
                                 <span class="small fw-medium" style="color: #f59e0b;">Verplicht</span>
                             </div>
                             {% endif %}
-                            
+
                             {% if event.is_recurring %}
                             <div class="d-flex align-items-center gap-2">
                                 <i data-feather="repeat" style="width: 1.25rem; height: 1.25rem; color: #7c3aed;"></i>
@@ -142,7 +142,7 @@
                             </div>
                             {% endif %}
                         </div>
-                        
+
                         <!-- Description -->
                         {% if event.description %}
                         <div class="mt-4">
@@ -155,7 +155,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Attendance Summary -->
     <div class="col-lg-4">
         <div class="card border-0 shadow-sm">
@@ -164,7 +164,7 @@
                     <i data-feather="users" style="width: 1.25rem; height: 1.25rem; margin-right: 0.5rem;"></i>
                     Aanwezigheid
                 </h5>
-                
+
                 <!-- Attendance Stats -->
                 <div class="row g-3 mb-4">
                     <div class="col-4 text-center">
@@ -180,7 +180,7 @@
                         <div class="small text-muted">Geen reactie</div>
                     </div>
                 </div>
-                
+
                 <!-- User Attendance Actions -->
                 {% if user.is_authenticated and is_upcoming %}
                 <div class="mb-4">
@@ -194,7 +194,7 @@
                             <i data-feather="check" style="width: 0.875rem; height: 0.875rem;"></i>
                             <span>Aanwezig</span>
                         </button>
-                        
+
                         <button class="btn attendance-btn{% if user_attendance_status == False %} btn-error{% else %} btn-ghost{% endif %} flex-fill attendance-absent-btn"
                             id="absent-btn-{{ event.id }}"
                             data-event-id="{{ event.id }}"
@@ -206,7 +206,7 @@
                     </div>
                 </div>
                 {% endif %}
-                
+
                 <!-- Attendance Rate -->
                 {% if total_players > 0 %}
                 {% with response_rate=total_players|sub:no_response_count %}
@@ -218,13 +218,13 @@
                         </span>
                     </div>
                     <div class="progress" style="height: 8px; background-color: #f1f5f9;">
-                        
+
                         {% if total_players > 0 %}
-                        <div class="progress-bar" 
+                        <div class="progress-bar"
                              style="background: var(--gradient-primary); width: {{ response_rate|div:total_players|mul:100|floatformat:0 }}%;">
                         </div>
                         {% endif %}
-                        
+
                     </div>
                 </div>
                 {% endwith %}
@@ -246,7 +246,7 @@
                 {{ total_players }} spelers
             </span>
         </div>
-        
+
         {% if player_attendance %}
         <div class="table-responsive">
             <table class="table table-hover">
@@ -262,7 +262,7 @@
                     <tr style="border-bottom: 1px solid #f1f5f9; transition: background-color 0.2s ease;">
                         <td style="padding: 1rem 0.75rem; border: none; vertical-align: middle;">
                             <div class="d-flex align-items-center gap-3">
-                                <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                                <div class="rounded-circle d-flex align-items-center justify-content-center"
                                      style="width: 2.5rem; height: 2.5rem; background: var(--gradient-primary); color: white; font-weight: 600; font-size: 0.875rem;">
                                     {% if player_data.player.first_name and player_data.player.last_name %}
                                         {{ player_data.player.first_name|first }}{{ player_data.player.last_name|first }}
@@ -286,19 +286,19 @@
                         </td>
                         <td class="text-center" style="padding: 1rem 0.75rem; border: none; vertical-align: middle;">
                             {% if player_data.present == True %}
-                                <span class="badge d-inline-flex align-items-center gap-1" 
+                                <span class="badge d-inline-flex align-items-center gap-1"
                                       style="background-color: #dcfce7; color: #166534; padding: 0.375rem 0.75rem; border-radius: 0.5rem;">
                                     <i data-feather="check" style="width: 0.875rem; height: 0.875rem;"></i>
                                     Aanwezig
                                 </span>
                             {% elif player_data.present == False %}
-                                <span class="badge d-inline-flex align-items-center gap-1" 
+                                <span class="badge d-inline-flex align-items-center gap-1"
                                       style="background-color: #fee2e2; color: #dc2626; padding: 0.375rem 0.75rem; border-radius: 0.5rem;">
                                     <i data-feather="x" style="width: 0.875rem; height: 0.875rem;"></i>
                                     Afwezig
                                 </span>
                             {% else %}
-                                <span class="badge" 
+                                <span class="badge"
                                       style="background-color: #f1f5f9; color: #64748b; padding: 0.375rem 0.75rem; border-radius: 0.5rem;">
                                     <i data-feather="minus" style="width: 0.875rem; height: 0.875rem;"></i>
                                     Geen reactie
@@ -344,7 +344,7 @@
             </button>
             {% endif %}
         </div>
-        
+
         <!-- Add Statistic Form (Staff Only) -->
         {% if user.is_staff and statistic_form %}
         <div class="collapse mb-4" id="statisticForm">
@@ -388,7 +388,7 @@
             </div>
         </div>
         {% endif %}
-        
+
         <!-- Statistics Display -->
         {% if statistics %}
         <div class="table-responsive">
@@ -409,7 +409,7 @@
                     <tr style="border-bottom: 1px solid #f1f5f9; transition: background-color 0.2s ease;">
                         <td style="padding: 1rem 0.75rem; border: none; vertical-align: middle;">
                             <div class="d-flex align-items-center gap-3">
-                                <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                                <div class="rounded-circle d-flex align-items-center justify-content-center"
                                      style="width: 2rem; height: 2rem; background: var(--gradient-primary); color: white; font-weight: 600; font-size: 0.75rem;">
                                     {% if stat.player.first_name and stat.player.last_name %}
                                         {{ stat.player.first_name|first }}{{ stat.player.last_name|first }}
@@ -427,7 +427,7 @@
                             </div>
                         </td>
                         <td style="padding: 1rem 0.75rem; border: none; vertical-align: middle;">
-                            <span class="badge d-inline-flex align-items-center gap-1" 
+                            <span class="badge d-inline-flex align-items-center gap-1"
                                   style="background-color: {% if stat.statistic_type == 'goal' %}#dcfce7; color: #166534;
                                                            {% elif stat.statistic_type == 'assist' %}#dbeafe; color: #1e40af;
                                                            {% elif stat.statistic_type == 'yellow_card' %}#fef3c7; color: #92400e;

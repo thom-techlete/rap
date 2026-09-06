@@ -32,21 +32,21 @@ log_error() {
 # Wait for database to be ready
 wait_for_db() {
     log_info "Waiting for database to be ready..."
-    
+
     local max_attempts=30
     local attempt=1
-    
+
     while [ $attempt -le $max_attempts ]; do
         if python manage.py check --database default >/dev/null 2>&1; then
             log_success "Database is ready!"
             return 0
         fi
-        
+
         log_info "Database not ready yet (attempt $attempt/$max_attempts). Waiting 2 seconds..."
         sleep 2
         attempt=$((attempt + 1))
     done
-    
+
     log_error "Database failed to become ready after $max_attempts attempts"
     exit 1
 }
@@ -54,7 +54,7 @@ wait_for_db() {
 # Run database migrations
 run_migrations() {
     log_info "Running database migrations..."
-    
+
     if python manage.py migrate --noinput; then
         log_success "Database migrations completed successfully"
     else
@@ -66,7 +66,7 @@ run_migrations() {
 # Collect static files
 collect_static() {
     log_info "Collecting static files..."
-    
+
     if python manage.py collectstatic --noinput --clear; then
         log_success "Static files collected successfully"
     else
@@ -96,7 +96,7 @@ EOF
 load_initial_data() {
     if [ "$LOAD_INITIAL_DATA" = "true" ]; then
         log_info "Loading initial data..."
-        
+
         # Load fixtures if they exist
         for fixture in fixtures/*.json; do
             if [ -f "$fixture" ]; then
@@ -104,7 +104,7 @@ load_initial_data() {
                 python manage.py loaddata "$fixture"
             fi
         done
-        
+
         log_success "Initial data loading completed"
     fi
 }
@@ -127,7 +127,7 @@ EOF
 # Validate Django configuration
 validate_django() {
     log_info "Validating Django configuration..."
-    
+
     if python manage.py check --deploy; then
         log_success "Django configuration is valid"
     else
@@ -139,33 +139,33 @@ validate_django() {
 # Main entrypoint logic
 main() {
     log_info "Starting RAP Web Application initialization..."
-    
+
     # Change to the app directory
     cd /app
-    
+
     # Wait for database
     wait_for_db
-    
+
     # Run migrations
     run_migrations
-    
+
     # Collect static files
     collect_static
-    
+
     # Validate Django configuration
     validate_django
-    
+
     # Optional: Create superuser
     create_superuser_if_needed
-    
+
     # Optional: Load initial data
     load_initial_data
-    
+
     # Optional: Clear cache
     clear_cache
-    
+
     log_success "Application initialization completed successfully!"
-    
+
     # Execute the main command
     log_info "Starting application server..."
     exec "$@"

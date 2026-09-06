@@ -378,7 +378,7 @@ def send_push_notification(self, subscription_id: int, notification_data: dict) 
 
         # Retry logic
         if self.request.retries < self.max_retries:
-            raise self.retry(countdown=60 * (self.request.retries + 1))
+            raise self.retry(countdown=60 * (self.request.retries + 1)) from e
 
         return False
 
@@ -411,7 +411,7 @@ def send_push_to_users(user_ids: list[int], notification_data: dict) -> dict:
             results["failed"] += 1
 
     # Track users without subscriptions
-    users_with_subs = set(sub.user_id for sub in subscriptions)
+    users_with_subs = {sub.user_id for sub in subscriptions}
     users_without_subs = set(user_ids) - users_with_subs
     results["no_subscription"] = len(users_without_subs)
 
@@ -493,7 +493,7 @@ def send_event_push_notification(event_id: int, message_type: str = "reminder") 
         results = send_push_to_users.delay(user_ids, notification_data)
 
         logger.info(f"Event push notification sent for {event.name}: {results}")
-        return results
+        return dict(results)
 
     except Event.DoesNotExist:
         logger.error(f"Event {event_id} not found for push notification")

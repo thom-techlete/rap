@@ -1,82 +1,78 @@
 repos:
   - repo: local
     hooks:
-      # Keep the committed uv lockfile synchronized with project metadata
       - id: check-uv-lock
         name: Check uv.lock is synchronized
-        entry: scripts/hooks/check-requirements.sh
-        language: script
-        types: [text]
+        entry: uv lock --check
+        language: system
+        pass_filenames: false
+        always_run: true
 
-      # Strip notebook outputs
+      - id: validate-branch-name
+        name: Validate branch name
+        entry: bash scripts/hooks/validate-branch-name.sh
+        language: system
+        pass_filenames: false
+        always_run: true
+
       - id: nbstripout-autoadd
         name: nbstripout (auto-add notebooks)
-        entry: scripts/hooks/nbstripout-autoadd.sh
-        language: python
+        entry: uv run --frozen nbstripout
+        language: system
         types: [jupyter]
-        additional_dependencies: [nbstripout]
 
-      # Auto-format Python code with Black
-      - id: black-autoformat
-        name: Auto-format Python with Black
-        entry: scripts/hooks/black-autoformat.sh
-        language: python
-        additional_dependencies: [black]
+  - repo: https://github.com/psf/black
+    rev: 26.5.1
+    hooks:
+      - id: black
+        language_version: python3.12
         types: [python]
 
-  # Dependency vulnerability scanning
-  - repo: https://github.com/pypa/pip-audit
-    rev: v2.9.0
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-toml
+      - id: check-json
+      - id: check-yaml
+        args: [--unsafe]
+      - id: check-symlinks
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: local
     hooks:
       - id: pip-audit
-        args: ['--progress-spinner', 'off']
+        name: pip-audit (uv.lock)
+        entry: bash scripts/hooks/run-pip-audit.sh --progress-spinner off
+        language: system
+        pass_filenames: false
         stages: [pre-commit]
 
-  # # Secrets scanning
-  # - repo: https://github.com/Yelp/detect-secrets
-  #   rev: v1.5.0
-  #   hooks:
-  #     - id: detect-secrets
-  #       args: ['--baseline', '.secrets.baseline']
-  #       exclude: ^tests/
-
-  # Notebook/text sync
-  - repo: https://github.com/mwouts/jupytext
-    rev: v1.17.2
-    hooks:
-      - id: jupytext
-        args: [--sync]
-        require_serial: true
-
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.7
-    hooks:
-      - id: ruff
-        name: Ruff (linting + extra isort + rules)
-        args: [--fix]
+      - id: bandit
+        name: bandit (security check)
+        entry: uv run --frozen bandit -r web -ll --exclude web/*/migrations
+        language: system
+        pass_filenames: false
         types: [python]
-  
-  # - repo: local
-  #   hooks:
-  #     - id: pytest
-  #       name: Run pytest with coverage & beartype
-  #       entry: pytest --cov --cov-fail-under=80 --beartype-packages=utils,example
-  #       language: python
-  #       additional_dependencies:
-  #         - pytest
-  #         - pytest-cov
-  #         - pytest-beartype
-  #       pass_filenames: false
-  #       always_run: true
-  #       stages: [pre-commit]
 
-  # - repo: local
-  #   hooks:
-  #     - id: pytest
-  #       name: Run pytest with coverage & beartype
-  #       entry: bash scripts/hooks/precommit_pytest.sh
-  #       language: system
-  #       pass_filenames: false
-  #       always_run: true
-  #       stages: [pre-commit]
+      - id: ruff
+        name: Ruff (linting and import sorting)
+        entry: uv run --frozen ruff check --fix
+        language: system
+        types: [python]
 
+      - id: pyupgrade
+        name: pyupgrade (modernize Python syntax)
+        entry: uv run --frozen pyupgrade --py312-plus
+        language: system
+        types: [python]
+
+      - id: mypy
+        name: mypy (type checking)
+        entry: uv run --frozen mypy --config-file=pyproject.toml
+        language: system
+        pass_filenames: false
+        types: [python]

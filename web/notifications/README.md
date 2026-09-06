@@ -16,7 +16,7 @@ The SV Rap 8 notification system automatically sends email notifications to all 
 ### Manual Notifications
 Staff members can manually send notifications for any event via:
 - Event cards in the event list (dropdown menu)
-- Django admin interface 
+- Django admin interface
 - Management commands
 
 ### Email Templates
@@ -34,7 +34,7 @@ EMAIL_HOST = "smtp-relay.brevo.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD") 
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
 ```
 
@@ -56,7 +56,7 @@ from events.models import Event
 event = Event.objects.get(id=1)
 send_new_event_notification(event)
 
-# Send reminder notification  
+# Send reminder notification
 send_event_reminder_notification(event)
 ```
 
@@ -95,7 +95,7 @@ python manage.py send_event_reminders --event-id 123
 - **Content**: Event details, date/time, location, description
 - **Call-to-action**: Encourages players to log in and indicate attendance
 
-### Event Reminder  
+### Event Reminder
 - **Trigger**: Manual or scheduled (e.g., 1 day before event)
 - **Recipients**: Active players who haven't indicated their attendance yet
 - **Content**: Event reminder with details and urgency

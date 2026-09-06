@@ -40,8 +40,6 @@ def analytics_dashboard(request: HttpRequest):
 
 def calculate_event_analytics():
     """Calculate comprehensive event analytics"""
-    now = timezone.now()
-
     # Event type distribution
     event_types = (
         Event.objects.values("event_type")

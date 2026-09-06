@@ -41,11 +41,11 @@
                         <span class="badge bg-secondary">Gesloten</span>
                       {% endif %}
                     </div>
-                    
+
                     {% if poll.description %}
                       <p class="card-text text-muted small">{{ poll.description|truncatewords:20 }}</p>
                     {% endif %}
-                    
+
                     <div class="row text-center small text-muted mb-3">
                       <div class="col-6">
                         <div class="fw-medium">{{ poll.total_votes }}</div>
@@ -56,14 +56,14 @@
                         <div>Stemmers</div>
                       </div>
                     </div>
-                    
+
                     {% if poll.end_date %}
                       <p class="small text-muted mb-3">
                         <i data-feather="clock" class="me-1" style="width: 14px; height: 14px;"></i>
                         Sluit op {{ poll.end_date|date:"d M Y H:i" }}
                       </p>
                     {% endif %}
-                    
+
                     <div class="d-flex gap-2">
                       <a href="{% url 'polls:detail' poll.pk %}" class="btn btn-primary btn-sm flex-fill">
                         {% if poll.is_open %}Bekijk & Stem{% else %}Bekijk Resultaten{% endif %}
@@ -97,11 +97,11 @@
                       <h5 class="card-title mb-0">{{ poll.title }}</h5>
                       <span class="badge bg-secondary">Gesloten</span>
                     </div>
-                    
+
                     {% if poll.description %}
                       <p class="card-text text-muted small">{{ poll.description|truncatewords:20 }}</p>
                     {% endif %}
-                    
+
                     <div class="row text-center small text-muted mb-3">
                       <div class="col-6">
                         <div class="fw-medium">{{ poll.total_votes }}</div>
@@ -112,14 +112,14 @@
                         <div>Stemmers</div>
                       </div>
                     </div>
-                    
+
                     {% if poll.closed_at %}
                       <p class="small text-muted mb-3">
                         <i data-feather="x-circle" class="me-1" style="width: 14px; height: 14px;"></i>
                         Gesloten op {{ poll.closed_at|date:"d M Y H:i" }}
                       </p>
                     {% endif %}
-                    
+
                     <div class="d-flex gap-2">
                       <a href="{% url 'polls:detail' poll.pk %}" class="btn btn-outline-primary btn-sm flex-fill">
                         Bekijk Resultaten

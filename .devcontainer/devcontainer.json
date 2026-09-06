@@ -1,0 +1,212 @@
+{
+  "containerEnv": {
+    "PRE_COMMIT_HOME": "/home/vscode/.cache/pre-commit",
+    "PYTHONPATH": "${containerWorkspaceFolder}/web",
+    "TZ": "Europe/Amsterdam",
+    "UV_CACHE_DIR": "/home/vscode/.cache/uv",
+    "UV_LINK_MODE": "copy",
+    "UV_PROJECT_ENVIRONMENT": "${containerWorkspaceFolder}/.venv",
+    "UV_PYTHON_DOWNLOADS": "never"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-azuretools.vscode-docker",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.mypy-type-checker",
+        "charliermarsh.ruff",
+        "ms-toolsai.jupyter",
+        "ms-python.black-formatter",
+        "ms-python.debugpy",
+        "docker.docker",
+        "tamasfe.even-better-toml",
+        "cweijan.vscode-office",
+        "openai.chatgpt",
+        "github.vscode-github-actions",
+        "GitHub.vscode-pull-request-github",
+        "mtxr.sqltools",
+        "mtxr.sqltools-driver-mysql",
+        "mtxr.sqltools-driver-pg",
+        "mtxr.sqltools-driver-sqlite",
+        "ms-ossdata.vscode-pgsql",
+        "redhat.vscode-yaml",
+        "foxundermoon.shell-format",
+        "biomejs.biome",
+        "bradlc.vscode-tailwindcss",
+        "ms-playwright.playwright",
+        "matthewpi.caddyfile-support"
+      ],
+      "settings": {
+        "[javascript]": {
+          "editor.codeActionsOnSave": {
+            "source.fixAll.biome": "explicit",
+            "source.organizeImports.biome": "explicit"
+          },
+          "editor.defaultFormatter": "biomejs.biome",
+          "editor.formatOnSave": true
+        },
+        "[javascriptreact]": {
+          "editor.codeActionsOnSave": {
+            "source.fixAll.biome": "explicit",
+            "source.organizeImports.biome": "explicit"
+          },
+          "editor.defaultFormatter": "biomejs.biome",
+          "editor.formatOnSave": true
+        },
+        "[json]": {
+          "editor.defaultFormatter": "vscode.json-language-features",
+          "editor.formatOnSave": true
+        },
+        "[jsonc]": {
+          "editor.defaultFormatter": "vscode.json-language-features",
+          "editor.formatOnSave": true
+        },
+        "[python]": {
+          "editor.codeActionsOnSave": {
+            "source.fixAll.ruff": "explicit",
+            "source.organizeImports.ruff": "explicit"
+          },
+          "editor.defaultFormatter": "ms-python.black-formatter",
+          "editor.formatOnSave": true
+        },
+        "[typescript]": {
+          "editor.codeActionsOnSave": {
+            "source.fixAll.biome": "explicit",
+            "source.organizeImports.biome": "explicit"
+          },
+          "editor.defaultFormatter": "biomejs.biome",
+          "editor.formatOnSave": true
+        },
+        "[typescriptreact]": {
+          "editor.codeActionsOnSave": {
+            "source.fixAll.biome": "explicit",
+            "source.organizeImports.biome": "explicit"
+          },
+          "editor.defaultFormatter": "biomejs.biome",
+          "editor.formatOnSave": true
+        },
+        "[yaml]": {
+          "editor.defaultFormatter": "redhat.vscode-yaml",
+          "editor.formatOnSave": true
+        },
+        "[shellscript]": {
+          "editor.defaultFormatter": "foxundermoon.shell-format",
+          "editor.formatOnSave": true
+        },
+        "biome.requireConfiguration": true,
+        "chatgpt.openOnStartup": false,
+        "chatgpt.runCodexInWindowsSubsystemForLinux": true,
+        "debug.internalConsoleOptions": "neverOpen",
+        "debug.showProtocolLogs": false,
+        "editor.formatOnPaste": true,
+        "editor.rulers": [
+          88
+        ],
+        "editor.trimAutoWhitespace": true,
+        "files.exclude": {
+          "**/__pycache__": true,
+          "**/.pytest_cache": true,
+          "**/.ruff_cache": true,
+          "**/node_modules": true
+        },
+        "files.watcherExclude": {
+          "**/__pycache__": true,
+          "**/.git/objects/**": true,
+          "**/.pytest_cache": true,
+          "**/.ruff_cache": true,
+          "**/node_modules": true
+        },
+        "git.ignoreLimitWarning": true,
+        "js/ts.tsdk.promptToUseWorkspaceVersion": true,
+        "mypy-type-checker.args": [
+          "--config-file=pyproject.toml"
+        ],
+        "mypy-type-checker.cwd": "${workspaceFolder}",
+        "mypy-type-checker.importStrategy": "fromEnvironment",
+        "mypy-type-checker.reportingScope": "workspace",
+        "python-envs.terminal.autoActivationType": "off",
+        "python.analysis.typeCheckingMode": "standard",
+        "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+        "python.terminal.activateEnvInCurrentTerminal": false,
+        "python.terminal.useEnvFile": true,
+        "python.testing.pytestArgs": [
+          "."
+        ],
+        "python.testing.pytestEnabled": true,
+        "python.testing.unittestEnabled": false,
+        "ruff.enable": true,
+        "search.exclude": {
+          "**/__pycache__": true,
+          "**/.git": true,
+          "**/.pytest_cache": true,
+          "**/.venv": true,
+          "**/build": true,
+          "**/dist": true,
+          "**/node_modules": true
+        },
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "terminal.integrated.env.linux": {
+          "PYTHONPATH": "${workspaceFolder}/web",
+          "UV_PROJECT_ENVIRONMENT": "${workspaceFolder}/.venv"
+        }
+      }
+    }
+  },
+  "dockerComposeFile": [
+    "docker-compose.yml"
+  ],
+  "features": {
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "enableNonRootDocker": "true",
+      "moby": "false",
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/azure-cli:1": {
+      "version": "latest",
+      "installBicep": true
+    }
+  },
+  "forwardPorts": [
+    8000,
+    5432,
+    6379
+  ],
+  "initializeCommand": "bash ${localWorkspaceFolder}/.devcontainer/initialize.sh",
+  "mounts": [
+    "source=${localEnv:HOME}/.gitconfig,target=/tmp/host-gitconfig,type=bind,consistency=cached",
+    "source=${localEnv:HOME}/.codex,target=/home/vscode/.codex,type=bind,consistency=cached",
+    "source=${localEnv:HOME}/.config/gh,target=/home/vscode/.config/gh,type=bind,consistency=cached"
+  ],
+  "name": "RAP Django",
+  "overrideCommand": true,
+  "portsAttributes": {
+    "8000": {
+      "label": "Django development server",
+      "onAutoForward": "notify"
+    },
+    "5432": {
+      "label": "PostgreSQL"
+    },
+    "6379": {
+      "label": "Redis"
+    }
+  },
+  "postAttachCommand": "bash .devcontainer/post-attach.sh",
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "remoteEnv": {
+    "CODEX_HOME": "/home/vscode/.codex"
+  },
+  "remoteUser": "vscode",
+  "runServices": [
+    "db",
+    "redis"
+  ],
+  "service": "app",
+  "shutdownAction": "stopCompose",
+  "updateRemoteUserUID": true,
+  "waitFor": "postCreateCommand",
+  "workspaceFolder": "/workspaces/rap"
+}

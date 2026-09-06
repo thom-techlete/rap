@@ -25,7 +25,7 @@
                     Evenement details
                 </h2>
             </div>
-            
+
             <div class="card-body">
                 <!-- Event Information -->
                 <div class="alert alert-light mb-4">
@@ -85,7 +85,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Warning about deletion -->
                 <div class="alert alert-danger">
                     <div class="d-flex align-items-start">
@@ -102,7 +102,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Recurring Event Delete Options -->
                 {% if is_recurring_event %}
                 <div class="alert alert-warning">
@@ -111,10 +111,10 @@
                         <div class="w-100">
                             <strong>Herhalend evenement verwijderen</strong>
                             <p class="mb-3 mt-2">Dit evenement is onderdeel van een reeks. Wat wilt u verwijderen?</p>
-                            
+
                             <form method="post">
                                 {% csrf_token %}
-                                
+
                                 <div class="form-check mb-3">
                                     <input class="form-check-input" type="radio" name="delete_series" value="false" id="delete_single" checked>
                                     <label class="form-check-label fw-medium" for="delete_single">
@@ -124,7 +124,7 @@
                                         Het evenement wordt verwijderd uit de reeks. Andere evenementen blijven bestaan.
                                     </div>
                                 </div>
-                                
+
                                 <div class="form-check mb-4">
                                     <input class="form-check-input" type="radio" name="delete_series" value="true" id="delete_all">
                                     <label class="form-check-label fw-medium" for="delete_all">
@@ -134,7 +134,7 @@
                                         Alle evenementen in deze reeks vanaf dit evenement worden verwijderd ({{ future_events_count }} evenementen).
                                     </div>
                                 </div>
-                                
+
                                 <div class="d-flex gap-2 flex-wrap">
                                     <button type="submit" class="btn btn-danger">
                                         <i data-feather="trash-2"></i>

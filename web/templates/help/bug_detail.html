@@ -16,7 +16,7 @@
             <li class="breadcrumb-item active">Bug #{{ bug_report.id }}</li>
           </ol>
         </nav>
-        
+
         <div class="d-flex justify-content-between align-items-start">
           <div>
             <h1 class="h2 mb-2">{{ bug_report.title }}</h1>
@@ -44,28 +44,28 @@
               <div class="col-sm-3"><strong>Beschrijving:</strong></div>
               <div class="col-sm-9">{{ bug_report.description|linebreaks }}</div>
             </div>
-            
+
             {% if bug_report.steps_to_reproduce %}
             <div class="row mb-3">
               <div class="col-sm-3"><strong>Stappen om te reproduceren:</strong></div>
               <div class="col-sm-9">{{ bug_report.steps_to_reproduce|linebreaks }}</div>
             </div>
             {% endif %}
-            
+
             {% if bug_report.expected_behavior %}
             <div class="row mb-3">
               <div class="col-sm-3"><strong>Verwacht gedrag:</strong></div>
               <div class="col-sm-9">{{ bug_report.expected_behavior|linebreaks }}</div>
             </div>
             {% endif %}
-            
+
             {% if bug_report.actual_behavior %}
             <div class="row mb-3">
               <div class="col-sm-3"><strong>Werkelijk gedrag:</strong></div>
               <div class="col-sm-9">{{ bug_report.actual_behavior|linebreaks }}</div>
             </div>
             {% endif %}
-            
+
             {% if bug_report.browser_info %}
             <div class="row mb-3">
               <div class="col-sm-3"><strong>Browser informatie:</strong></div>

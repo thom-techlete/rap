@@ -1,0 +1,57 @@
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    command: sleep infinity
+    working_dir: /workspaces/rap
+    volumes:
+      - ..:/workspaces/rap:cached
+      - rap-uv-cache:/home/vscode/.cache/uv
+      - rap-pre-commit-cache:/home/vscode/.cache/pre-commit
+    environment:
+      DJANGO_SECRET_KEY: changethis
+      DJANGO_DEBUG: "True"
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+      POSTGRES_DB: rap_db
+      POSTGRES_USER: rap_user
+      POSTGRES_PASSWORD: rap_db_password
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      REDIS_URL: redis://redis:6379/0
+      SITE_URL: http://localhost:8000
+      VAPID_CONTACT_EMAIL: noreply@localhost
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: rap_db
+      POSTGRES_USER: rap_user
+      POSTGRES_PASSWORD: rap_db_password
+    volumes:
+      - rap-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rap_user -d rap_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  rap-postgres-data:
+  rap-uv-cache:
+  rap-pre-commit-cache:

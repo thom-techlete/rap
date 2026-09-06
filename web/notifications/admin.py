@@ -49,10 +49,9 @@ class ScheduleConfigurationAdmin(admin.ModelAdmin):
         ),
     )
 
+    @admin.display(description="Cron expressie")
     def get_cron_display(self, obj):
         return obj.get_cron_expression()
-
-    get_cron_display.short_description = "Cron expressie"
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
@@ -105,10 +104,9 @@ class EventScheduleOverrideAdmin(admin.ModelAdmin):
         ),
     )
 
+    @admin.display(description="Effectieve cron expressie")
     def get_effective_cron_display(self, obj):
         return obj.get_effective_cron_expression()
-
-    get_effective_cron_display.short_description = "Effectieve cron expressie"
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
@@ -183,23 +181,20 @@ class PushSubscriptionAdmin(admin.ModelAdmin):
 
     readonly_fields = ("created_at", "last_used")
 
+    @admin.display(description="Endpoint")
     def get_endpoint_display(self, obj):
         if len(obj.endpoint) > 50:
             return f"{obj.endpoint[:50]}..."
         return obj.endpoint
 
-    get_endpoint_display.short_description = "Endpoint"
-
     actions = ["deactivate_subscriptions", "test_subscriptions"]
 
+    @admin.action(description="Geselecteerde subscriptions deactiveren")
     def deactivate_subscriptions(self, request, queryset):
         updated = queryset.update(is_active=False)
         self.message_user(request, f"{updated} subscriptions gedeactiveerd.")
 
-    deactivate_subscriptions.short_description = (
-        "Geselecteerde subscriptions deactiveren"
-    )
-
+    @admin.action(description="Test notificatie naar geselecteerde subscriptions")
     def test_subscriptions(self, request, queryset):
         from .tasks import send_push_notification
 
@@ -220,10 +215,6 @@ class PushSubscriptionAdmin(admin.ModelAdmin):
         self.message_user(
             request, f"Test notificaties verzonden naar {sent_count} subscriptions."
         )
-
-    test_subscriptions.short_description = (
-        "Test notificatie naar geselecteerde subscriptions"
-    )
 
 
 @admin.register(PushNotificationLog)
@@ -256,10 +247,9 @@ class PushNotificationLogAdmin(admin.ModelAdmin):
         "error_message",
     )
 
+    @admin.display(description="Gebruiker")
     def get_user(self, obj):
         return obj.subscription.user.get_full_name()
-
-    get_user.short_description = "Gebruiker"
 
     def has_add_permission(self, request):
         return False  # These are created automatically
