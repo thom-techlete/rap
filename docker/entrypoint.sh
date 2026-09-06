@@ -144,8 +144,9 @@ main() {
     cd /app
 
     # Named volumes are mounted after the image is created. Ensure the runtime
-    # user can write uploads and collected static files.
-    chown -R django:django /app/staticfiles /app/media
+    # user can write uploads, collected static files, and log files created by
+    # the root startup commands below.
+    chown -R django:django /app/staticfiles /app/media /app/logs
 
     # Wait for database
     wait_for_db

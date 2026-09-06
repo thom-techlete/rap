@@ -23,6 +23,7 @@ def test_application_drops_privileges_after_reading_startup_secrets():
 
     assert "apt-get install" in dockerfile and "gosu" in dockerfile
     assert 'exec gosu django "$@"' in entrypoint
+    assert "chown -R django:django /app/staticfiles /app/media /app/logs" in entrypoint
 
 
 def test_caddy_serves_named_static_and_media_volume_contents():
