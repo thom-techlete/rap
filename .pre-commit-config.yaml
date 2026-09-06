@@ -7,24 +7,25 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
-
       - id: validate-branch-name
-        name: Validate branch name
+        name: Validate branch name format
         entry: bash scripts/hooks/validate-branch-name.sh
         language: system
-        pass_filenames: false
         always_run: true
-
+        pass_filenames: false
+        stages: [pre-commit]
       - id: nbstripout-autoadd
         name: nbstripout (auto-add notebooks)
-        entry: uv run --frozen nbstripout
+        entry: uv run scripts/hooks/nbstripout-autoadd.sh
         language: system
-        types: [jupyter]
+        always_run: true
+        pass_filenames: false
 
   - repo: https://github.com/psf/black
     rev: 26.5.1
     hooks:
       - id: black
+        name: Black (python formatter)
         language_version: python3.12
         types: [python]
 
@@ -42,37 +43,61 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
 
-  - repo: local
+  - repo: https://github.com/pypa/pip-audit
+    rev: v2.10.1
     hooks:
       - id: pip-audit
         name: pip-audit (uv.lock)
-        entry: bash scripts/hooks/run-pip-audit.sh --progress-spinner off
+        args: [--progress-spinner, "off", --desc]
+        entry: uv run bash scripts/hooks/run-pip-audit.sh
         language: system
-        pass_filenames: false
         stages: [pre-commit]
 
-      - id: bandit
-        name: bandit (security check)
-        entry: uv run --frozen bandit -r web -ll --exclude web/*/migrations
+  - repo: local
+    hooks:
+      - id: detect-secrets
+        name: detect-secrets (shared helper)
+        entry: bash scripts/hooks/run-detect-secrets.sh --pre-commit
         language: system
+        pass_filenames: true
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v2.3.0
+    hooks:
+      - id: mypy
+        name: Type check with mypy
+        args: [--config-file=pyproject.toml, --install-types, --non-interactive]
         pass_filenames: false
-        types: [python]
 
-      - id: ruff
-        name: Ruff (linting and import sorting)
-        entry: uv run --frozen ruff check --fix
-        language: system
-        types: [python]
-
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.21.2
+    hooks:
       - id: pyupgrade
         name: pyupgrade (modernize Python syntax)
-        entry: uv run --frozen pyupgrade --py312-plus
-        language: system
+        args: [--py312-plus]
         types: [python]
 
-      - id: mypy
-        name: mypy (type checking)
-        entry: uv run --frozen mypy --config-file=pyproject.toml
-        language: system
-        pass_filenames: false
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.0
+    hooks:
+      - id: ruff
+        name: Ruff (linting + import sorting + formatting)
+        args: [--fix]
+        types: [python]
+
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.9.4
+    hooks:
+      - id: bandit
+        name: bandit (security check)
+        args: [-ll, --skip, B101]
+        exclude: ^web/.*/(migrations|tests?)/
+        types: [python]
+
+  - repo: https://github.com/PyCQA/pydocstyle
+    rev: 6.3.0
+    hooks:
+      - id: pydocstyle
+        name: pydocstyle (docstring validation)
+        exclude: ^web/.*/(management|migrations|tests?)/
         types: [python]

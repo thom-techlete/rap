@@ -119,6 +119,7 @@ warn_unused_configs = true
 exclude = '''
 (?x)(
     ^web/.*/migrations/
+  | ^web/.*/tests/
   | ^web/.*/tests\\.py$
   | ^web/.*/test_.*\\.py$
 )
