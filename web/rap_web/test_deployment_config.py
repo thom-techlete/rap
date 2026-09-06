@@ -23,3 +23,29 @@ def test_application_drops_privileges_after_reading_startup_secrets():
 
     assert "apt-get install" in dockerfile and "gosu" in dockerfile
     assert 'exec gosu django "$@"' in entrypoint
+
+
+def test_caddy_serves_named_static_and_media_volume_contents():
+    caddyfile = (REPOSITORY_ROOT / "docker/caddy/Caddyfile").read_text()
+
+    assert "handle_path /static/*" in caddyfile
+    assert "root * /app/staticfiles" in caddyfile
+    assert "handle_path /media/*" in caddyfile
+    assert "root * /app/media" in caddyfile
+
+
+def test_caddy_csp_allows_declared_external_asset_hosts():
+    caddyfile = (REPOSITORY_ROOT / "docker/caddy/Caddyfile").read_text()
+
+    assert (
+        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com"
+        in caddyfile
+    )
+    assert (
+        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdnjs.cloudflare.com"
+        in caddyfile
+    )
+    assert (
+        "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com"
+        in caddyfile
+    )
