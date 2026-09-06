@@ -41,15 +41,23 @@ if settings.DEBUG:
 
 # Serve static files during testing
 import sys
-if 'test' in sys.argv or 'pytest' in sys.modules:
-    from django.contrib.staticfiles.views import serve
-    from django.views.static import serve as static_serve
+
+if "test" in sys.argv or "pytest" in sys.modules:
+
     from django.urls import re_path
-    import os
-    
+    from django.views.static import serve as static_serve
+
     # Serve static files during testing
     urlpatterns += [
-        re_path(r'^static/(?P<path>.*)$', static_serve, {
-            'document_root': settings.STATICFILES_DIRS[0] if settings.STATICFILES_DIRS else settings.STATIC_ROOT
-        }),
+        re_path(
+            r"^static/(?P<path>.*)$",
+            static_serve,
+            {
+                "document_root": (
+                    settings.STATICFILES_DIRS[0]
+                    if settings.STATICFILES_DIRS
+                    else settings.STATIC_ROOT
+                )
+            },
+        ),
     ]

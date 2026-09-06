@@ -1,7 +1,7 @@
 """
 Local development settings override
 """
-import os
+
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -19,4 +19,4 @@ DATABASES = {
 DEBUG = True
 
 # Allow all hosts for development
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ["*"]

@@ -237,7 +237,7 @@ You can trigger a manual deployment by:
 
 4. **Docker Build Failed**
    - Check Dockerfile syntax
-   - Verify all dependencies in requirements.txt
+   - Verify all dependencies from the committed `uv.lock`
    - Check for syntax errors in code
 
 5. **Deployment Fallback Triggered**

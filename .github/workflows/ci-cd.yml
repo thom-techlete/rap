@@ -14,7 +14,6 @@ on:
       - 'htmlcov/**'
       - '*.egg-info/**'
       - 'coverage.xml'
-      - 'pyproject.toml'
       - 'CODE_OF_CONDUCT.md'
       - 'CONTRIBUTING.md'
   workflow_dispatch:
@@ -70,13 +69,18 @@ jobs:
         with:
           python-version: 3.12
 
-      - name: Cache pip dependencies
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.7"
+
+      - name: Cache uv dependencies
         uses: actions/cache@v4
         with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          path: ~/.cache/uv
+          key: ${{ runner.os }}-uv-${{ hashFiles('pyproject.toml', 'uv.lock') }}
           restore-keys: |
-            ${{ runner.os }}-pip-
+            ${{ runner.os }}-uv-
 
       - name: Install system dependencies
         run: |
@@ -87,9 +91,7 @@ jobs:
             build-essential
 
       - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+        run: uv sync --locked --no-install-project
 
       - name: Run Django system check
         working-directory: ./web
@@ -105,7 +107,7 @@ jobs:
           DJANGO_DEBUG: True
           DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
         run: |
-          python manage.py check --deploy
+          uv run --locked --no-sync python manage.py check --deploy
 
       - name: Run Django migrations
         working-directory: ./web
@@ -121,7 +123,7 @@ jobs:
           DJANGO_DEBUG: True
           DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
         run: |
-          python manage.py migrate
+          uv run --locked --no-sync python manage.py migrate
 
       - name: Run Django tests
         working-directory: ./web
@@ -137,7 +139,7 @@ jobs:
           DJANGO_DEBUG: True
           DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
         run: |
-          python manage.py test --settings=rap_web.test_settings --verbosity=2
+          uv run --locked --no-sync python manage.py test --settings=rap_web.test_settings --verbosity=2
 
   build:
     name: Build and push image

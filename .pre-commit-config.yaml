@@ -1,9 +1,9 @@
 repos:
   - repo: local
     hooks:
-      # Prevent manual requirements.txt files
-      - id: prevent-manual-requirements-edits
-        name: Prevent manual changes to requirements.txt
+      # Keep the committed uv lockfile synchronized with project metadata
+      - id: check-uv-lock
+        name: Check uv.lock is synchronized
         entry: scripts/hooks/check-requirements.sh
         language: script
         types: [text]
@@ -79,5 +79,4 @@ repos:
   #       pass_filenames: false
   #       always_run: true
   #       stages: [pre-commit]
-
 

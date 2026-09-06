@@ -64,7 +64,7 @@ class Command(BaseCommand):
             # Convert to local timezone for display
             local_start = timezone.localtime(target_date_start)
             local_end = timezone.localtime(target_date_end)
-            
+
             self.stdout.write(
                 f"Target date range: {local_start.strftime('%d-%m-%Y %H:%M')} to {local_end.strftime('%d-%m-%Y %H:%M')}"
             )

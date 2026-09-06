@@ -121,7 +121,6 @@ htmlcov/
 .pre-commit-config.yaml
 
 # Development tools
-pyproject.toml
 setup.py
 requirements-dev.txt
 

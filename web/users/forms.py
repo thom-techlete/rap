@@ -182,7 +182,7 @@ class CustomAuthenticationForm(AuthenticationForm):
             self.user_cache = authenticate(
                 self.request, username=username, password=password
             )
-            
+
             if self.user_cache is None:
                 # Authentication failed - could be wrong credentials or inactive account
                 try:
@@ -195,7 +195,7 @@ class CustomAuthenticationForm(AuthenticationForm):
                         )
                 except Player.DoesNotExist:
                     pass
-                
+
                 # For wrong password or non-existent user, show generic error
                 raise ValidationError(
                     self.error_messages["invalid_login"],

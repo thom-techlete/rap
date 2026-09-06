@@ -9,8 +9,8 @@ class InvitationCode(models.Model):
     """Model for invitation codes that allow users to register"""
 
     USER_TYPES = [
-        ('player', 'Speler'),
-        ('invaller', 'Invaller'),
+        ("player", "Speler"),
+        ("invaller", "Invaller"),
     ]
 
     code = models.CharField(
@@ -22,9 +22,9 @@ class InvitationCode(models.Model):
     user_type = models.CharField(
         max_length=20,
         choices=USER_TYPES,
-        default='player',
+        default="player",
         verbose_name="Gebruikerstype",
-        help_text="Type gebruiker dat met deze code geregistreerd wordt"
+        help_text="Type gebruiker dat met deze code geregistreerd wordt",
     )
     description = models.CharField(
         max_length=255,
@@ -101,19 +101,19 @@ class InvitationCode(models.Model):
 
 class Player(AbstractUser):
     USER_TYPES = [
-        ('player', 'Speler'),
-        ('invaller', 'Invaller'),
+        ("player", "Speler"),
+        ("invaller", "Invaller"),
     ]
-    
+
     # User type field
     user_type = models.CharField(
         max_length=20,
         choices=USER_TYPES,
-        default='player',
+        default="player",
         verbose_name="Gebruikerstype",
-        help_text="Type gebruiker: speler (volledige toegang) of invaller (alleen wedstrijden)"
+        help_text="Type gebruiker: speler (volledige toegang) of invaller (alleen wedstrijden)",
     )
-    
+
     # Extra player info fields
     geboortedatum = models.DateField(
         null=True, blank=True, verbose_name="Geboortedatum"
@@ -169,7 +169,7 @@ class Player(AbstractUser):
         Returns a list of missing field labels.
         """
         missing_fields = []
-        
+
         # Check required basic fields
         if not self.first_name:
             missing_fields.append("Voornaam")
@@ -183,20 +183,20 @@ class Player(AbstractUser):
             missing_fields.append("Geboortedatum")
         if not self.foto:
             missing_fields.append("Profielfoto")
-            
+
         return missing_fields
-    
+
     @property
     def is_profile_complete(self):
         """Check if the user's profile is complete"""
         return len(self.get_missing_profile_fields()) == 0
-    
+
     @property
     def is_invaller(self):
         """Check if user is an invaller (substitute)"""
-        return self.user_type == 'invaller'
-    
+        return self.user_type == "invaller"
+
     @property
     def is_player(self):
         """Check if user is a regular player"""
-        return self.user_type == 'player'
+        return self.user_type == "player"

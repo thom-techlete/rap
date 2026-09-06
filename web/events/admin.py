@@ -68,23 +68,36 @@ send_event_reminder_action.short_description = "Verzend evenement herinneringen"
 # Inline admin for EventScheduleOverride
 class EventScheduleOverrideInline(admin.StackedInline):
     from notifications.models import EventScheduleOverride
+
     model = EventScheduleOverride
     extra = 0
     max_num = 1
     can_delete = True
-    
+
     fieldsets = (
-        ("Schema override configuratie", {
-            "fields": ("configuration", "enabled"),
-            "description": "Configureer aangepaste planning voor dit evenement"
-        }),
-        ("Schema overrides", {
-            "fields": ("override_minute", "override_hour", "override_day_of_week", "override_day_of_month", "override_month_of_year"),
-            "description": "Laat velden leeg om de basis configuratie te gebruiken. Vul alleen in wat je wilt overschrijven.",
-            "classes": ("collapse",)
-        }),
+        (
+            "Schema override configuratie",
+            {
+                "fields": ("configuration", "enabled"),
+                "description": "Configureer aangepaste planning voor dit evenement",
+            },
+        ),
+        (
+            "Schema overrides",
+            {
+                "fields": (
+                    "override_minute",
+                    "override_hour",
+                    "override_day_of_week",
+                    "override_day_of_month",
+                    "override_month_of_year",
+                ),
+                "description": "Laat velden leeg om de basis configuratie te gebruiken. Vul alleen in wat je wilt overschrijven.",
+                "classes": ("collapse",),
+            },
+        ),
     )
-    
+
     verbose_name = "Planning Override"
     verbose_name_plural = "Planning Overrides"
 
@@ -174,10 +187,12 @@ class EventAdmin(admin.ModelAdmin):
             if override.enabled:
                 return format_html(
                     '<span style="color: #17a2b8;" title="{}">✓ Override actief</span>',
-                    override.get_effective_cron_expression()
+                    override.get_effective_cron_expression(),
                 )
             else:
-                return format_html('<span style="color: #6c757d;">Override inactief</span>')
+                return format_html(
+                    '<span style="color: #6c757d;">Override inactief</span>'
+                )
         except:
             return format_html('<span style="color: #666;">Geen override</span>')
 
@@ -221,14 +236,23 @@ class EventAdmin(admin.ModelAdmin):
         super().save_related(request, form, formsets, change)
         # Check if any schedule override was saved
         for formset in formsets:
-            if hasattr(formset, 'model') and 'EventScheduleOverride' in str(formset.model):
+            if hasattr(formset, "model") and "EventScheduleOverride" in str(
+                formset.model
+            ):
                 if formset.has_changed():
                     try:
                         from notifications.utils import sync_periodic_tasks
+
                         sync_periodic_tasks()
-                        messages.success(request, "Planning overrides gesynchroniseerd met Celery beat.")
+                        messages.success(
+                            request,
+                            "Planning overrides gesynchroniseerd met Celery beat.",
+                        )
                     except Exception as e:
-                        messages.warning(request, f"Planning override opgeslagen, maar synchronisatie mislukt: {e}")
+                        messages.warning(
+                            request,
+                            f"Planning override opgeslagen, maar synchronisatie mislukt: {e}",
+                        )
 
     class Media:
         css = {"all": ("admin/css/custom_admin.css",)}
@@ -238,51 +262,50 @@ class EventAdmin(admin.ModelAdmin):
 @admin.register(MatchStatistic)
 class MatchStatisticAdmin(admin.ModelAdmin):
     list_display = [
-        "event", 
-        "player", 
-        "statistic_type", 
-        "value", 
-        "minute", 
-        "created_at", 
-        "created_by"
+        "event",
+        "player",
+        "statistic_type",
+        "value",
+        "minute",
+        "created_at",
+        "created_by",
     ]
-    list_filter = [
-        "statistic_type", 
-        "event__event_type", 
-        "event__date", 
-        "created_at"
-    ]
+    list_filter = ["statistic_type", "event__event_type", "event__date", "created_at"]
     search_fields = [
-        "event__name", 
-        "player__username", 
-        "player__first_name", 
-        "player__last_name"
+        "event__name",
+        "player__username",
+        "player__first_name",
+        "player__last_name",
     ]
     date_hierarchy = "created_at"
     ordering = ["-created_at"]
-    
+
     fieldsets = (
-        ("Statistiek informatie", {
-            "fields": ("event", "player", "statistic_type", "value", "minute")
-        }),
-        ("Extra informatie", {
-            "fields": ("notes", "created_by"),
-            "classes": ("collapse",)
-        }),
-        ("Metadata", {
-            "fields": ("created_at", "updated_at"),
-            "classes": ("collapse",),
-            "description": "Automatisch bijgehouden informatie",
-        }),
+        (
+            "Statistiek informatie",
+            {"fields": ("event", "player", "statistic_type", "value", "minute")},
+        ),
+        (
+            "Extra informatie",
+            {"fields": ("notes", "created_by"), "classes": ("collapse",)},
+        ),
+        (
+            "Metadata",
+            {
+                "fields": ("created_at", "updated_at"),
+                "classes": ("collapse",),
+                "description": "Automatisch bijgehouden informatie",
+            },
+        ),
     )
-    
+
     readonly_fields = ("created_at", "updated_at")
-    
+
     def get_queryset(self, request):
         """Optimize queries by prefetching related data"""
         qs = super().get_queryset(request)
         return qs.select_related("event", "player", "created_by")
-    
+
     def save_model(self, request, obj, form, change):
         """Set created_by to current user if not set"""
         if not change and not obj.created_by:

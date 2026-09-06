@@ -1,10 +1,15 @@
 # Use Python 3.12 slim image
 FROM python:3.12-slim
 
+# Pin the dependency installer independently from the application dependencies.
+ARG UV_VERSION=0.11.7
+
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV DJANGO_SETTINGS_MODULE=rap_web.settings
+ENV PATH="/app/.venv/bin:$PATH"
+ENV UV_COMPILE_BYTECODE=1
 
 # Set work directory
 WORKDIR /app
@@ -17,9 +22,11 @@ RUN apt-get update \
         libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir "uv==${UV_VERSION}"
+
+# Install Python dependencies from the committed lockfile.
+COPY pyproject.toml uv.lock ./
+RUN uv sync --locked --no-dev --no-install-project
 
 # Copy entrypoint script
 COPY docker/entrypoint.sh /entrypoint.sh

@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timezone as dt_timezone
+from datetime import UTC, datetime
 
 from attendance.models import Attendance
 from django.contrib import messages
@@ -20,15 +20,15 @@ User = get_user_model()
 
 def is_invaller(user):
     """Check if user is an invaller (substitute)"""
-    return hasattr(user, 'is_invaller') and user.is_invaller
+    return hasattr(user, "is_invaller") and user.is_invaller
 
 
 @login_required
 def event_list(request: HttpRequest):
     # If user is an invaller, redirect to invaller-specific view
-    if hasattr(request.user, 'is_invaller') and request.user.is_invaller:
-        return redirect('events:invaller_matches')
-    
+    if hasattr(request.user, "is_invaller") and request.user.is_invaller:
+        return redirect("events:invaller_matches")
+
     now = timezone.now()
 
     # Get filter parameters
@@ -110,10 +110,10 @@ def event_list(request: HttpRequest):
 def invaller_matches(request: HttpRequest):
     """Show only matches for invaller users"""
     # Check if user is an invaller
-    if not (hasattr(request.user, 'is_invaller') and request.user.is_invaller):
+    if not (hasattr(request.user, "is_invaller") and request.user.is_invaller):
         messages.error(request, "Je hebt geen toegang tot deze pagina.")
-        return redirect('events:list')
-    
+        return redirect("events:list")
+
     now = timezone.now()
 
     # Get filter parameters
@@ -121,8 +121,8 @@ def invaller_matches(request: HttpRequest):
     location_filter = request.GET.get("location", "")
 
     # Base querysets - only matches (wedstrijd events)
-    upcoming_events = Event.objects.filter(date__gt=now, event_type='wedstrijd')
-    past_events = Event.objects.filter(date__lte=now, event_type='wedstrijd')
+    upcoming_events = Event.objects.filter(date__gt=now, event_type="wedstrijd")
+    past_events = Event.objects.filter(date__lte=now, event_type="wedstrijd")
 
     # Apply search filter
     if search_query:
@@ -156,7 +156,7 @@ def invaller_matches(request: HttpRequest):
 
     # Get unique locations for filter dropdown (only from matches)
     unique_locations = (
-        Event.objects.filter(event_type='wedstrijd')
+        Event.objects.filter(event_type="wedstrijd")
         .exclude(location__exact="")
         .values_list("location", flat=True)
         .distinct()
@@ -179,11 +179,15 @@ def invaller_matches(request: HttpRequest):
 def event_detail(request: HttpRequest, pk: int):
     """Show detailed view of a specific event"""
     event = get_object_or_404(Event, pk=pk)
-    
+
     # Check if invaller is trying to access non-match event
-    if hasattr(request.user, 'is_invaller') and request.user.is_invaller and event.event_type != 'wedstrijd':
+    if (
+        hasattr(request.user, "is_invaller")
+        and request.user.is_invaller
+        and event.event_type != "wedstrijd"
+    ):
         messages.error(request, "Als invaller kun je alleen wedstrijden bekijken.")
-        return redirect('events:invaller_matches')
+        return redirect("events:invaller_matches")
 
     # Get all active players for attendance table
     players = User.objects.filter(is_active=True).order_by("last_name", "first_name")
@@ -210,14 +214,18 @@ def event_detail(request: HttpRequest, pk: int):
     user_attendance_status = None
     if request.user.is_authenticated:
         user_attendance_status = event.get_user_attendance_status(request.user)
-    
+
     # Handle statistics for match events
     statistics = []
     statistic_form = None
     if event.is_match:
         # Get existing statistics for this match
-        statistics = MatchStatistic.objects.filter(event=event).select_related("player").order_by("minute", "statistic_type")
-        
+        statistics = (
+            MatchStatistic.objects.filter(event=event)
+            .select_related("player")
+            .order_by("minute", "statistic_type")
+        )
+
         # Handle statistics form submission (staff only)
         if request.user.is_staff:
             if request.method == "POST" and "add_statistic" in request.POST:
@@ -227,12 +235,13 @@ def event_detail(request: HttpRequest, pk: int):
                     statistic.event = event
                     statistic.created_by = request.user
                     statistic.save()
-                    messages.success(request, f"Statistiek toegevoegd voor {statistic.player}.")
+                    messages.success(
+                        request, f"Statistiek toegevoegd voor {statistic.player}."
+                    )
                     return redirect("events:detail", pk=event.pk)
             else:
                 statistic_form = MatchStatisticForm(event=event)
-                
-               
+
     context = {
         "event": event,
         "player_attendance": player_attendance,
@@ -639,13 +648,15 @@ def delete_statistic(request: HttpRequest, pk: int, stat_id: int):
     """Delete a match statistic"""
     event = get_object_or_404(Event, pk=pk)
     statistic = get_object_or_404(MatchStatistic, pk=stat_id, event=event)
-    
+
     player_name = statistic.player.get_full_name() or statistic.player.username
     stat_type = statistic.get_statistic_type_display()
-    
+
     statistic.delete()
-    messages.success(request, f"Statistiek '{stat_type}' voor {player_name} verwijderd.")
-    
+    messages.success(
+        request, f"Statistiek '{stat_type}' voor {player_name} verwijderd."
+    )
+
     return redirect("events:detail", pk=event.pk)
 
 
@@ -654,50 +665,60 @@ def export_ics(request: HttpRequest):
     """Export future events as ICS calendar file"""
     now = timezone.now()
     future_events = Event.objects.filter(date__gt=now).order_by("date")
-    
+
     # Create ICS content
     ics_lines = [
         "BEGIN:VCALENDAR",
-        "VERSION:2.0", 
+        "VERSION:2.0",
         "PRODID:-//SV Rap 8//Event Calendar//NL",
         "CALSCALE:GREGORIAN",
         "METHOD:PUBLISH",
         "X-WR-CALNAME:SV Rap 8 Evenementen",
         "X-WR-TIMEZONE:Europe/Amsterdam",
     ]
-    
+
     for event in future_events:
         # Format dates for ICS (UTC format)
-        utc_start = event.date.astimezone(dt_timezone.utc)
-        utc_end = (event.date + timezone.timedelta(hours=2)).astimezone(dt_timezone.utc)  # Default 2 hour duration
-        
+        utc_start = event.date.astimezone(UTC)
+        utc_end = (event.date + timezone.timedelta(hours=2)).astimezone(
+            UTC
+        )  # Default 2 hour duration
+
         start_str = utc_start.strftime("%Y%m%dT%H%M%SZ")
         end_str = utc_end.strftime("%Y%m%dT%H%M%SZ")
-        created_str = datetime.now(dt_timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-        
+        created_str = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+
         # Clean description for ICS format
-        description = event.description.replace('\n', '\\n').replace('\r', '') if event.description else ""
+        description = (
+            event.description.replace("\n", "\\n").replace("\r", "")
+            if event.description
+            else ""
+        )
         location = event.location if event.location else ""
-        
+
         # Create event entry
-        ics_lines.extend([
-            "BEGIN:VEVENT",
-            f"UID:{event.id}@svrap8.nl",
-            f"DTSTART:{start_str}",
-            f"DTEND:{end_str}",
-            f"DTSTAMP:{created_str}",
-            f"SUMMARY:{event.name}",
-            f"DESCRIPTION:{description}",
-            f"LOCATION:{location}",
-            f"CATEGORIES:{event.get_event_type_display()}",
-            f"STATUS:CONFIRMED",
-            f"TRANSP:OPAQUE",
-            "END:VEVENT",
-        ])
-    
+        ics_lines.extend(
+            [
+                "BEGIN:VEVENT",
+                f"UID:{event.id}@svrap8.nl",
+                f"DTSTART:{start_str}",
+                f"DTEND:{end_str}",
+                f"DTSTAMP:{created_str}",
+                f"SUMMARY:{event.name}",
+                f"DESCRIPTION:{description}",
+                f"LOCATION:{location}",
+                f"CATEGORIES:{event.get_event_type_display()}",
+                "STATUS:CONFIRMED",
+                "TRANSP:OPAQUE",
+                "END:VEVENT",
+            ]
+        )
+
     ics_lines.append("END:VCALENDAR")
-    
+
     # Create response
-    response = HttpResponse('\r\n'.join(ics_lines), content_type='text/calendar; charset=utf-8')
-    response['Content-Disposition'] = 'attachment; filename="sv_rap_8_evenementen.ics"'
+    response = HttpResponse(
+        "\r\n".join(ics_lines), content_type="text/calendar; charset=utf-8"
+    )
+    response["Content-Disposition"] = 'attachment; filename="sv_rap_8_evenementen.ics"'
     return response

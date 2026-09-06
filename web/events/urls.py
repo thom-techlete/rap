@@ -1,7 +1,6 @@
 from django.urls import path
 
-from . import views
-from . import analytics_views
+from . import analytics_views, views
 
 app_name = "events"
 

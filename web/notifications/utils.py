@@ -338,15 +338,15 @@ def send_recurring_event_notification(events: list):
     # Prepare email context
     # Convert to local timezone before formatting
     first_event_local = timezone.localtime(first_event.date)
-    last_event_local = timezone.localtime(last_event.date) if len(events_sorted) > 1 else None
-    
+    last_event_local = (
+        timezone.localtime(last_event.date) if len(events_sorted) > 1 else None
+    )
+
     context = {
         "event": first_event,  # Use first event as the base
         "first_event_date_formatted": first_event_local.strftime("%d-%m-%Y om %H:%M"),
         "last_event_date_formatted": (
-            last_event_local.strftime("%d-%m-%Y om %H:%M")
-            if last_event_local
-            else None
+            last_event_local.strftime("%d-%m-%Y om %H:%M") if last_event_local else None
         ),
         "event_type_display": first_event.get_event_type_display(),
         "is_mandatory_text": "Ja" if first_event.is_mandatory else "Nee",

@@ -3,6 +3,7 @@ Django management command to create default schedule configurations.
 """
 
 from django.core.management.base import BaseCommand
+
 from notifications.models import ScheduleConfiguration
 
 
@@ -73,10 +74,10 @@ class Command(BaseCommand):
 
         for config_data in default_configs:
             name = config_data["name"]
-            
+
             # Check if configuration already exists
             existing = ScheduleConfiguration.objects.filter(name=name).first()
-            
+
             if existing:
                 if overwrite:
                     # Update existing configuration
@@ -96,16 +97,14 @@ class Command(BaseCommand):
                 # Create new configuration
                 ScheduleConfiguration.objects.create(**config_data)
                 created_count += 1
-                self.stdout.write(
-                    self.style.SUCCESS(f"Created configuration: {name}")
-                )
+                self.stdout.write(self.style.SUCCESS(f"Created configuration: {name}"))
 
         # Summary
-        self.stdout.write("\n" + "="*50)
+        self.stdout.write("\n" + "=" * 50)
         self.stdout.write(f"Created: {created_count}")
         self.stdout.write(f"Updated: {updated_count}")
         self.stdout.write(f"Skipped: {skipped_count}")
-        self.stdout.write("="*50)
+        self.stdout.write("=" * 50)
 
         if created_count > 0 or updated_count > 0:
             self.stdout.write(
@@ -116,13 +115,13 @@ class Command(BaseCommand):
             self.stdout.write(
                 "You can now manage these configurations in the admin interface:"
             )
-            self.stdout.write("- Django Admin: /admin/notifications/scheduleconfiguration/")
+            self.stdout.write(
+                "- Django Admin: /admin/notifications/scheduleconfiguration/"
+            )
             self.stdout.write("- Custom Admin: /notifications/admin/schedule/")
         else:
             self.stdout.write(
-                self.style.WARNING(
-                    "\nNo configurations were created or updated."
-                )
+                self.style.WARNING("\nNo configurations were created or updated.")
             )
             if skipped_count > 0:
                 self.stdout.write("Use --overwrite to update existing configurations.")

@@ -7,9 +7,9 @@ from django.db.models import Count, Q, Sum
 from django.http import HttpRequest
 from django.shortcuts import render
 from django.utils import timezone
+from polls.models import Poll
 
 from .models import Event, MatchStatistic
-from polls.models import Poll
 
 User = get_user_model()
 
@@ -20,7 +20,7 @@ def dashboard(request: HttpRequest):
     now = timezone.now()
 
     # Check if user is invaller and redirect to their specific dashboard
-    if hasattr(request.user, 'is_invaller') and request.user.is_invaller:
+    if hasattr(request.user, "is_invaller") and request.user.is_invaller:
         return invaller_dashboard(request)
 
     # Date ranges for statistics
@@ -108,7 +108,7 @@ def dashboard(request: HttpRequest):
     match_stats = calculate_match_statistics()
 
     # Active polls for dashboard
-    active_polls = Poll.objects.filter(is_active=True).order_by('-created_at')[:3]
+    active_polls = Poll.objects.filter(is_active=True).order_by("-created_at")[:3]
 
     context = {
         "stats": stats,
@@ -195,13 +195,10 @@ def calculate_player_rankings():
 def calculate_match_statistics():
     """Calculate comprehensive match statistics for dashboard"""
     now = timezone.now()
-    
+
     # Get all completed matches (past events that are matches)
-    completed_matches = Event.objects.filter(
-        date__lt=now, 
-        event_type="wedstrijd"
-    )
-    
+    completed_matches = Event.objects.filter(date__lt=now, event_type="wedstrijd")
+
     if not completed_matches.exists():
         return {
             "total_matches": 0,
@@ -213,59 +210,67 @@ def calculate_match_statistics():
             "most_carded": [],
             "recent_statistics": [],
         }
-    
+
     # Total statistics
     total_matches = completed_matches.count()
-    total_goals = MatchStatistic.objects.filter(
-        event__in=completed_matches,
-        statistic_type='goal'
-    ).aggregate(total=Sum('value'))['total'] or 0
-    
-    total_assists = MatchStatistic.objects.filter(
-        event__in=completed_matches,
-        statistic_type='assist'
-    ).aggregate(total=Sum('value'))['total'] or 0
-    
-    total_cards = MatchStatistic.objects.filter(
-        event__in=completed_matches,
-        statistic_type__in=['yellow_card', 'red_card']
-    ).aggregate(total=Sum('value'))['total'] or 0
-    
+    total_goals = (
+        MatchStatistic.objects.filter(
+            event__in=completed_matches, statistic_type="goal"
+        ).aggregate(total=Sum("value"))["total"]
+        or 0
+    )
+
+    total_assists = (
+        MatchStatistic.objects.filter(
+            event__in=completed_matches, statistic_type="assist"
+        ).aggregate(total=Sum("value"))["total"]
+        or 0
+    )
+
+    total_cards = (
+        MatchStatistic.objects.filter(
+            event__in=completed_matches, statistic_type__in=["yellow_card", "red_card"]
+        ).aggregate(total=Sum("value"))["total"]
+        or 0
+    )
+
     # Top goalscorers
     top_goalscorers = (
-        MatchStatistic.objects
-        .filter(event__in=completed_matches, statistic_type='goal')
-        .values('player__first_name', 'player__last_name', 'player__username')
-        .annotate(total_goals=Sum('value'))
-        .order_by('-total_goals')[:5]
+        MatchStatistic.objects.filter(
+            event__in=completed_matches, statistic_type="goal"
+        )
+        .values("player__first_name", "player__last_name", "player__username")
+        .annotate(total_goals=Sum("value"))
+        .order_by("-total_goals")[:5]
     )
-    
+
     # Top assisters
     top_assisters = (
-        MatchStatistic.objects
-        .filter(event__in=completed_matches, statistic_type='assist')
-        .values('player__first_name', 'player__last_name', 'player__username')
-        .annotate(total_assists=Sum('value'))
-        .order_by('-total_assists')[:5]
+        MatchStatistic.objects.filter(
+            event__in=completed_matches, statistic_type="assist"
+        )
+        .values("player__first_name", "player__last_name", "player__username")
+        .annotate(total_assists=Sum("value"))
+        .order_by("-total_assists")[:5]
     )
-    
+
     # Most carded players
     most_carded = (
-        MatchStatistic.objects
-        .filter(event__in=completed_matches, statistic_type__in=['yellow_card', 'red_card'])
-        .values('player__first_name', 'player__last_name', 'player__username')
-        .annotate(total_cards=Sum('value'))
-        .order_by('-total_cards')[:5]
+        MatchStatistic.objects.filter(
+            event__in=completed_matches, statistic_type__in=["yellow_card", "red_card"]
+        )
+        .values("player__first_name", "player__last_name", "player__username")
+        .annotate(total_cards=Sum("value"))
+        .order_by("-total_cards")[:5]
     )
-    
+
     # Recent statistics (last 10 statistics added)
     recent_statistics = (
-        MatchStatistic.objects
-        .filter(event__in=completed_matches)
-        .select_related('player', 'event')
-        .order_by('-created_at')[:10]
+        MatchStatistic.objects.filter(event__in=completed_matches)
+        .select_related("player", "event")
+        .order_by("-created_at")[:10]
     )
-    
+
     return {
         "total_matches": total_matches,
         "total_goals": total_goals,
@@ -285,23 +290,21 @@ def invaller_dashboard(request: HttpRequest):
 
     # Only show matches for invallers
     upcoming_matches = Event.objects.filter(
-        date__gt=now, 
-        event_type='wedstrijd'
-    ).order_by('date')[:5]
-    
-    past_matches = Event.objects.filter(
-        date__lt=now, 
-        event_type='wedstrijd'
-    ).order_by('-date')[:3]
+        date__gt=now, event_type="wedstrijd"
+    ).order_by("date")[:5]
+
+    past_matches = Event.objects.filter(date__lt=now, event_type="wedstrijd").order_by(
+        "-date"
+    )[:3]
 
     # Get user's match attendance
     user_attendances = Attendance.objects.filter(
-        user=request.user,
-        event__event_type='wedstrijd'
-    ).select_related('event')
+        user=request.user, event__event_type="wedstrijd"
+    ).select_related("event")
 
     # Add attendance information to upcoming matches
     from django.db.models import Prefetch
+
     user_attendance_prefetch = Prefetch(
         "attendance_set",
         queryset=Attendance.objects.filter(user=request.user),
@@ -310,13 +313,11 @@ def invaller_dashboard(request: HttpRequest):
     upcoming_matches = upcoming_matches.prefetch_related(user_attendance_prefetch)
 
     # Calculate invaller statistics
-    total_matches_available = Event.objects.filter(
-        event_type='wedstrijd'
-    ).count()
-    
+    total_matches_available = Event.objects.filter(event_type="wedstrijd").count()
+
     # Count matches user attended
     matches_attended = user_attendances.filter(present=True).count()
-    
+
     # Calculate availability rate
     matches_responded = user_attendances.count()
     if matches_responded > 0:
@@ -325,20 +326,20 @@ def invaller_dashboard(request: HttpRequest):
         availability_rate = 0
 
     stats = {
-        'total_matches_available': total_matches_available,
-        'matches_attended': matches_attended,
-        'matches_responded': matches_responded,
-        'availability_rate': availability_rate,
-        'upcoming_matches_count': upcoming_matches.count(),
+        "total_matches_available": total_matches_available,
+        "matches_attended": matches_attended,
+        "matches_responded": matches_responded,
+        "availability_rate": availability_rate,
+        "upcoming_matches_count": upcoming_matches.count(),
     }
 
     context = {
-        'stats': stats,
-        'upcoming_matches': upcoming_matches,
-        'past_matches': past_matches,
-        'user_attendances': user_attendances,
-        'now': now,
-        'is_invaller': True,
+        "stats": stats,
+        "upcoming_matches": upcoming_matches,
+        "past_matches": past_matches,
+        "user_attendances": user_attendances,
+        "now": now,
+        "is_invaller": True,
     }
 
     return render(request, "dashboard/invaller.html", context)

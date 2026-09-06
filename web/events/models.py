@@ -205,7 +205,7 @@ class Event(models.Model):
 
 class MatchStatistic(models.Model):
     """Model for storing match statistics like goals, assists, cards, etc."""
-    
+
     STATISTIC_TYPES = [
         ("goal", "Doelpunt"),
         ("assist", "Assist"),
@@ -216,43 +216,41 @@ class MatchStatistic(models.Model):
         ("penalty_scored", "Penalty gescoord"),
         ("penalty_missed", "Penalty gemist"),
         ("own_goal", "Eigen doelpunt"),
-        ("clean_sheet", "Clean sheet"), # For goalkeepers
-        ("saves", "Reddingen"), # For goalkeepers
+        ("clean_sheet", "Clean sheet"),  # For goalkeepers
+        ("saves", "Reddingen"),  # For goalkeepers
         ("man_of_the_match", "Man van de wedstrijd"),
     ]
-    
+
     event = models.ForeignKey(
-        Event, 
-        on_delete=models.CASCADE, 
+        Event,
+        on_delete=models.CASCADE,
         verbose_name="Evenement",
-        help_text="Het evenement waaraan deze statistiek is gekoppeld"
+        help_text="Het evenement waaraan deze statistiek is gekoppeld",
     )
     player = models.ForeignKey(
-        User, 
-        on_delete=models.CASCADE, 
+        User,
+        on_delete=models.CASCADE,
         verbose_name="Speler",
-        help_text="De speler aan wie deze statistiek toebehoort"
+        help_text="De speler aan wie deze statistiek toebehoort",
     )
     statistic_type = models.CharField(
-        max_length=20,
-        choices=STATISTIC_TYPES,
-        verbose_name="Type statistiek"
+        max_length=20, choices=STATISTIC_TYPES, verbose_name="Type statistiek"
     )
     value = models.IntegerField(
         default=1,
         verbose_name="Waarde",
-        help_text="Aantal voor deze statistiek (bijv. aantal doelpunten, aantal kaarten)"
+        help_text="Aantal voor deze statistiek (bijv. aantal doelpunten, aantal kaarten)",
     )
     minute = models.PositiveIntegerField(
         null=True,
         blank=True,
         verbose_name="Minuut",
-        help_text="In welke minuut van de wedstrijd (optioneel)"
+        help_text="In welke minuut van de wedstrijd (optioneel)",
     )
     notes = models.TextField(
         blank=True,
         verbose_name="Opmerkingen",
-        help_text="Extra informatie over deze statistiek"
+        help_text="Extra informatie over deze statistiek",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -261,7 +259,7 @@ class MatchStatistic(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         related_name="created_statistics",
-        verbose_name="Toegevoegd door"
+        verbose_name="Toegevoegd door",
     )
 
     class Meta:
@@ -278,5 +276,8 @@ class MatchStatistic(models.Model):
     def clean(self):
         """Validate that statistics are only added to match events"""
         from django.core.exceptions import ValidationError
-        if hasattr(self, 'event') and self.event and not self.event.is_match:
-            raise ValidationError("Statistieken kunnen alleen worden toegevoegd aan wedstrijden.")
+
+        if hasattr(self, "event") and self.event and not self.event.is_match:
+            raise ValidationError(
+                "Statistieken kunnen alleen worden toegevoegd aan wedstrijden."
+            )

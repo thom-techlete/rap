@@ -342,7 +342,8 @@ def admin_invitations(request: HttpRequest):
 
         user_type_display = "invaller" if user_type == "invaller" else "speler"
         messages.success(
-            request, f'Uitnodigingscode "{invitation.code}" voor {user_type_display} is aangemaakt.'
+            request,
+            f'Uitnodigingscode "{invitation.code}" voor {user_type_display} is aangemaakt.',
         )
         return redirect("users:admin_invitations")
 
