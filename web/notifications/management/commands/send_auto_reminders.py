@@ -38,7 +38,7 @@ class Command(BaseCommand):
             from datetime import timedelta
 
             from django.utils import timezone
-            from events.models import Event
+            from events.models import Event, Season
 
             # Map reminder types to days before event
             days_mapping = {
@@ -58,7 +58,10 @@ class Command(BaseCommand):
 
             # Get upcoming events that would need reminders
             upcoming_events = Event.objects.filter(
-                date__gte=target_date_start, date__lte=target_date_end, date__gt=now
+                season=Season.get_active(),
+                date__gte=target_date_start,
+                date__lte=target_date_end,
+                date__gt=now,
             ).exclude(automatic_reminders__reminder_type=reminder_type)
 
             # Convert to local timezone for display

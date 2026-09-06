@@ -120,6 +120,9 @@ wait_for_web() {
 }
 
 start_all() {
+  echo "Applying Django migrations..."
+  (cd "${repo_root}/web" && uv run python manage.py migrate --noinput)
+
   for service in "${SERVICES[@]}"; do
     IFS='|' read -r name port workdir command <<<"${service}"
     start_service "${name}" "${port}" "${workdir}" "${command}"

@@ -9,7 +9,8 @@ from django.shortcuts import render
 from django.utils import timezone
 from polls.models import Poll
 
-from .models import Event, MatchStatistic
+from .models import Event, MatchStatistic, Season
+from .seasoning import get_selected_season
 
 User = get_user_model()
 
@@ -18,6 +19,7 @@ User = get_user_model()
 def dashboard(request: HttpRequest):
     """Main dashboard view showing overview of everything"""
     now = timezone.now()
+    season = get_selected_season(request)
 
     # Check if user is invaller and redirect to their specific dashboard
     if hasattr(request.user, "is_invaller") and request.user.is_invaller:
@@ -28,7 +30,8 @@ def dashboard(request: HttpRequest):
     month_ago = now - timedelta(days=30)
 
     # Basic statistics (based on past events with automatic absent for missing records)
-    past_events = Event.objects.filter(date__lt=now)
+    season_events = Event.objects.filter(season=season)
+    past_events = season_events.filter(date__lt=now)
     total_past_events = past_events.count()
     active_players_count = User.objects.filter(is_active=True).count()
 
@@ -41,9 +44,9 @@ def dashboard(request: HttpRequest):
     ).count()
 
     stats = {
-        "total_events": Event.objects.count(),
-        "upcoming_events": Event.objects.filter(date__gt=now).count(),
-        "events_this_week": Event.objects.filter(
+        "total_events": season_events.count(),
+        "upcoming_events": season_events.filter(date__gt=now).count(),
+        "events_this_week": season_events.filter(
             date__gte=week_ago, date__lte=now + timedelta(days=7)
         ).count(),
         "active_players": active_players_count,
@@ -60,9 +63,9 @@ def dashboard(request: HttpRequest):
         stats["team_attendance_rate"] = 0
 
     # Recent events (last 5 past events and next 5 upcoming events)
-    recent_past_events = Event.objects.filter(date__lt=now).order_by("-date")[:3]
+    recent_past_events = past_events.order_by("-date")[:3]
 
-    upcoming_events = Event.objects.filter(date__gt=now).order_by("date")[:5]
+    upcoming_events = season_events.filter(date__gt=now).order_by("date")[:5]
 
     # Add attendance information for upcoming events if user is authenticated
     if request.user.is_authenticated:
@@ -76,28 +79,28 @@ def dashboard(request: HttpRequest):
         upcoming_events = upcoming_events.prefetch_related(user_attendance_prefetch)
 
     # Next event happening today or soon
-    next_event = Event.objects.filter(date__gt=now).order_by("date").first()
-    today_events = Event.objects.filter(date__date=now.date())
+    next_event = season_events.filter(date__gt=now).order_by("date").first()
+    today_events = season_events.filter(date__date=now.date())
 
     # Player attendance ranking
-    player_rankings = calculate_player_rankings()
+    player_rankings = calculate_player_rankings(season)
 
     # Recent attendance activity (for the activity feed)
     recent_attendance = (
         Attendance.objects.select_related("user", "event")
-        .filter(timestamp__gte=week_ago)
+        .filter(timestamp__gte=week_ago, event__season=season)
         .order_by("-timestamp")[:10]
     )
 
     # Event type statistics
     event_type_stats = (
-        Event.objects.values("event_type")
+        season_events.values("event_type")
         .annotate(count=Count("id"))
         .order_by("-count")
     )
 
     # Attendance rate for recent events
-    recent_events_with_attendance = Event.objects.filter(
+    recent_events_with_attendance = season_events.filter(
         date__gte=month_ago, date__lt=now
     ).annotate(
         total_responses=Count("attendance"),
@@ -105,7 +108,7 @@ def dashboard(request: HttpRequest):
     )
 
     # Match statistics (only include completed matches)
-    match_stats = calculate_match_statistics()
+    match_stats = calculate_match_statistics(season)
 
     # Active polls for dashboard
     active_polls = Poll.objects.filter(is_active=True).order_by("-created_at")[:3]
@@ -123,19 +126,21 @@ def dashboard(request: HttpRequest):
         "match_stats": match_stats,
         "active_polls": active_polls,
         "now": now,
+        "selected_season": season,
     }
 
     return render(request, "dashboard/main.html", context)
 
 
-def calculate_player_rankings():
+def calculate_player_rankings(season=None):
     """Calculate player attendance rankings"""
     # Get all active players
     active_players = User.objects.filter(is_active=True)
 
     # Get all past events (events that have already happened)
     now = timezone.now()
-    past_events = Event.objects.filter(date__lt=now)
+    season = season or Season.get_active()
+    past_events = Event.objects.filter(season=season, date__lt=now)
 
     rankings = []
 
@@ -192,12 +197,15 @@ def calculate_player_rankings():
     return rankings
 
 
-def calculate_match_statistics():
+def calculate_match_statistics(season=None):
     """Calculate comprehensive match statistics for dashboard"""
     now = timezone.now()
 
     # Get all completed matches (past events that are matches)
-    completed_matches = Event.objects.filter(date__lt=now, event_type="wedstrijd")
+    season = season or Season.get_active()
+    completed_matches = Event.objects.filter(
+        season=season, date__lt=now, event_type="wedstrijd"
+    )
 
     if not completed_matches.exists():
         return {
@@ -287,19 +295,21 @@ def calculate_match_statistics():
 def invaller_dashboard(request: HttpRequest):
     """Dashboard view specifically for invaller users"""
     now = timezone.now()
+    season = get_selected_season(request)
 
     # Only show matches for invallers
-    upcoming_matches = Event.objects.filter(
+    season_events = Event.objects.filter(season=season)
+    upcoming_matches = season_events.filter(
         date__gt=now, event_type="wedstrijd"
     ).order_by("date")[:5]
 
-    past_matches = Event.objects.filter(date__lt=now, event_type="wedstrijd").order_by(
+    past_matches = season_events.filter(date__lt=now, event_type="wedstrijd").order_by(
         "-date"
     )[:3]
 
     # Get user's match attendance
     user_attendances = Attendance.objects.filter(
-        user=request.user, event__event_type="wedstrijd"
+        user=request.user, event__season=season, event__event_type="wedstrijd"
     ).select_related("event")
 
     # Add attendance information to upcoming matches
@@ -313,7 +323,7 @@ def invaller_dashboard(request: HttpRequest):
     upcoming_matches = upcoming_matches.prefetch_related(user_attendance_prefetch)
 
     # Calculate invaller statistics
-    total_matches_available = Event.objects.filter(event_type="wedstrijd").count()
+    total_matches_available = season_events.filter(event_type="wedstrijd").count()
 
     # Count matches user attended
     matches_attended = user_attendances.filter(present=True).count()

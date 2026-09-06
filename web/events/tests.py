@@ -1,14 +1,151 @@
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 
 from attendance.models import Attendance
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+from django.db.models.deletion import ProtectedError
 from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import Event, MatchStatistic
+from .dashboard_views import calculate_match_statistics, calculate_player_rankings
+from .forms import EventForm
+from .models import Event, MatchStatistic, Season
+from .seasoning import get_season_for_datetime, get_selected_season
 
 User = get_user_model()
+
+
+class SeasonDomainTestCase(TestCase):
+    def setUp(self):
+        self.archived = Season.objects.get(name="2025–2026")
+        self.active = Season.objects.get(name="2026–2027")
+
+    def test_active_season_and_boundaries(self):
+        self.assertEqual(Season.get_active(), self.active)
+        self.assertTrue(
+            self.archived.contains(timezone.make_aware(datetime(2026, 7, 31, 23, 59)))
+        )
+        self.assertFalse(
+            self.archived.contains(timezone.make_aware(datetime(2026, 8, 1)))
+        )
+        self.assertTrue(self.active.contains(timezone.make_aware(datetime(2026, 8, 1))))
+
+    def test_only_one_active_season_is_allowed(self):
+        with self.assertRaises(ValidationError):
+            Season.objects.create(
+                name="Dubbel",
+                start_date="2027-08-01",
+                end_date="2028-08-01",
+                is_active=True,
+            )
+
+    def test_event_defaults_to_active_and_protects_season(self):
+        event = Event.objects.create(name="Nieuw", date=timezone.now())
+        self.assertEqual(event.season, self.active)
+        with self.assertRaises(ProtectedError):
+            self.active.delete()
+
+    def test_selected_season_and_datetime_lookup(self):
+        request = self.client.get("/").wsgi_request
+        self.assertEqual(get_selected_season(request), self.active)
+        request.GET = {"season": str(self.archived.pk)}
+        self.assertEqual(get_selected_season(request), self.archived)
+        self.assertEqual(
+            get_season_for_datetime(timezone.make_aware(datetime(2026, 8, 1))),
+            self.active,
+        )
+        self.assertEqual(
+            get_season_for_datetime(datetime(2026, 7, 31, 22, 30, tzinfo=UTC)),
+            self.active,
+        )
+
+    def test_event_form_defaults_to_active_and_rejects_unknown_date(self):
+        form = EventForm()
+        self.assertEqual(form.initial["season"], self.active)
+        data = {
+            "name": "Oud evenement",
+            "event_type": "training",
+            "date": "01/01/2030 12:00",
+            "season": self.active.pk,
+            "recurrence_type": "none",
+        }
+        self.assertFalse(EventForm(data).is_valid())
+        self.assertIn("bekend seizoen", str(EventForm(data).errors))
+
+    def test_seasons_must_start_on_first_of_august(self):
+        with self.assertRaises(ValidationError):
+            Season.objects.create(
+                name="Ongeldig", start_date="2026-01-01", end_date="2027-01-01"
+            )
+
+    def test_direct_event_save_rejects_unknown_date(self):
+        with self.assertRaises(ValidationError):
+            Event.objects.create(name="Ver buiten seizoen", date=datetime(2030, 1, 1))
+
+    def test_dashboard_calculations_are_isolated_by_season(self):
+        player = User.objects.create_user(username="season-player")
+        old_match = Event.objects.create(
+            name="Oude wedstrijd",
+            event_type="wedstrijd",
+            date=timezone.make_aware(datetime(2026, 7, 1)),
+            season=self.archived,
+        )
+        new_match = Event.objects.create(
+            name="Nieuwe wedstrijd",
+            event_type="wedstrijd",
+            date=timezone.make_aware(datetime(2026, 8, 15)),
+            season=self.active,
+        )
+        Attendance.objects.create(user=player, event=old_match, present=True)
+        Attendance.objects.create(user=player, event=new_match, present=False)
+        MatchStatistic.objects.create(
+            event=old_match, player=player, statistic_type="goal", value=3
+        )
+        MatchStatistic.objects.create(
+            event=new_match, player=player, statistic_type="goal", value=1
+        )
+
+        self.assertEqual(calculate_match_statistics(self.archived)["total_goals"], 3)
+        self.assertEqual(calculate_match_statistics(self.active)["total_goals"], 1)
+        self.assertEqual(
+            calculate_player_rankings(self.archived)[0]["present_count"], 1
+        )
+        self.assertEqual(calculate_player_rankings(self.active)[0]["present_count"], 0)
+        self.assertEqual(Attendance.objects.count(), 2)
+        self.assertEqual(MatchStatistic.objects.count(), 2)
+
+    def test_recurring_events_cannot_cross_seasons(self):
+        from django.core.exceptions import ValidationError
+
+        with self.assertRaises(ValidationError):
+            Event.create_recurring_events(
+                {"name": "Zomer", "date": timezone.make_aware(datetime(2026, 7, 25))},
+                "weekly",
+                datetime(2026, 8, 15).date(),
+            )
+
+    def test_event_list_and_attendance_dashboard_use_selected_season(self):
+        user = User.objects.create_user(username="season-viewer", password="test")
+        self.client.login(username="season-viewer", password="test")
+        old_event = Event.objects.create(
+            name="Archief evenement",
+            date=timezone.make_aware(datetime(2026, 7, 1)),
+            season=self.archived,
+        )
+        Event.objects.create(
+            name="Actief evenement",
+            date=timezone.make_aware(datetime(2026, 8, 15)),
+            season=self.active,
+        )
+        Attendance.objects.create(user=user, event=old_event, present=True)
+
+        response = self.client.get("/events/")
+        self.assertNotContains(response, "Archief evenement")
+        response = self.client.get(f"/events/?season={self.archived.pk}")
+        self.assertContains(response, "Archief evenement")
+        response = self.client.get(f"/attendance/dashboard/?season={self.archived.pk}")
+        self.assertEqual(response.context["total_events"], 1)
 
 
 class EventListTestCase(TestCase):

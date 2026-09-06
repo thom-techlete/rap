@@ -4,7 +4,8 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
-from .models import Event, MatchStatistic
+from .models import Event, MatchStatistic, Season
+from .seasoning import get_season_for_datetime, season_queryset
 
 User = get_user_model()
 
@@ -43,6 +44,7 @@ class EventForm(forms.ModelForm):
             "location",
             "max_participants",
             "is_mandatory",
+            "season",
         ]
         widgets = {
             "date": forms.DateTimeInput(
@@ -78,6 +80,9 @@ class EventForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["season"].queryset = season_queryset()
+        if not self.instance.pk:
+            self.initial["season"] = Season.get_active()
         # Format datetime for display in dd/mm/yyyy hh:mm format
         if self.instance and self.instance.pk and self.instance.date:
             # Convert to local timezone before formatting
@@ -107,6 +112,22 @@ class EventForm(forms.ModelForm):
         recurrence_type = cleaned_data.get("recurrence_type")
         recurrence_end_date = cleaned_data.get("recurrence_end_date")
         event_date = cleaned_data.get("date")
+
+        if event_date:
+            season = cleaned_data.get("season")
+            date_season = get_season_for_datetime(event_date)
+            if season and season != date_season:
+                raise forms.ValidationError(
+                    "De evenementdatum valt niet binnen het geselecteerde seizoen."
+                )
+            cleaned_data["season"] = date_season
+            if (
+                recurrence_end_date
+                and get_season_for_datetime(recurrence_end_date) != date_season
+            ):
+                raise forms.ValidationError(
+                    "Een herhalend evenement mag niet over seizoenen heen lopen."
+                )
 
         # If recurrence is enabled, end date is required
         if recurrence_type and recurrence_type != "none":

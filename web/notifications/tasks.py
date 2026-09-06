@@ -10,7 +10,7 @@ from celery import shared_task
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
-from events.models import Event
+from events.models import Event, Season
 
 from notifications.models import (
     AutomaticReminderLog,
@@ -58,6 +58,7 @@ def send_automatic_event_reminders(self, reminder_type: str = "1_week"):
 
     # Get upcoming events that need reminders
     upcoming_events = Event.objects.filter(
+        season=Season.get_active(),
         date__gte=target_date_start,
         date__lte=target_date_end,
         date__gt=now,  # Only future events
@@ -235,7 +236,9 @@ def send_event_summary_to_attendees(self, reminder_type: str = "morning_of"):
     )
 
     events_today = Event.objects.filter(
-        date__gte=target_date_start, date__lte=target_date_end
+        season=Season.get_active(),
+        date__gte=target_date_start,
+        date__lte=target_date_end,
     )
 
     total_events = events_today.count()

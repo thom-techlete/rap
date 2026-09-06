@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
 
-{% block title %}Aanwezigheid Dashboard - SV Rap 8{% endblock %}
+{% block title %}Aanwezigheid - {{ selected_season.name|default:'SV Rap 8' }}{% endblock %}
 
 {% block content %}
+    <p class="text-muted">Seizoen: {{ selected_season.name }}</p>
     <div class="text-center mb-5">
         <h1 class="display-4 fw-bold d-flex align-items-center justify-content-center" style="color: #475569;">
             <i data-feather="bar-chart-2" style="width: 2.5rem; height: 2.5rem; margin-right: 1rem; color: #64748b;"></i>

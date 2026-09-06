@@ -14,6 +14,7 @@ from notifications.utils import send_bulk_notifications, send_new_event_notifica
 
 from .forms import EventForm, MatchStatisticForm
 from .models import Event, MatchStatistic
+from .seasoning import get_selected_season, season_queryset
 
 User = get_user_model()
 
@@ -30,6 +31,7 @@ def event_list(request: HttpRequest):
         return redirect("events:invaller_matches")
 
     now = timezone.now()
+    season = get_selected_season(request)
 
     # Get filter parameters
     search_query = request.GET.get("search", "").strip()
@@ -38,8 +40,9 @@ def event_list(request: HttpRequest):
     mandatory_filter = request.GET.get("mandatory", "")
 
     # Base querysets
-    upcoming_events = Event.objects.filter(date__gt=now)
-    past_events = Event.objects.filter(date__lte=now)
+    season_events = Event.objects.filter(season=season)
+    upcoming_events = season_events.filter(date__gt=now)
+    past_events = season_events.filter(date__lte=now)
 
     # Apply search filter
     if search_query:
@@ -85,7 +88,7 @@ def event_list(request: HttpRequest):
 
     # Get unique locations for filter dropdown
     unique_locations = (
-        Event.objects.exclude(location__exact="")
+        season_events.exclude(location__exact="")
         .values_list("location", flat=True)
         .distinct()
         .order_by("location")
@@ -101,6 +104,8 @@ def event_list(request: HttpRequest):
         "mandatory_filter": mandatory_filter,
         "event_types": Event.EVENT_TYPES,
         "unique_locations": unique_locations,
+        "selected_season": season,
+        "seasons": season_queryset(),
     }
 
     return render(request, "events/event_list.html", context)
@@ -115,14 +120,16 @@ def invaller_matches(request: HttpRequest):
         return redirect("events:list")
 
     now = timezone.now()
+    season = get_selected_season(request)
 
     # Get filter parameters
     search_query = request.GET.get("search", "").strip()
     location_filter = request.GET.get("location", "")
 
     # Base querysets - only matches (wedstrijd events)
-    upcoming_events = Event.objects.filter(date__gt=now, event_type="wedstrijd")
-    past_events = Event.objects.filter(date__lte=now, event_type="wedstrijd")
+    season_events = Event.objects.filter(season=season)
+    upcoming_events = season_events.filter(date__gt=now, event_type="wedstrijd")
+    past_events = season_events.filter(date__lte=now, event_type="wedstrijd")
 
     # Apply search filter
     if search_query:
@@ -156,7 +163,7 @@ def invaller_matches(request: HttpRequest):
 
     # Get unique locations for filter dropdown (only from matches)
     unique_locations = (
-        Event.objects.filter(event_type="wedstrijd")
+        season_events.filter(event_type="wedstrijd")
         .exclude(location__exact="")
         .values_list("location", flat=True)
         .distinct()
@@ -170,6 +177,8 @@ def invaller_matches(request: HttpRequest):
         "location_filter": location_filter,
         "unique_locations": unique_locations,
         "is_invaller": True,  # Flag for template
+        "selected_season": season,
+        "seasons": season_queryset(),
     }
 
     return render(request, "events/invaller_matches.html", context)
@@ -281,6 +290,7 @@ def event_create(request: HttpRequest):
                 "location": form.cleaned_data["location"],
                 "max_participants": form.cleaned_data["max_participants"],
                 "is_mandatory": form.cleaned_data["is_mandatory"],
+                "season": form.cleaned_data["season"],
             }
 
             if recurrence_type and recurrence_type != "none" and recurrence_end_date:
@@ -291,9 +301,21 @@ def event_create(request: HttpRequest):
                 event_count = len(events)
 
                 # Send notification for all created events
+                notification_events = [
+                    created_event
+                    for created_event in events
+                    if created_event.season.is_active
+                    and created_event.date > timezone.now()
+                ]
                 try:
+                    if not notification_events:
+                        messages.success(
+                            request,
+                            f"Herhalend evenement succesvol aangemaakt ({event_count} evenementen).",
+                        )
+                        return redirect("events:list")
                     success_count, error_count = send_bulk_notifications(
-                        events, "new_event"
+                        notification_events, "new_event"
                     )
                     if error_count > 0:
                         messages.warning(
@@ -319,6 +341,9 @@ def event_create(request: HttpRequest):
 
                 # Send notification for the new event
                 try:
+                    if not event.season.is_active or event.date <= timezone.now():
+                        messages.success(request, "Evenement succesvol aangemaakt.")
+                        return redirect("events:list")
                     send_new_event_notification(event)
                     messages.success(
                         request,
@@ -357,6 +382,20 @@ def event_edit(request: HttpRequest, pk: int):
                 if update_series:
                     # Update all future events in the series
                     recurring_events = event.get_recurring_events()
+                    if any(
+                        recurring_event.date >= event.date
+                        and recurring_event.season_id != form.cleaned_data["season"].pk
+                        for recurring_event in recurring_events
+                    ):
+                        form.add_error(
+                            None,
+                            "Een herhalende reeks mag niet over seizoenen heen lopen.",
+                        )
+                        return render(
+                            request,
+                            "events/event_form.html",
+                            {"form": form, "event": event, "is_recurring_event": True},
+                        )
                     updated_count = 0
 
                     for recurring_event in recurring_events:
@@ -664,7 +703,8 @@ def delete_statistic(request: HttpRequest, pk: int, stat_id: int):
 def export_ics(request: HttpRequest):
     """Export future events as ICS calendar file"""
     now = timezone.now()
-    future_events = Event.objects.filter(date__gt=now).order_by("date")
+    season = get_selected_season(request)
+    future_events = Event.objects.filter(season=season, date__gt=now).order_by("date")
 
     # Create ICS content
     ics_lines = [

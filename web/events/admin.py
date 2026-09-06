@@ -1,7 +1,14 @@
 from django.contrib import admin, messages
 from django.utils.html import format_html
 
-from .models import Event, MatchStatistic
+from .models import Event, MatchStatistic, Season
+
+
+@admin.register(Season)
+class SeasonAdmin(admin.ModelAdmin):
+    list_display = ["name", "start_date", "end_date", "is_active"]
+    list_filter = ["is_active"]
+    ordering = ["-start_date"]
 
 
 @admin.action(description="Verzend nieuwe evenement notificaties")
@@ -124,7 +131,7 @@ class EventAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ("Basis informatie", {"fields": ("name", "description", "event_type")}),
-        ("Planning", {"fields": ("date", "location")}),
+        ("Planning", {"fields": ("date", "location", "season")}),
         (
             "Instellingen",
             {"fields": ("is_mandatory", "max_participants"), "classes": ("collapse",)},

@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 from events.models import Event
+from events.seasoning import get_selected_season, season_queryset
 
 from .models import Attendance
 
@@ -41,7 +42,8 @@ def dashboard(request: HttpRequest):
 
     # Only consider past events for statistics
     now = timezone.now()
-    past_events = Event.objects.filter(date__lt=now).order_by("-date")
+    season = get_selected_season(request)
+    past_events = Event.objects.filter(season=season, date__lt=now).order_by("-date")
 
     # Get user's attendance records for past events only
     user_attendances = (
@@ -105,6 +107,8 @@ def dashboard(request: HttpRequest):
         "attendance_rate": round(attendance_rate, 1),
         "remaining_to_goal": round(remaining_to_goal, 1),
         "target_rate": target_rate,
+        "selected_season": season,
+        "seasons": season_queryset(),
     }
 
     return render(request, "attendance/dashboard.html", context)

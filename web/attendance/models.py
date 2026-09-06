@@ -10,6 +10,9 @@ class Attendance(models.Model):
     present = models.BooleanField(default=False)
     timestamp = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        indexes = [models.Index(fields=["event", "present"])]
+
     def __str__(self):
         return (
             f"{self.user} - {self.event} - {'Aanwezig' if self.present else 'Afwezig'}"

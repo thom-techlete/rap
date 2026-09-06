@@ -1,5 +1,5 @@
 import uuid
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from dateutil.relativedelta import relativedelta
 from django.contrib.auth import get_user_model
@@ -8,6 +8,84 @@ from django.urls import reverse
 from django.utils import timezone
 
 User = get_user_model()
+
+
+class Season(models.Model):
+    name = models.CharField(max_length=20, unique=True, verbose_name="Seizoen")
+    start_date = models.DateField(verbose_name="Startdatum")
+    end_date = models.DateField(verbose_name="Einddatum")
+    is_active = models.BooleanField(default=False, verbose_name="Actief seizoen")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["start_date"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["is_active"],
+                condition=models.Q(is_active=True),
+                name="only_one_active_season",
+            ),
+            models.UniqueConstraint(
+                fields=["start_date"], name="unique_season_start_date"
+            ),
+            models.CheckConstraint(
+                condition=models.Q(
+                    start_date__month=8,
+                    start_date__day=1,
+                    end_date__month=8,
+                    end_date__day=1,
+                ),
+                name="season_dates_on_august_first",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(end_date__year=models.F("start_date__year") + 1),
+                name="season_is_exactly_one_year",
+            ),
+        ]
+        verbose_name = "Seizoen"
+        verbose_name_plural = "Seizoenen"
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        if self.end_date <= self.start_date:
+            raise ValidationError("De einddatum moet na de startdatum liggen.")
+        if self.start_date.month != 8 or self.start_date.day != 1:
+            raise ValidationError("Een seizoen moet op 1 augustus beginnen.")
+        if self.end_date != self.start_date.replace(year=self.start_date.year + 1):
+            raise ValidationError(
+                "Een seizoen moet precies één jaar duren en op 1 augustus eindigen."
+            )
+        if (
+            Season.objects.filter(
+                start_date__lt=self.end_date, end_date__gt=self.start_date
+            )
+            .exclude(pk=self.pk)
+            .exists()
+        ):
+            raise ValidationError("Seizoenen mogen elkaar niet overlappen.")
+        if (
+            self.is_active
+            and Season.objects.filter(is_active=True).exclude(pk=self.pk).exists()
+        ):
+            raise ValidationError("Er kan maar één actief seizoen zijn.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
+    def contains(self, moment):
+        value = (
+            timezone.localdate(moment)
+            if isinstance(moment, datetime) and timezone.is_aware(moment)
+            else (moment.date() if isinstance(moment, datetime) else moment)
+        )
+        return self.start_date <= value < self.end_date
+
+    @classmethod
+    def get_active(cls):
+        return cls.objects.get(is_active=True)
 
 
 class Event(models.Model):
@@ -59,6 +137,13 @@ class Event(models.Model):
         verbose_name="Verplichte aanwezigheid",
         help_text="Aanwezigheid is verplicht voor alle spelers",
     )
+    season = models.ForeignKey(
+        Season,
+        on_delete=models.PROTECT,
+        related_name="events",
+        blank=True,
+        verbose_name="Seizoen",
+    )
 
     # Recurring event fields
     recurring_event_link_id = models.UUIDField(
@@ -91,6 +176,28 @@ class Event(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.date:%d-%m-%Y %H:%M})"
+
+    def save(self, *args, **kwargs):
+        if self.season_id is None:
+            from .seasoning import get_season_for_datetime
+
+            self.season = get_season_for_datetime(self.date)
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        from .seasoning import get_season_for_datetime
+
+        if (
+            self.date
+            and self.season_id
+            and self.season != get_season_for_datetime(self.date)
+        ):
+            raise ValidationError(
+                "Het evenement hoort bij een ander seizoen op basis van de datum."
+            )
 
     @property
     def is_upcoming(self):
@@ -177,16 +284,11 @@ class Event(models.Model):
         link_id = uuid.uuid4()
         events = []
         current_date = base_event_data["date"]
+        occurrence_dates = []
 
         # Calculate the interval based on recurrence type
         while current_date.date() <= end_date:
-            event_data = base_event_data.copy()
-            event_data["date"] = current_date
-            event_data["recurring_event_link_id"] = link_id
-            event_data["recurrence_type"] = recurrence_type
-            event_data["recurrence_end_date"] = end_date
-
-            events.append(cls.objects.create(**event_data))
+            occurrence_dates.append(current_date)
 
             # Calculate next occurrence
             if recurrence_type == "daily":
@@ -199,6 +301,25 @@ class Event(models.Model):
                 current_date += relativedelta(months=1)
             elif recurrence_type == "yearly":
                 current_date += relativedelta(years=1)
+
+        from django.core.exceptions import ValidationError
+
+        from .seasoning import get_season_for_datetime
+
+        seasons = {get_season_for_datetime(moment).pk for moment in occurrence_dates}
+        if len(seasons) > 1:
+            raise ValidationError(
+                "Een herhalend evenement mag niet over seizoenen heen lopen."
+            )
+
+        for occurrence_date in occurrence_dates:
+            event_data = base_event_data.copy()
+            event_data["date"] = occurrence_date
+            event_data["recurring_event_link_id"] = link_id
+            event_data["recurrence_type"] = recurrence_type
+            event_data["recurrence_end_date"] = end_date
+
+            events.append(cls.objects.create(**event_data))
 
         return events
 

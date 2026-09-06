@@ -8,7 +8,6 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
 from django.views import View
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods, require_POST
 from events.models import Event
 
@@ -142,7 +141,6 @@ class PushSubscriptionView(View):
             }
         )
 
-    @method_decorator(csrf_exempt)
     def post(self, request):
         """Subscribe to push notifications."""
         try:
@@ -190,7 +188,6 @@ class PushSubscriptionView(View):
             logger.error(f"Error creating push subscription: {e}")
             return JsonResponse({"error": "Internal server error"}, status=500)
 
-    @method_decorator(csrf_exempt)
     def delete(self, request):
         """Unsubscribe from push notifications."""
         try:
@@ -219,7 +216,6 @@ class PushSubscriptionView(View):
 
 @login_required
 @require_http_methods(["POST"])
-@csrf_exempt
 def send_test_notification(request):
     """
     Send a test push notification to the user.

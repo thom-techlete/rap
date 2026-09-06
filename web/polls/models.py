@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.db.models import Count
 from django.urls import reverse
 from django.utils import timezone
 
@@ -94,8 +95,8 @@ class Poll(models.Model):
         results = []
         unique_voters = self.unique_voters
 
-        for option in self.options.all():
-            vote_count = option.votes.count()
+        for option in self.options.annotate(annotated_vote_count=Count("votes")):
+            vote_count = option.annotated_vote_count
             percentage = (vote_count / unique_voters * 100) if unique_voters > 0 else 0
             results.append(
                 {

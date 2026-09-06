@@ -43,19 +43,18 @@ sudo chown -R $USER:$USER /opt/rap
 cd /opt/rap
 ```
 
-### 3. Run Deployment Script
+### 3. Configure and start the production stack
 
-Make the deployment script executable and run it:
+Create `docker/.env.prod` and the VAPID key files through your external secret
+manager. Do not commit either the environment file or private keys. Set the
+validated public domain in the Compose environment:
 
 ```bash
-chmod +x scripts/deploy.sh
-./scripts/deploy.sh your-domain.com --setup
+export DOMAIN=your-domain.com
+docker compose -f docker/docker-compose.yml up -d
 ```
 
 This will:
-- Install Docker and Docker Compose
-- Set up firewall rules
-- Generate production secrets
 - Deploy the application with all services (Caddy handles SSL/TLS automatically)
 
 ### 4. DNS Configuration
@@ -88,31 +87,24 @@ sudo chmod +x /usr/local/bin/docker-compose
 # Log out and log back in for group changes to take effect
 ```
 
-### 2. Generate Production Secrets
-
-```bash
-cd /opt/rap
-chmod +x scripts/generate_secrets.sh
-./scripts/generate_secrets.sh your-domain.com
-```
-
-### 3. Deploy Application
+### 2. Deploy Application
 
 ```bash
 # Build and start services
-docker-compose -f docker/docker-compose.prod.yml up --build -d
+export DOMAIN=your-domain.com
+docker compose -f docker/docker-compose.yml up -d
 
 # Wait for database to start
 sleep 20
 
 # Run migrations
-docker-compose -f docker/docker-compose.prod.yml exec web python manage.py migrate
+docker compose -f docker/docker-compose.yml exec web python manage.py migrate
 
 # Collect static files
-docker-compose -f docker/docker-compose.prod.yml exec web python manage.py collectstatic --noinput
+docker compose -f docker/docker-compose.yml exec web python manage.py collectstatic --noinput
 
 # Create superuser
-docker-compose -f docker/docker-compose.prod.yml exec web python manage.py createsuperuser
+docker compose -f docker/docker-compose.yml exec web python manage.py createsuperuser
 ```
 
 > **Note**: SSL/TLS certificates are handled automatically by Caddy via Let's Encrypt. No manual certificate management is required.
@@ -179,7 +171,8 @@ To update the application:
 
 ```bash
 cd /opt/rap
-./scripts/deploy.sh your-domain.com --update
+docker compose -f docker/docker-compose.yml pull
+docker compose -f docker/docker-compose.yml up -d
 ```
 
 This will:
@@ -195,7 +188,8 @@ This will:
 Create a backup:
 
 ```bash
-./scripts/deploy.sh your-domain.com --backup
+docker compose -f docker/docker-compose.yml exec -T db pg_dump \
+  -U "$POSTGRES_USER" "$POSTGRES_DB" > rap-backup.sql
 ```
 
 Backups are stored in `/opt/rap_backups/`
@@ -286,15 +280,9 @@ df -h
 ```
 /opt/rap/
 ├── docker/
-│   ├── docker-compose.prod.yml    # Production Docker Compose
+│   ├── docker-compose.yml         # Production Docker Compose
 │   ├── .env.prod                  # Production environment variables
-│   └── caddy/
-│       ├── Caddyfile.prod         # Production Caddy config (auto-HTTPS)
-│       ├── Caddyfile.prod.http    # Production HTTP-only Caddy config
-│       └── error-pages/           # Custom error pages
-├── scripts/
-│   ├── deploy.sh                  # Deployment script
-│   └── generate_secrets.sh        # Secret generation script
+│   └── caddy/                      # Caddy config and error pages
 └── web/                           # Django application
 ```
 

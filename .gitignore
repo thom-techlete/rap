@@ -73,6 +73,7 @@ pip-delete-this-directory.txt
 # dotenv files (if used for secrets)
 .env.prod
 .env.*
+.env
 !.env.template
 
 # SSL certificates

@@ -1,24 +1,22 @@
 import os
+from io import BytesIO
 
-try:
-    import magic
-
-    HAS_MAGIC = True
-except ImportError:
-    HAS_MAGIC = False
 from django import forms
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.db import transaction
 from django.forms import formset_factory
+from PIL import Image, UnidentifiedImageError
 
 from .models import InvitationCode, Player
 
 
 def validate_image_file(file):
-    """Enhanced image file validation"""
+    """Validate and normalize an uploaded profile image."""
     if not file:
-        return
+        return None
 
     # Check file size (5MB max)
     if file.size > 5 * 1024 * 1024:
@@ -32,38 +30,34 @@ def validate_image_file(file):
             f"Alleen {', '.join(allowed_extensions)} bestanden zijn toegestaan."
         )
 
-    # Check MIME type using python-magic if available (more secure than relying on content_type)
-    if HAS_MAGIC:
-        try:
-            file_mime = magic.from_buffer(file.read(1024), mime=True)
-            file.seek(0)  # Reset file pointer
+    try:
+        Image.MAX_IMAGE_PIXELS = 20_000_000
+        file.seek(0)
+        with Image.open(file) as image:
+            image.verify()
+        file.seek(0)
+        with Image.open(file) as image:
+            if image.width * image.height > Image.MAX_IMAGE_PIXELS:
+                raise ValidationError("De afbeelding heeft te veel pixels.")
+            normalized = image.convert("RGBA" if "A" in image.getbands() else "RGB")
+            output = BytesIO()
+            normalized.save(output, format="PNG", optimize=True)
+    except (Image.DecompressionBombError, Image.DecompressionBombWarning):
+        raise ValidationError(
+            "De afbeelding is te groot om veilig te verwerken."
+        ) from None
+    except (UnidentifiedImageError, OSError):
+        raise ValidationError("Het bestand is geen geldige afbeelding.") from None
 
-            allowed_mimes = ["image/jpeg", "image/png", "image/gif", "image/webp"]
-            if file_mime not in allowed_mimes:
-                raise ValidationError("Het bestand is geen geldige afbeelding.")
-        except Exception:
-            # Fallback to content_type if python-magic fails
-            if hasattr(file, "content_type") and not file.content_type.startswith(
-                "image/"
-            ):
-                print("geen geldige afbeelding")
-    else:
-        # Fallback to content_type if python-magic is not available
-        if hasattr(file, "content_type") and not file.content_type.startswith("image/"):
-            raise ValidationError("Het bestand is geen geldige afbeelding.")
-
-    # Check for potential malicious content
-    file.seek(0)
-    content = file.read(1024)
-    file.seek(0)
-
-    # Look for common script tags or suspicious content
-    suspicious_patterns = [b"<script", b"<?php", b"<%", b"javascript:", b"vbscript:"]
-    content_lower = content.lower()
-
-    for pattern in suspicious_patterns:
-        if pattern in content_lower:
-            raise ValidationError("Het bestand bevat verdachte inhoud.")
+    output.seek(0)
+    return InMemoryUploadedFile(
+        output,
+        "foto",
+        f"{os.path.splitext(file.name)[0]}.png",
+        "image/png",
+        output.getbuffer().nbytes,
+        None,
+    )
 
 
 class PlayerProfileForm(forms.ModelForm):
@@ -155,9 +149,8 @@ class PlayerProfileForm(forms.ModelForm):
         foto = self.cleaned_data.get("foto")
         if foto:
             # Validate uploaded photo with enhanced security
-            validate_image_file(foto)
-            # Additional checks can be added here
-        return foto
+            return validate_image_file(foto)
+        return None
 
 
 class CustomAuthenticationForm(AuthenticationForm):
@@ -308,13 +301,16 @@ class InvitationCodeRegistrationForm(UserCreationForm):
         user.is_active = False  # Require admin activation
 
         if commit:
-            # Get invitation code to set user_type
-            invitation_code = self.cleaned_data["invitation_code"]
-            invitation = InvitationCode.objects.get(code=invitation_code)
-            user.user_type = invitation.user_type  # Set user type based on invitation
-            user.save()
-            # Mark invitation code as used
-            invitation.use_code()
+            with transaction.atomic():
+                invitation = InvitationCode.objects.select_for_update().get(
+                    code=self.cleaned_data["invitation_code"]
+                )
+                is_valid, error_message = invitation.is_valid()
+                if not is_valid:
+                    raise ValidationError(error_message)
+                user.user_type = invitation.user_type
+                user.save()
+                invitation.use_code()
 
         return user
 

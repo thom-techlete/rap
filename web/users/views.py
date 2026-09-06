@@ -1,10 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from attendance.models import Attendance
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -13,6 +13,7 @@ from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 from django_ratelimit.decorators import ratelimit
 from events.models import Event
+from events.seasoning import get_selected_season, season_queryset
 
 from .forms import (
     CustomAuthenticationForm,
@@ -79,18 +80,10 @@ def login_view(request: HttpRequest):
 @login_required
 def profile(request: HttpRequest):
     now = timezone.now()
-
-    # Define current season (August to July of next year)
-    current_year = now.year
-    if now.month >= 8:  # August or later
-        season_start = timezone.make_aware(datetime(current_year, 8, 1))
-        season_end = timezone.make_aware(datetime(current_year + 1, 7, 31, 23, 59, 59))
-    else:  # Before August
-        season_start = timezone.make_aware(datetime(current_year - 1, 8, 1))
-        season_end = timezone.make_aware(datetime(current_year, 7, 31, 23, 59, 59))
+    season = get_selected_season(request)
 
     # Get all events in current season
-    season_events = Event.objects.filter(date__gte=season_start, date__lte=season_end)
+    season_events = Event.objects.filter(season=season)
 
     # Get user's attendance for season events
     user_attendance = Attendance.objects.filter(
@@ -130,7 +123,7 @@ def profile(request: HttpRequest):
     context = {
         "user": request.user,
         "stats": {
-            "season_start": season_start.year,
+            "season_start": season.start_date.year,
             "season_attendance_rate": attendance_rate,
             "season_present": attended_events,
             "season_total": responded_events,
@@ -179,21 +172,30 @@ def is_staff(user):
 def admin_dashboard(request: HttpRequest):
     """Admin dashboard with overview statistics"""
     now = timezone.now()
+    season = get_selected_season(request)
 
     # Basic statistics
     total_players = Player.objects.count()
     active_players = Player.objects.filter(is_active=True).count()
-    total_events = Event.objects.count()
-    upcoming_events = Event.objects.filter(date__gt=now).count()
+    season_events = Event.objects.filter(season=season)
+    total_events = season_events.count()
+    upcoming_events = season_events.filter(date__gt=now).count()
 
     # Recent events with attendance
-    recent_events = Event.objects.filter(date__lt=now).order_by("-date")[:5]
+    recent_events = (
+        season_events.filter(date__lt=now)
+        .order_by("-date")[:5]
+        .annotate(
+            total_responses=Count("attendance"),
+            present_count=Count("attendance", filter=Q(attendance__present=True)),
+        )
+    )
 
     # Calculate average attendance rate
     attendance_stats = []
     for event in recent_events:
-        total_responses = Attendance.objects.filter(event=event).count()
-        present_count = Attendance.objects.filter(event=event, present=True).count()
+        total_responses = event.total_responses
+        present_count = event.present_count
         rate = (present_count / total_responses * 100) if total_responses > 0 else 0
         attendance_stats.append(
             {
@@ -205,7 +207,7 @@ def admin_dashboard(request: HttpRequest):
         )
 
     # Upcoming events
-    next_events = Event.objects.filter(date__gt=now).order_by("date")[:5]
+    next_events = season_events.filter(date__gt=now).order_by("date")[:5]
 
     # Get invitation codes
     invitation_codes = InvitationCode.objects.filter(is_active=True).order_by(
@@ -220,6 +222,8 @@ def admin_dashboard(request: HttpRequest):
         "recent_events": attendance_stats,
         "next_events": next_events,
         "invitation_codes": invitation_codes,
+        "selected_season": season,
+        "seasons": season_queryset(),
     }
 
     return render(request, "users/admin/dashboard.html", context)
@@ -266,7 +270,8 @@ def admin_events(request: HttpRequest):
     event_type = request.GET.get("type", "all")
     time_filter = request.GET.get("time", "all")
 
-    events = Event.objects.all()
+    season = get_selected_season(request)
+    events = Event.objects.filter(season=season)
 
     if search:
         events = events.filter(
@@ -286,13 +291,16 @@ def admin_events(request: HttpRequest):
     elif time_filter == "today":
         events = events.filter(date__date=now.date())
 
-    events = events.order_by("-date")
+    events = events.order_by("-date").annotate(
+        total_responses=Count("attendance"),
+        present_count=Count("attendance", filter=Q(attendance__present=True)),
+    )
 
     # Add attendance stats for each event
     events_with_stats = []
     for event in events:
-        total_responses = Attendance.objects.filter(event=event).count()
-        present_count = Attendance.objects.filter(event=event, present=True).count()
+        total_responses = event.total_responses
+        present_count = event.present_count
         attendance_rate = (
             (present_count / total_responses * 100) if total_responses > 0 else 0
         )
@@ -312,6 +320,8 @@ def admin_events(request: HttpRequest):
         "event_type": event_type,
         "time_filter": time_filter,
         "event_types": Event.EVENT_TYPES,
+        "selected_season": season,
+        "seasons": season_queryset(),
     }
 
     return render(request, "users/admin/events.html", context)
@@ -403,16 +413,8 @@ def admin_player_detail(request: HttpRequest, player_id: int):
         return redirect("users:admin_player_detail", player_id=player.pk)
 
     # Get player's attendance statistics
-    now = timezone.now()
-    current_year = now.year
-    if now.month >= 8:
-        season_start = timezone.make_aware(datetime(current_year, 8, 1))
-        season_end = timezone.make_aware(datetime(current_year + 1, 7, 31, 23, 59, 59))
-    else:
-        season_start = timezone.make_aware(datetime(current_year - 1, 8, 1))
-        season_end = timezone.make_aware(datetime(current_year, 7, 31, 23, 59, 59))
-
-    season_events = Event.objects.filter(date__gte=season_start, date__lte=season_end)
+    season = get_selected_season(request)
+    season_events = Event.objects.filter(season=season)
     player_attendance = Attendance.objects.filter(user=player, event__in=season_events)
 
     attended_events = player_attendance.filter(present=True).count()
@@ -426,6 +428,7 @@ def admin_player_detail(request: HttpRequest, player_id: int):
 
     context = {
         "player": player,
+        "selected_season": season,
         "attended_events": attended_events,
         "total_events": total_events,
         "attendance_rate": round(attendance_rate, 1),

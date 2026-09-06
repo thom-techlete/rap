@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from events.models import Event
+from events.models import Event, Season
 
 from notifications.utils import send_event_reminder_notification
 
@@ -49,7 +49,7 @@ class Command(BaseCommand):
             end_date = start_date + timezone.timedelta(days=1)
 
             upcoming_events = Event.objects.filter(
-                date__gte=start_date, date__lt=end_date
+                season=Season.get_active(), date__gte=start_date, date__lt=end_date
             )
 
             if not upcoming_events.exists():

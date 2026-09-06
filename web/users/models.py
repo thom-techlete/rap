@@ -95,8 +95,9 @@ class InvitationCode(models.Model):
 
     def use_code(self):
         """Increment the used count"""
-        self.used_count += 1
-        self.save()
+        self.used_count = models.F("used_count") + 1
+        self.save(update_fields=["used_count"])
+        self.refresh_from_db(fields=["used_count"])
 
 
 class Player(AbstractUser):

@@ -100,6 +100,18 @@
           </div>
 
           <!-- Desktop User Menu -->
+          {% if seasons %}
+            <form method="get" action="" class="season-selector">
+              <label for="season-select">Seizoen</label>
+              <select id="season-select" name="season" onchange="this.form.submit()">
+                {% for season in seasons %}
+                  <option value="{{ season.pk }}" {% if season.pk == selected_season.pk %}selected{% endif %}>{{ season.name }}</option>
+                {% endfor %}
+              </select>
+            </form>
+          {% endif %}
+
+          <!-- Desktop User Menu -->
           <div class="nav-user">
             <div class="user-menu">
               <button class="user-button" onclick="toggleUserMenu()" aria-label="Gebruikersmenu">
@@ -180,6 +192,16 @@
           </div>
         </div>
         <div class="mobile-nav-links">
+          {% if seasons %}
+            <form method="get" action="" class="mobile-season-selector">
+              <label for="mobile-season-select">Seizoen</label>
+              <select id="mobile-season-select" name="season" onchange="this.form.submit()">
+                {% for season in seasons %}
+                  <option value="{{ season.pk }}" {% if season.pk == selected_season.pk %}selected{% endif %}>{{ season.name }}</option>
+                {% endfor %}
+              </select>
+            </form>
+          {% endif %}
           <a href="/" class="mobile-nav-link">
             <i data-feather="home"></i>
             <span>Dashboard</span>

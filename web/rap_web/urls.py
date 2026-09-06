@@ -23,12 +23,13 @@ from django.contrib import admin
 from django.urls import URLPattern, URLResolver, include, path
 from events import dashboard_views
 
-from .health import health_check
+from .health import health_check, readiness_check
 
 urlpatterns: list[URLPattern | URLResolver] = [
     path("", dashboard_views.dashboard, name="home"),
     path("health/", health_check, name="health_check"),
-    path("admin/", admin.site.urls),
+    path("readiness/", readiness_check, name="readiness_check"),
+    path(settings.ADMIN_URL, admin.site.urls),
     path("users/", include("users.urls")),
     path("events/", include("events.urls")),
     path("attendance/", include("attendance.urls")),

@@ -124,7 +124,6 @@ rap/
 │   └── DEPLOYMENT.md               # Deployment gids
 ├── scripts/                        # Deployment scripts
 │   ├── setup.sh                    # Lokale setup
-│   ├── deploy.sh                   # Productie deployment
 │   └── copilot-setup.sh            # GitHub Copilot setup
 └── .github/                        # GitHub configuratie
     ├── workflows/                  # CI/CD pipelines
@@ -235,13 +234,6 @@ DEFAULT_FROM_EMAIL=noreply@rap8.nl
 
 ### Eenvoudige VPS Deployment
 
-Deploy naar een productieserver met één commando:
-
-```bash
-# Op je VPS server (Ubuntu 20.04+):
-curl -fsSL https://raw.githubusercontent.com/thom-techlete/rap/main/scripts/vps-setup.sh | bash
-```
-
 ### Handmatige Productie Setup
 
 ```bash
@@ -249,11 +241,9 @@ curl -fsSL https://raw.githubusercontent.com/thom-techlete/rap/main/scripts/vps-
 git clone https://github.com/thom-techlete/rap.git /opt/rap
 cd /opt/rap
 
-# Genereer productie secrets
-./scripts/generate_secrets.sh your-domain.com
-
-# Deploy met SSL en security features
-./scripts/deploy.sh your-domain.com --setup
+# Configureer docker/.env.prod en de VAPID Docker secret-bestanden via je
+# externe secret manager, en zet DOMAIN in de Compose-omgeving.
+docker compose -f docker/docker-compose.yml up -d
 ```
 
 ### Productie Features

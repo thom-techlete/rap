@@ -79,17 +79,21 @@ reset.
 
 #### 3. Make production configuration fail closed
 
+Status: implemented on 2026-09-06. Production now requires an explicit
+`DJANGO_ENV=production` and rejects missing or unsafe core configuration during
+settings import. `ADMIN_URL` is the effective Django admin route. Caddy uses
+the validated `DOMAIN` value supplied by the external deployment environment.
+
 Evidence:
 
-- `web/rap_web/settings.py:55-57` falls back to a known Django secret.
-- `web/rap_web/settings.py:160-168` falls back to a known database password.
-- `web/rap_web/settings.py:326-340` allows HTTPS redirect and secure cookies to
-  be disabled by omission or a wrong environment value.
-- `scripts/generate_secrets.sh:76-77` generates `ADMIN_URL`, but
-  `web/rap_web/urls.py:26-35` always registers `path("admin/", ...)`.
-  Therefore the advertised randomized admin URL does not protect the admin.
-- `docker/caddy/Caddyfile.prod:7` is hard-coded to `rap8.nl` and `www.rap8.nl`,
-  while the deployment scripts accept an arbitrary domain argument.
+- Production defaults no longer provide a known Django key, database password,
+  local Redis URL, or HTTP site URL. Missing required values raise
+  `ImproperlyConfigured` before the application starts.
+- `SECURE_SSL_REDIRECT`, secure cookies, `DEBUG`, wildcard hosts, HTTPS site URLs,
+  and a minimum-length Django key are enforced in production mode.
+- `web/rap_web/urls.py` uses the normalized `ADMIN_URL` setting.
+- `docker/caddy/Caddyfile` uses the externally supplied `DOMAIN` value; secret
+  and environment provisioning is intentionally outside this repository.
 
 Recommendation:
 
@@ -103,28 +107,32 @@ Recommendation:
 - Template the Caddy site name from the same validated deployment domain, or
   support only the one hard-coded domain and reject other arguments.
 
-Verification: run `manage.py check --deploy` with a production-like environment
-and make missing/unsafe values fail the process; test the effective admin route
-and HTTPS redirect through Caddy.
+Verification: production-like settings with missing values fail at import;
+complete production-like settings pass Django deployment checks apart from the
+known Axes warning tracked in point 4; a configured `ADMIN_URL` resolves to the
+same route; and the external secret manager supplies the production environment
+and VAPID files.
 
 ### P1 - address next
 
 #### 4. Repair CSRF, proxy identity, and rate-limit semantics
 
+Status: implemented on 2026-09-06. Push write endpoints now use the normal
+CSRF middleware, Django and the custom limiter use shared Redis caching, and
+forwarded client IPs are accepted only from configured trusted proxy networks.
+Axes now uses the username and verified client IP as one combination; production requires
+`TRUSTED_PROXY_IPS` to be supplied by the deployment environment.
+
 Evidence:
 
-- `web/notifications/views.py:130-131`, `176-177`, and `209-212` disable CSRF
-  for authenticated state-changing endpoints.
-- There is no `CACHES` configuration in `settings.py`; Django therefore uses its
-  default local-memory cache unless another environment override exists. The
-  custom limiter in `security_middleware.py:117-175` is consequently not a
-  reliable shared limit across Gunicorn workers.
-- `security_middleware.py:100-107` and `179-186` take the first
-  `X-Forwarded-For` value without proving that the request came through a
-  trusted proxy.
-- Django’s check reported `axes.W006`: `AXES_LOCKOUT_PARAMETERS` is only
-  `['username']` in `settings.py:410-418`, allowing attackers to rotate other
-  request dimensions and bypass IP-based protection.
+- `web/notifications/views.py` no longer exempts authenticated state-changing
+  push endpoints from CSRF protection.
+- `settings.py` configures Django's Redis cache backend and atomic counters for
+  the custom limiter, so limits are shared across Gunicorn workers.
+- `security_middleware.py` validates the socket peer against
+  `TRUSTED_PROXY_IPS` before reading forwarded headers. Django-ratelimit uses
+  the same resolver.
+- `AXES_LOCKOUT_PARAMETERS` contains both `username` and `ip_address`.
 
 Recommendation:
 
@@ -138,11 +146,16 @@ Recommendation:
 - Choose a documented lockout policy that balances account lockout abuse against
   credential-stuffing resistance, then test it with multiple IPs and usernames.
 
-Verification: cross-worker rate-limit test, forged `X-Forwarded-For` test,
-CSRF-negative tests for every state-changing endpoint, and an Axes deployment
-check with the production middleware enabled.
+Verification: focused security tests cover the shared cache configuration,
+forged and trusted `X-Forwarded-For`, all three push CSRF-negative paths, and
+the Axes policy. A live multi-Gunicorn cross-worker probe remains deployment
+verification rather than local source validation.
 
 #### 5. Split public liveness from internal readiness
+
+Status: implemented on 2026-09-06. `/health/` is now a cheap generic liveness
+response. `/readiness/` is staff-authenticated, checks only database/cache
+dependencies, and logs failures without returning exception details.
 
 Evidence: `web/rap_web/middleware.py:23-34` makes `health_check` public, while
 `web/rap_web/health.py:29-119` performs database, cache, Celery inspection, and
@@ -165,6 +178,10 @@ Verification: measure `/health/` under repeated probes and confirm no secrets,
 paths, exception text, worker names, or backend hostnames are exposed.
 
 #### 6. Enforce upload validation at the content boundary
+
+Status: implemented on 2026-09-06. Profile images are validated and decoded by
+Pillow with a size/pixel limit, then re-encoded as PNG before storage; browser
+MIME metadata is not trusted.
 
 Evidence:
 
@@ -190,6 +207,10 @@ Recommendation:
 
 #### 7. Fix registration and attendance races with database constraints
 
+Status: implemented on 2026-09-06. Invitation consumption is transactional and
+row-locked, and attendance duplicates are cleaned before a unique constraint and
+query index are added.
+
 Evidence:
 
 - Invitation validation occurs in `web/users/forms.py:283-300`, then the user and
@@ -210,6 +231,10 @@ Recommendation:
   invariant that belongs in the database.
 
 #### 8. Remove unbounded and N+1 query paths
+
+Status: partially implemented on 2026-09-06. Poll result counts now use one
+annotated query and attendance has a composite index. The larger analytics and
+list pagination work remains to be completed and measured.
 
 Evidence:
 
@@ -240,6 +265,10 @@ Recommendation:
 
 #### 9. Establish one configuration and security source of truth
 
+Status: implemented on 2026-09-06. The unused duplicate security module and
+unused direct environment/DRF dependencies were removed; active settings remain
+centralized in `rap_web.settings`.
+
 Evidence:
 
 - `web/rap_web/security.py` duplicates settings, but `settings.py` defines its
@@ -264,6 +293,11 @@ Recommendation:
 
 #### 10. Make CI/CD validate what it deploys
 
+Status: partially implemented on 2026-09-06. CI now runs on pushes to `main`,
+deploys the immutable commit image, and no longer performs host-wide Docker
+pruning. Action commit pinning and a production PostgreSQL/settings matrix still
+require deployment-platform follow-up.
+
 Evidence:
 
 - `.github/workflows/ci-cd.yml` is triggered on merged pull requests rather than
@@ -272,11 +306,11 @@ Evidence:
 - Tests use `web/rap_web/test_settings.py`, which replaces PostgreSQL with
   SQLite, uses MD5 password hashing, disables Axes/authentication middleware,
   and disables the custom security middleware.
-- The deploy script first deploys the mutable `latest` image and only records a
-  commit tag afterward (`ci-cd.yml:295-309`).
-- `scripts/deploy.sh:117-126` stops services for a backup, uses a hard-coded
-  database name/user, and the CI deploy runs `docker system prune -f`, which can
-  remove unrelated unused Docker resources on a shared host.
+- The CI deploy first deploys the mutable `latest` image and only records a
+  commit tag afterward (`ci-cd.yml:295-309`), while also running
+  `docker system prune -f`, which can remove unrelated unused Docker resources
+  on a shared host. Production deployment and backup tooling are external to
+  this repository.
 
 Recommendation:
 
@@ -294,6 +328,11 @@ Recommendation:
   permissions per job.
 
 #### 11. Add basic observability and recovery proof
+
+Status: partially implemented on 2026-09-06. The repository now includes an
+operations runbook with post-deploy smoke checks, backup retention guidance, and
+a safe restore-drill procedure. External monitoring and a witnessed restore
+remain deployment evidence and cannot be proven by source changes alone.
 
 The code has logging and backup commands, but the audit found no evidence in the
 repository of a tested restore, query latency budget, error-rate alert, queue

@@ -3,13 +3,14 @@ from datetime import timedelta
 from attendance.models import Attendance
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, Prefetch, Q, Sum
 from django.db.models.functions import TruncMonth
 from django.http import HttpRequest
 from django.shortcuts import render
 from django.utils import timezone
 
-from .models import Event, MatchStatistic
+from .models import Event, MatchStatistic, Season
+from .seasoning import get_selected_season, season_queryset
 
 User = get_user_model()
 
@@ -18,13 +19,14 @@ User = get_user_model()
 def analytics_dashboard(request: HttpRequest):
     """Comprehensive analytics dashboard showing detailed insights across all data"""
     now = timezone.now()
+    season = get_selected_season(request)
 
     # Get analytics data
-    event_analytics = calculate_event_analytics()
-    attendance_analytics = calculate_attendance_analytics()
-    match_analytics = calculate_detailed_match_analytics()
-    response_time_analytics = calculate_response_time_analytics()
-    player_analytics = calculate_player_analytics()
+    event_analytics = calculate_event_analytics(season)
+    attendance_analytics = calculate_attendance_analytics(season)
+    match_analytics = calculate_detailed_match_analytics(season)
+    response_time_analytics = calculate_response_time_analytics(season)
+    player_analytics = calculate_player_analytics(season)
 
     context = {
         "event_analytics": event_analytics,
@@ -33,27 +35,29 @@ def analytics_dashboard(request: HttpRequest):
         "response_time_analytics": response_time_analytics,
         "player_analytics": player_analytics,
         "now": now,
+        "selected_season": season,
+        "seasons": season_queryset(),
     }
 
     return render(request, "events/analytics_dashboard.html", context)
 
 
-def calculate_event_analytics():
+def calculate_event_analytics(season=None):
     """Calculate comprehensive event analytics"""
+    season = season or Season.get_active()
+    events = Event.objects.filter(season=season)
     # Event type distribution
     event_types = (
-        Event.objects.values("event_type")
-        .annotate(count=Count("id"))
-        .order_by("-count")
+        events.values("event_type").annotate(count=Count("id")).order_by("-count")
     )
 
     # Training and match counts
-    training_count = Event.objects.filter(event_type="training").count()
-    match_count = Event.objects.filter(event_type="wedstrijd").count()
+    training_count = events.filter(event_type="training").count()
+    match_count = events.filter(event_type="wedstrijd").count()
 
     # Events over time (monthly)
     events_by_month = (
-        Event.objects.annotate(month=TruncMonth("date"))
+        events.annotate(month=TruncMonth("date"))
         .values("month")
         .annotate(count=Count("id"))
         .order_by("month")
@@ -61,21 +65,21 @@ def calculate_event_analytics():
 
     # Events by location (top 10)
     events_by_location = (
-        Event.objects.exclude(location="")
+        events.exclude(location="")
         .values("location")
         .annotate(count=Count("id"))
         .order_by("-count")[:10]
     )
 
     # Mandatory vs optional events
-    mandatory_stats = Event.objects.aggregate(
+    mandatory_stats = events.aggregate(
         total=Count("id"),
         mandatory=Count("id", filter=Q(is_mandatory=True)),
         optional=Count("id", filter=Q(is_mandatory=False)),
     )
 
     # Recurring vs one-time events
-    recurring_stats = Event.objects.aggregate(
+    recurring_stats = events.aggregate(
         total=Count("id"),
         recurring=Count(
             "id", filter=Q(recurrence_type__isnull=False) & ~Q(recurrence_type="none")
@@ -101,7 +105,7 @@ def calculate_event_analytics():
         week_day = (i + 2) % 7
         if week_day == 0:
             week_day = 7
-        count = Event.objects.filter(date__week_day=week_day).count()
+        count = events.filter(date__week_day=week_day).count()
         events_by_weekday.append({"day": weekdays[i], "count": count})
 
     return {
@@ -116,9 +120,11 @@ def calculate_event_analytics():
     }
 
 
-def calculate_attendance_analytics():
+def calculate_attendance_analytics(season=None):
     """Calculate comprehensive attendance analytics"""
     now = timezone.now()
+    season = season or Season.get_active()
+    events = Event.objects.filter(season=season)
 
     # Overall attendance rate over time (monthly)
     attendance_by_month = []
@@ -128,7 +134,7 @@ def calculate_attendance_analytics():
             days=1
         )
 
-        events_in_month = Event.objects.filter(
+        events_in_month = events.filter(
             date__gte=month_start, date__lte=month_end, date__lt=now
         )
 
@@ -161,11 +167,11 @@ def calculate_attendance_analytics():
     # Attendance by event type
     attendance_by_event_type = []
     for event_type, event_type_name in Event.EVENT_TYPES:
-        events = Event.objects.filter(event_type=event_type, date__lt=now)
-        if events.exists():
-            total_responses = Attendance.objects.filter(event__in=events).count()
+        type_events = events.filter(event_type=event_type, date__lt=now)
+        if type_events.exists():
+            total_responses = Attendance.objects.filter(event__in=type_events).count()
             present_responses = Attendance.objects.filter(
-                event__in=events, present=True
+                event__in=type_events, present=True
             ).count()
 
             rate = (
@@ -195,11 +201,13 @@ def calculate_attendance_analytics():
         "Zondag",
     ]
     for i in range(7):
-        events = Event.objects.filter(date__week_day=i + 1, date__lt=now)
-        if events.exists():
-            total_responses = Attendance.objects.filter(event__in=events).count()
+        weekday_events = events.filter(date__week_day=i + 1, date__lt=now)
+        if weekday_events.exists():
+            total_responses = Attendance.objects.filter(
+                event__in=weekday_events
+            ).count()
             present_responses = Attendance.objects.filter(
-                event__in=events, present=True
+                event__in=weekday_events, present=True
             ).count()
 
             rate = (
@@ -224,12 +232,15 @@ def calculate_attendance_analytics():
     }
 
 
-def calculate_detailed_match_analytics():
+def calculate_detailed_match_analytics(season=None):
     """Calculate detailed match statistics analytics"""
     now = timezone.now()
+    season = season or Season.get_active()
 
     # Get all completed matches
-    completed_matches = Event.objects.filter(date__lt=now, event_type="wedstrijd")
+    completed_matches = Event.objects.filter(
+        season=season, date__lt=now, event_type="wedstrijd"
+    )
 
     if not completed_matches.exists():
         return {
@@ -346,16 +357,19 @@ def calculate_detailed_match_analytics():
     }
 
 
-def calculate_response_time_analytics():
+def calculate_response_time_analytics(season=None):
     """Calculate response time analytics for attendance"""
     now = timezone.now()
+    season = season or Season.get_active()
 
     # Response time distribution (how quickly people respond to events)
     response_times = []
 
     # Get events from the past 3 months with attendance data
     three_months_ago = now - timedelta(days=90)
-    recent_events = Event.objects.filter(date__gte=three_months_ago, date__lte=now)
+    recent_events = Event.objects.filter(
+        season=season, date__gte=three_months_ago, date__lte=now
+    )
 
     for event in recent_events:
         attendances = Attendance.objects.filter(event=event)
@@ -411,26 +425,31 @@ def calculate_response_time_analytics():
     }
 
 
-def calculate_player_analytics():
+def calculate_player_analytics(season=None):
     """Calculate detailed player performance analytics"""
     now = timezone.now()
+    season = season or Season.get_active()
 
     # Active players
-    active_players = User.objects.filter(is_active=True)
+    # Get past events for calculation
+    past_events = Event.objects.filter(season=season, date__lt=now).order_by("-date")
+    active_players = User.objects.filter(is_active=True).prefetch_related(
+        Prefetch(
+            "attendance_set",
+            queryset=Attendance.objects.filter(event__in=past_events)
+            .select_related("event")
+            .order_by("-event__date"),
+            to_attr="season_attendances",
+        )
+    )
 
     # Player attendance streaks and patterns
     player_stats = []
-
-    # Get past events for calculation
-    past_events = Event.objects.filter(date__lt=now).order_by("-date")
+    total_events = past_events.count()
 
     for player in active_players:
-        attendances = Attendance.objects.filter(
-            user=player, event__in=past_events
-        ).order_by("-event__date")
-
-        total_events = past_events.count()
-        attended = attendances.filter(present=True).count()
+        attendances = player.season_attendances
+        attended = sum(attendance.present for attendance in attendances)
         attendance_rate = (attended / total_events * 100) if total_events > 0 else 0
 
         # Calculate current streak
@@ -475,7 +494,8 @@ def calculate_player_analytics():
         events_in_month = past_events.filter(date__gte=month_start, date__lte=month_end)
 
         if events_in_month.exists():
-            total_possible = events_in_month.count() * active_players.count()
+            event_count = events_in_month.count()
+            total_possible = event_count * active_players.count()
             actual_present = Attendance.objects.filter(
                 event__in=events_in_month, present=True
             ).count()
@@ -489,7 +509,7 @@ def calculate_player_analytics():
                     "month": month_start.strftime("%Y-%m"),
                     "month_name": month_start.strftime("%B"),
                     "rate": round(team_rate, 1),
-                    "events": events_in_month.count(),
+                    "events": event_count,
                 }
             )
 

@@ -3,6 +3,7 @@ Additional security middleware for the RAP application.
 """
 
 import logging
+from ipaddress import ip_address, ip_network
 
 from django.conf import settings
 from django.core.cache import cache
@@ -10,6 +11,40 @@ from django.http import HttpResponse
 from django.utils.deprecation import MiddlewareMixin
 
 logger = logging.getLogger("rap_web.security")
+
+
+def get_client_ip(request):
+    """Return the client IP, trusting forwarding headers only from known proxies."""
+    remote_addr = request.META.get("REMOTE_ADDR", "unknown")
+    try:
+        remote_ip = ip_address(remote_addr)
+    except ValueError:
+        return remote_addr
+
+    trusted_networks = []
+    for value in getattr(settings, "TRUSTED_PROXY_IPS", []):
+        try:
+            trusted_networks.append(ip_network(value, strict=False))
+        except ValueError:
+            logger.warning("Ignoring invalid trusted proxy network configuration")
+
+    if not any(remote_ip in network for network in trusted_networks):
+        return remote_addr
+
+    forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR", "")
+    candidates = [item.strip() for item in forwarded_for.split(",") if item.strip()]
+    candidates.append(request.META.get("HTTP_X_REAL_IP", "").strip())
+    candidates = [item for item in candidates if item]
+
+    for candidate in reversed(candidates):
+        try:
+            candidate_ip = ip_address(candidate)
+        except ValueError:
+            continue
+        if not any(candidate_ip in network for network in trusted_networks):
+            return candidate
+
+    return remote_addr
 
 
 class SecurityHeadersMiddleware(MiddlewareMixin):
@@ -99,12 +134,7 @@ class SecurityLoggingMiddleware(MiddlewareMixin):
 
     def get_client_ip(self, request):
         """Get the real client IP address."""
-        x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
-        if x_forwarded_for:
-            ip = x_forwarded_for.split(",")[0].strip()
-        else:
-            ip = request.META.get("REMOTE_ADDR", "unknown")
-        return ip
+        return get_client_ip(request)
 
 
 class BasicRateLimitMiddleware(MiddlewareMixin):
@@ -127,9 +157,9 @@ class BasicRateLimitMiddleware(MiddlewareMixin):
             username = request.POST.get("username", "").strip().lower()
             if username:
                 cache_key = f"login_attempts_user_{username}"
-                attempts = cache.get(cache_key, 0)
+                attempts = self.increment_counter(cache_key, 300)
 
-                if attempts >= failure_limit:
+                if attempts > failure_limit:
                     logger.warning(
                         f"Rate limit exceeded for login attempts for username '{username}'"
                     )
@@ -138,15 +168,14 @@ class BasicRateLimitMiddleware(MiddlewareMixin):
                         status=429,
                     )
 
-                cache.set(cache_key, attempts + 1, 300)  # 5 minutes
             else:
                 # No username provided — fall back to IP-based limiting to block
                 # empty-username probes from the same source.
                 client_ip = self.get_client_ip(request)
                 cache_key = f"login_attempts_nouser_{client_ip}"
-                attempts = cache.get(cache_key, 0)
+                attempts = self.increment_counter(cache_key, 300)
 
-                if attempts >= failure_limit:
+                if attempts > failure_limit:
                     logger.warning(
                         f"Rate limit exceeded for username-less login attempts from IP {client_ip}"
                     )
@@ -155,15 +184,13 @@ class BasicRateLimitMiddleware(MiddlewareMixin):
                         status=429,
                     )
 
-                cache.set(cache_key, attempts + 1, 300)  # 5 minutes
-
         # Rate limit registration attempts by IP (registration has no username yet)
         if request.path == "/users/register/" and request.method == "POST":
             client_ip = self.get_client_ip(request)
             cache_key = f"register_attempts_{client_ip}"
-            attempts = cache.get(cache_key, 0)
+            attempts = self.increment_counter(cache_key, 3600)
 
-            if attempts >= 3:  # Max 3 attempts per hour
+            if attempts > 3:  # Max 3 attempts per hour
                 logger.warning(
                     f"Rate limit exceeded for registration attempts from IP {client_ip}"
                 )
@@ -172,18 +199,22 @@ class BasicRateLimitMiddleware(MiddlewareMixin):
                     status=429,
                 )
 
-            cache.set(cache_key, attempts + 1, 3600)  # 1 hour
-
         return None
+
+    @staticmethod
+    def increment_counter(cache_key, timeout):
+        """Atomically increment a shared cache counter."""
+        if cache.add(cache_key, 1, timeout=timeout):
+            return 1
+        try:
+            return cache.incr(cache_key)
+        except ValueError:
+            cache.set(cache_key, 1, timeout=timeout)
+            return 1
 
     def get_client_ip(self, request):
         """Get the real client IP address."""
-        x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
-        if x_forwarded_for:
-            ip = x_forwarded_for.split(",")[0].strip()
-        else:
-            ip = request.META.get("REMOTE_ADDR", "unknown")
-        return ip
+        return get_client_ip(request)
 
 
 class AdminAccessControlMiddleware(MiddlewareMixin):
@@ -193,7 +224,7 @@ class AdminAccessControlMiddleware(MiddlewareMixin):
 
     def process_request(self, request):
         # Extra security for admin URLs
-        if request.path.startswith("/admin/") or request.path.startswith(
+        if request.path.startswith(f"/{settings.ADMIN_URL}") or request.path.startswith(
             "/users/admin/"
         ):
             # Get user safely (might not be available if auth middleware hasn't run)
@@ -221,9 +252,4 @@ class AdminAccessControlMiddleware(MiddlewareMixin):
 
     def get_client_ip(self, request):
         """Get the real client IP address."""
-        x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
-        if x_forwarded_for:
-            ip = x_forwarded_for.split(",")[0]
-        else:
-            ip = request.META.get("REMOTE_ADDR")
-        return ip
+        return get_client_ip(request)

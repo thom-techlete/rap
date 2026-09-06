@@ -16,9 +16,19 @@ from pathlib import Path
 from typing import Any
 
 from decouple import config as decouple_config
-
+from django.core.exceptions import ImproperlyConfigured
 
 # Helper function to get boolean configuration values
+DEPLOYMENT_ENV = os.getenv("DJANGO_ENV", "development").strip().lower()
+if DEPLOYMENT_ENV not in {"development", "test", "production"}:
+    raise ImproperlyConfigured("DJANGO_ENV must be development, test, or production")
+
+IS_PRODUCTION = (
+    DEPLOYMENT_ENV == "production"
+    or os.getenv("DJANGO_DEBUG", "").strip().lower() == "false"
+)
+
+
 def bool_config(key, default=False):
     return decouple_config(key, default=default, cast=bool)
 
@@ -57,10 +67,13 @@ SECRET_KEY = os.environ.get(
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = bool_config("DJANGO_DEBUG", default=False)
+DEBUG = bool_config("DJANGO_DEBUG", default=not IS_PRODUCTION)
 
 # More restrictive allowed hosts
-ALLOWED_HOSTS = list_config("DJANGO_ALLOWED_HOSTS", default="localhost,127.0.0.1")
+ALLOWED_HOSTS = list_config(
+    "DJANGO_ALLOWED_HOSTS",
+    default="" if IS_PRODUCTION else "localhost,127.0.0.1",
+)
 
 # Proxy settings for reverse proxy (Nginx)
 USE_X_FORWARDED_HOST = bool_config("USE_X_FORWARDED_HOST", default=False)
@@ -150,6 +163,7 @@ TEMPLATES: list[dict[str, Any]] = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "rap_web.context_processors.seasons",
             ],
         },
     },
@@ -160,11 +174,14 @@ WSGI_APPLICATION = "rap_web.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("POSTGRES_DB", "rap_db"),
-        "USER": os.environ.get("POSTGRES_USER", "rap_user"),
-        "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "rap_db_password"),
-        "HOST": os.environ.get("POSTGRES_HOST", "db"),
+        "NAME": os.environ.get("POSTGRES_DB") or (None if IS_PRODUCTION else "rap_db"),
+        "USER": os.environ.get("POSTGRES_USER")
+        or (None if IS_PRODUCTION else "rap_user"),
+        "PASSWORD": os.environ.get("POSTGRES_PASSWORD")
+        or (None if IS_PRODUCTION else "rap_db_password"),
+        "HOST": os.environ.get("POSTGRES_HOST") or (None if IS_PRODUCTION else "db"),
         "PORT": os.environ.get("POSTGRES_PORT", "5432"),
+        "OPTIONS": {"connect_timeout": 3},
     }
 }
 
@@ -240,10 +257,14 @@ LOGOUT_REDIRECT_URL = "/users/login/"
 # =============================================================================
 
 # Admin URL customization
-ADMIN_URL = os.environ.get("ADMIN_URL", "admin/")
+configured_admin_url = os.environ.get("ADMIN_URL", "")
+ADMIN_URL = configured_admin_url.strip("/") + "/" if configured_admin_url else "admin/"
 
 # Rate limiting settings
 RATELIMIT_ENABLE = True
+RATELIMIT_USE_CACHE = "default"
+RATELIMIT_CACHE_PREFIX = "rap-ratelimit:"
+RATELIMIT_IP_META_KEY = "rap_web.security_middleware.get_client_ip"
 
 # =============================================================================
 # LOGGING CONFIGURATION
@@ -323,7 +344,7 @@ SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 X_FRAME_OPTIONS = "DENY"
 
 # HTTPS settings (for production)
-SECURE_SSL_REDIRECT = bool_config("SECURE_SSL_REDIRECT", default=False)
+SECURE_SSL_REDIRECT = bool_config("SECURE_SSL_REDIRECT", default=not DEBUG)
 SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0  # 1 year in production
 SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
 SECURE_HSTS_PRELOAD = not DEBUG
@@ -380,7 +401,9 @@ ENABLE_BASIC_RATE_LIMITING = True
 # Email configuration
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp-relay.brevo.com")
+EMAIL_HOST = os.getenv("EMAIL_HOST") or (
+    None if IS_PRODUCTION else "smtp-relay.brevo.com"
+)
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "true").lower() == "true"
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")  # your Brevo SMTP login email
@@ -392,7 +415,7 @@ SERVER_EMAIL = os.getenv("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
 EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", 30))
 
 # Site URL for email links
-SITE_URL = os.getenv("SITE_URL", "http://localhost:8000")
+SITE_URL = os.getenv("SITE_URL") or (None if IS_PRODUCTION else "http://localhost:8000")
 
 # =============================================================================
 # AUTHENTICATION CONFIGURATION
@@ -407,13 +430,13 @@ AUTHENTICATION_BACKENDS = [
 # =============================================================================
 # ACCOUNT LOCKOUT CONFIGURATION (django-axes)
 # =============================================================================
-# Lock accounts by username only — NOT by IP address.
-# Locking by IP causes all users behind the same proxy/load balancer to be
-# locked out simultaneously when any one user exceeds the failure limit.
+# Lock a username/IP combination, so one bad actor cannot lock every account
+# behind a shared proxy. The shared login limiter protects usernames across
+# distributed sources.
 AXES_ENABLED = True
-AXES_LOCKOUT_PARAMETERS = ["username"]  # Username-only lockout (not IP-based)
-AXES_FAILURE_LIMIT = 5  # Lock after 5 failed attempts
-AXES_COOLOFF_TIME = 1  # Lockout duration in hours
+AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]
+AXES_FAILURE_LIMIT = 10  # Lock after 5 failed attempts
+AXES_COOLOFF_TIME = 0.5  # Lockout duration in hours
 AXES_RESET_ON_SUCCESS = True  # Clear failed attempts on successful login
 AXES_HANDLER = "axes.handlers.database.AxesDatabaseHandler"
 
@@ -422,7 +445,22 @@ AXES_HANDLER = "axes.handlers.database.AxesDatabaseHandler"
 # =============================================================================
 
 # Redis configuration for Celery
-REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+REDIS_URL = os.getenv("REDIS_URL") or (
+    None if IS_PRODUCTION else "redis://localhost:6379/0"
+)
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": REDIS_URL,
+        "KEY_PREFIX": "rap",
+        "OPTIONS": {"socket_connect_timeout": 3, "socket_timeout": 3},
+    }
+}
+
+TRUSTED_PROXY_IPS = list_config(
+    "TRUSTED_PROXY_IPS", default="" if IS_PRODUCTION else "127.0.0.1"
+)
 
 # Celery Configuration Options
 CELERY_BROKER_URL = REDIS_URL
@@ -454,12 +492,62 @@ CELERY_BEAT_SCHEDULE: dict[str, Any] = {}
 
 # VAPID keys for web push notifications
 # Generate these with: python manage.py generate_vapid_keys
-VAPID_PRIVATE_KEY = load_file_secret(
-    os.getenv("VAPID_PRIVATE_KEY_FILE", "/run/secrets/vapid_private_key")
-)
-VAPID_PUBLIC_KEY = load_file_secret(
-    os.getenv("VAPID_PUBLIC_KEY_PEM_FILE", "/run/secrets/vapid_public_key")
-)
+vapid_private_key_file = os.getenv("VAPID_PRIVATE_KEY_FILE")
+vapid_public_key_file = os.getenv("VAPID_PUBLIC_KEY_PEM_FILE")
+if not DEBUG:
+    vapid_private_key_file = vapid_private_key_file or "/run/secrets/vapid_private_key"
+    vapid_public_key_file = vapid_public_key_file or "/run/secrets/vapid_public_key"
+
+VAPID_PRIVATE_KEY = load_file_secret(vapid_private_key_file)
+VAPID_PUBLIC_KEY = load_file_secret(vapid_public_key_file)
 VAPID_CLAIMS = {
     "sub": f"mailto:{os.getenv('VAPID_CONTACT_EMAIL', 'noreply@localhost')}"
 }
+
+
+if IS_PRODUCTION:
+    required_production_settings = {
+        "DJANGO_SECRET_KEY": os.getenv("DJANGO_SECRET_KEY"),
+        "DJANGO_ALLOWED_HOSTS": os.getenv("DJANGO_ALLOWED_HOSTS"),
+        "POSTGRES_DB": os.getenv("POSTGRES_DB"),
+        "POSTGRES_USER": os.getenv("POSTGRES_USER"),
+        "POSTGRES_PASSWORD": os.getenv("POSTGRES_PASSWORD"),
+        "POSTGRES_HOST": os.getenv("POSTGRES_HOST"),
+        "REDIS_URL": os.getenv("REDIS_URL"),
+        "TRUSTED_PROXY_IPS": os.getenv("TRUSTED_PROXY_IPS"),
+        "EMAIL_HOST": os.getenv("EMAIL_HOST"),
+        "EMAIL_HOST_USER": os.getenv("EMAIL_HOST_USER"),
+        "EMAIL_HOST_PASSWORD": os.getenv("EMAIL_HOST_PASSWORD"),
+        "DEFAULT_FROM_EMAIL": os.getenv("DEFAULT_FROM_EMAIL"),
+        "SITE_URL": os.getenv("SITE_URL"),
+        "ADMIN_URL": configured_admin_url,
+    }
+    missing_production_settings = [
+        name for name, value in required_production_settings.items() if not value
+    ]
+    if missing_production_settings:
+        raise ImproperlyConfigured(
+            "Missing required production settings: "
+            + ", ".join(missing_production_settings)
+        )
+    if DEBUG:
+        raise ImproperlyConfigured("DJANGO_DEBUG must be False in production")
+    if (
+        len(SECRET_KEY) < 50
+        or SECRET_KEY == "changeme-generate-secure-key-for-production"
+    ):
+        raise ImproperlyConfigured(
+            "DJANGO_SECRET_KEY must be a long random value in production"
+        )
+    if "*" in ALLOWED_HOSTS:
+        raise ImproperlyConfigured(
+            "DJANGO_ALLOWED_HOSTS cannot contain '*' in production"
+        )
+    if not SECURE_SSL_REDIRECT:
+        raise ImproperlyConfigured("SECURE_SSL_REDIRECT must be True in production")
+    if not SESSION_COOKIE_SECURE or not CSRF_COOKIE_SECURE:
+        raise ImproperlyConfigured(
+            "SESSION_COOKIE_SECURE and CSRF_COOKIE_SECURE must be True in production"
+        )
+    if not SITE_URL or not SITE_URL.startswith("https://"):
+        raise ImproperlyConfigured("SITE_URL must use https:// in production")

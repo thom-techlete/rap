@@ -1,11 +1,12 @@
 {% extends 'base.html' %}
 
 {% block title %}
-  Dashboard - SV Rap 8
+  Dashboard - {{ selected_season.name|default:'SV Rap 8' }}
 {% endblock %}
 
 {% block content %}
   {% csrf_token %}
+  <p class="text-muted">Seizoen: {{ selected_season.name }}</p>
 
   <!-- Welcome Section -->
   <div class="row mb-4">
