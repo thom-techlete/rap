@@ -230,8 +230,10 @@ ruff check .
 - The VPS keeps its production-only `docker/.env` and VAPID secret files outside
   version control. Do not overwrite, commit, or expose their values.
 - The deployment workflow updates the server checkout and uses the immutable
-  image tag built by CI. It verifies `https://rap8.nl/health/` after restarting
-  the web and Celery services.
+  image tag built by CI. It must start the complete Compose stack (including
+  PostgreSQL, Redis, and Caddy) before verifying `https://rap8.nl/health/`.
+- In the production `.env`, containers must reach PostgreSQL and Redis through
+  the Compose service names (`db` and `redis`), never `localhost`.
 - PostgreSQL data is stored in the named `postgres_data` volume and must never
   be deleted during deployment or troubleshooting. Attendance, event, and
   match-statistics records are likewise preserved.

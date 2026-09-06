@@ -256,13 +256,13 @@ jobs:
               sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=$tag/" .env
 
               # Pull the specific image
-              if ! docker compose -f docker-compose.yml pull web celery_worker celery_beat; then
+              if ! docker compose -f docker-compose.yml pull -q; then
                 echo "❌ Failed to pull images for tag: $tag"
                 return 1
               fi
 
               # Restart services
-              if ! docker compose -f docker-compose.yml up -d --no-deps --remove-orphans web celery_worker celery_beat; then
+              if ! docker compose -f docker-compose.yml up -d --remove-orphans; then
                 echo "❌ Failed to start services with tag: $tag"
                 return 1
               fi
