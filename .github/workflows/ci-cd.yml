@@ -446,3 +446,18 @@ jobs:
             fi
 
             echo "🏁 Deployment process completed!"
+
+  prune-ghcr:
+    name: Prune old GHCR images
+    needs: [ deploy ]
+    runs-on: ubuntu-latest
+    if: ${{ always() && (needs.deploy.result == 'success' || needs.deploy.result == 'skipped') }}
+    steps:
+      - name: Clean up old GHCR images
+        uses: actions/delete-package-versions@v5
+        with:
+          owner: ${{ github.repository_owner }}
+          package-name: ${{ github.event.repository.name }}
+          package-type: container
+          min-versions-to-keep: 3
+          token: ${{ secrets.GITHUB_TOKEN }}
